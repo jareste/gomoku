@@ -1,3 +1,5 @@
+use std::process::exit;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Piece {
     Empty,
@@ -19,7 +21,24 @@ impl Game {
             captured2: 0,
         }
     }
+    
+    pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        if self.map[x][y].is_some() && self.map[x][y] != Some(Piece::Empty){
+            return false;
+        }
+        self.map[x][y] = Some(piece);
+        self.capture(x, y, piece);
+        self.print_map();
+        let (win, message) = self.check_win();
+        if win {
+            println!("{}", message);
+            println!("Game over!");
+            exit(0);
+        }
+        true
+    }
 
+    // terminal game
     fn print_map(&self) {
         for i in 0..19 {
             for j in 0..19 {
@@ -32,25 +51,93 @@ impl Game {
             }
             println!();
         }
+        println!("Captured 1: {} | Captured2: {}", self.captured1, self.captured2);
     }
 
-    fn check_valid(&self, x: usize, y: usize) -> bool {
-        if x < 0 || x > 18 || y < 0 || y > 18 {
-            return false;
+    fn check_win(&self) -> (bool, String) {
+        if self.captured1 >= 10 {
+            return (true, "Player 1 wins!".to_string());
         }
-        if self.map[x][y].is_some() && self.map[x][y] != Some(Piece::Empty) {
-            return false;
+        if self.captured2 >= 10 {
+            return (true, "Player 2 wins!".to_string());
         }
-        true
+        for i in 0..19 {
+            for j in 0..19 {
+                if self.map[i][j] == Some(Piece::Player1) {
+                    if i < 15 {
+                        if self.map[i + 1][j] == Some(Piece::Player1) && self.map[i + 2][j] == Some(Piece::Player1) && self.map[i + 3][j] == Some(Piece::Player1) && self.map[i + 4][j] == Some(Piece::Player1) {
+                            return (true, "Player 1 wins!".to_string());
+                        }
+                    }
+                    if j < 15 {
+                        if self.map[i][j + 1] == Some(Piece::Player1) && self.map[i][j + 2] == Some(Piece::Player1) && self.map[i][j + 3] == Some(Piece::Player1) && self.map[i][j + 4] == Some(Piece::Player1) {
+                            return (true, "Player 1 wins!".to_string());
+                        }
+                    }
+                    if i < 15 && j < 15 {
+                        if self.map[i + 1][j + 1] == Some(Piece::Player1) && self.map[i + 2][j + 2] == Some(Piece::Player1) && self.map[i + 3][j + 3] == Some(Piece::Player1) && self.map[i + 4][j + 4] == Some(Piece::Player1) {
+                            return (true, "Player 1 wins!".to_string());
+                        }
+                    }
+                    if i < 15 && j > 3 {
+                        if self.map[i + 1][j - 1] == Some(Piece::Player1) && self.map[i + 2][j - 2] == Some(Piece::Player1) && self.map[i + 3][j - 3] == Some(Piece::Player1) && self.map[i + 4][j - 4] == Some(Piece::Player1) {
+                            return (true, "Player 1 wins!".to_string());
+                        }
+                    }
+                }
+                if self.map[i][j] == Some(Piece::Player2) {
+                    if i < 15 {
+                        if self.map[i + 1][j] == Some(Piece::Player2) && self.map[i + 2][j] == Some(Piece::Player2) && self.map[i + 3][j] == Some(Piece::Player2) && self.map[i + 4][j] == Some(Piece::Player2) {
+                            return (true, "Player 1 wins!".to_string());
+                        }
+                    }
+                    if j < 15 {
+                        if self.map[i][j + 1] == Some(Piece::Player2) && self.map[i][j + 2] == Some(Piece::Player2) && self.map[i][j + 3] == Some(Piece::Player2) && self.map[i][j + 4] == Some(Piece::Player2) {
+                            return (true, "Player 1 wins!".to_string());
+                        }
+                    }
+                    if i < 15 && j < 15 {
+                        if self.map[i + 1][j + 1] == Some(Piece::Player2) && self.map[i + 2][j + 2] == Some(Piece::Player2) && self.map[i + 3][j + 3] == Some(Piece::Player2) && self.map[i + 4][j + 4] == Some(Piece::Player2) {
+                            return (true, "Player 1 wins!".to_string());
+                        }
+                    }
+                    if i < 15 && j > 3 {
+                        if self.map[i + 1][j - 1] == Some(Piece::Player2) && self.map[i + 2][j - 2] == Some(Piece::Player2) && self.map[i + 3][j - 3] == Some(Piece::Player2) && self.map[i + 4][j - 4] == Some(Piece::Player2) {
+                            return (true, "Player 1 wins!".to_string());
+                        }
+                    }
+                }
+            }
+        }
+        (false, "".to_string())
     }
 
-    pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
-        if self.map[x][y].is_some() && self.map[x][y] != Some(Piece::Empty){
-            return false;
+    //i must check like expanding from the actual position to check captures or possible ones right now not working
+    fn capture(&mut self, x: usize, y: usize, piece: Piece) { 
+        let mut captured = 0;
+
+        if x > 0 && self.map[x - 1][y] == Some(piece) {
+            captured += 1;
         }
-        self.map[x][y] = Some(piece);
-        self.print_map();
-        true
+        if x < 18 && self.map[x + 1][y] == Some(piece) {
+            captured += 1;
+        }
+        if y > 0 && self.map[x][y - 1] == Some(piece) {
+            captured += 1;
+        }
+        if y < 18 && self.map[x][y + 1] == Some(piece) {
+            captured += 1;
+        }
+
+        if captured == 4 {
+            self.map[x][y] = Some(Piece::Empty);
+
+            if piece == Piece::Player1 {
+                self.captured1 += 1;
+            } else {
+                self.captured2 += 1;
+            }
+        }
     }
 
     // pub fn capture(&mut self, x: usize, y: usize, piece: Piece) {
@@ -83,6 +170,7 @@ impl Game {
 }
 
 
+use core::panic;
 use std::io::{self, Write};
 
 pub fn terminal_game() {
@@ -100,7 +188,6 @@ pub fn terminal_game() {
         io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
         input.clear();
         io::stdin().read_line(&mut input).unwrap();
-        println!("input: {:?}", input);
         numbers = input
             .split_whitespace()
             .map(|s| s.parse().unwrap())
@@ -127,9 +214,7 @@ pub fn terminal_game() {
                 continue;
             }
         }
-        println!("numbers: {:?}", numbers);
         numbers.clear();
-        println!("numbers: {:?}", numbers);
         movements += 1;
     }
 }
