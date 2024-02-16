@@ -45,3 +45,11 @@
 // fn main() -> iced::Result {
 //     // MyApp::run(Settings::default())
 // }
+
+mod game;
+use game::terminal_game;
+
+
+fn main() {
+    terminal_game();
+}
