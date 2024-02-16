@@ -117,17 +117,17 @@ impl Game {
     }
 
     //i must check like expanding from the actual position to check captures or possible ones right now not working
-    fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) { 
+    fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
+        println!("x: {:?} y: {:?}", x, y);
         if x > 2 {
-            if self.map[x - 1][y] == Some(o_piece) && self.map[x - 2][y] == Some(o_piece) && self.map[x - 3][y] == Some(piece){} // creo que sobra && self.map[x - 4][y] == piece {
+            // capturo hacia arriba
+            if self.map[x - 1][y] == Some(o_piece) && self.map[x - 2][y] == Some(o_piece) && self.map[x - 3][y] == Some(piece){
                 self.map[x - 1][y] = Some(Piece::Empty);
                 self.map[x - 2][y] = Some(Piece::Empty);
-                self.map[x - 3][y] = Some(Piece::Empty);
-                self.map[x - 4][y] = Some(Piece::Empty);
                 if piece == Piece::Player1 {
-                    self.captured1 += 1;
+                    self.captured1 += 2;
                 } else {
-                    self.captured2 += 1;
+                    self.captured2 += 2;
                 }
             }
 
