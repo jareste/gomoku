@@ -27,7 +27,11 @@ impl Game {
             return false;
         }
         self.map[x][y] = Some(piece);
-        self.capture(x, y, piece);
+        if piece == Piece::Player1 {
+            self.capture(x, y, piece, Piece::Player2);
+        } else {
+            self.capture(x, y, piece, Piece::Player1);
+        }
         self.print_map();
         let (win, message) = self.check_win();
         if win {
@@ -113,30 +117,20 @@ impl Game {
     }
 
     //i must check like expanding from the actual position to check captures or possible ones right now not working
-    fn capture(&mut self, x: usize, y: usize, piece: Piece) { 
-        let mut captured = 0;
-
-        if x > 0 && self.map[x - 1][y] == Some(piece) {
-            captured += 1;
-        }
-        if x < 18 && self.map[x + 1][y] == Some(piece) {
-            captured += 1;
-        }
-        if y > 0 && self.map[x][y - 1] == Some(piece) {
-            captured += 1;
-        }
-        if y < 18 && self.map[x][y + 1] == Some(piece) {
-            captured += 1;
-        }
-
-        if captured == 4 {
-            self.map[x][y] = Some(Piece::Empty);
-
-            if piece == Piece::Player1 {
-                self.captured1 += 1;
-            } else {
-                self.captured2 += 1;
+    fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) { 
+        if x > 2 {
+            if self.map[x - 1][y] == Some(o_piece) && self.map[x - 2][y] == Some(o_piece) && self.map[x - 3][y] == Some(piece){} // creo que sobra && self.map[x - 4][y] == piece {
+                self.map[x - 1][y] = Some(Piece::Empty);
+                self.map[x - 2][y] = Some(Piece::Empty);
+                self.map[x - 3][y] = Some(Piece::Empty);
+                self.map[x - 4][y] = Some(Piece::Empty);
+                if piece == Piece::Player1 {
+                    self.captured1 += 1;
+                } else {
+                    self.captured2 += 1;
+                }
             }
+
         }
     }
 
