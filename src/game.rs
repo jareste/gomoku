@@ -32,7 +32,7 @@ impl Game {
         } else {
             self.capture(x, y, piece, Piece::Player1);
         }
-        if self.check_free_three(piece) {
+        if self.check_actual_free_three(x, y, piece) {
             self.map[x][y] = Some(Piece::Empty);
             return false;
         }
@@ -46,7 +46,7 @@ impl Game {
         true
     }
 
-    // terminal game
+    // terminal game HELPER FUNCTION
     fn print_map(&self) {
         for i in 0..19 {
             for j in 0..19 {
@@ -62,66 +62,7 @@ impl Game {
         println!("Captured 1: {} | Captured2: {}", self.captured1, self.captured2);
     }
 
-    // fn check_win(&self) -> (bool, String) {
-    //     if self.captured1 >= 10 {
-    //         return (true, "Player 1 wins!".to_string());
-    //     }
-    //     if self.captured2 >= 10 {
-    //         return (true, "Player 2 wins!".to_string());
-    //     }
-    //     for i in 0..19 {
-    //         for j in 0..19 {
-    //             if self.map[i][j] == Some(Piece::Player1) {
-    //                 if i < 15 {
-    //                     if self.map[i + 1][j] == Some(Piece::Player1) && self.map[i + 2][j] == Some(Piece::Player1) && self.map[i + 3][j] == Some(Piece::Player1) && self.map[i + 4][j] == Some(Piece::Player1) {
-    //                         return (true, "Player 1 wins!".to_string());
-    //                     }
-    //                 }
-    //                 if j < 15 {
-    //                     if self.map[i][j + 1] == Some(Piece::Player1) && self.map[i][j + 2] == Some(Piece::Player1) && self.map[i][j + 3] == Some(Piece::Player1) && self.map[i][j + 4] == Some(Piece::Player1) {
-    //                         return (true, "Player 1 wins!".to_string());
-    //                     }
-    //                 }
-    //                 if i < 15 && j < 15 {
-    //                     if self.map[i + 1][j + 1] == Some(Piece::Player1) && self.map[i + 2][j + 2] == Some(Piece::Player1) && self.map[i + 3][j + 3] == Some(Piece::Player1) && self.map[i + 4][j + 4] == Some(Piece::Player1) {
-    //                         return (true, "Player 1 wins!".to_string());
-    //                     }
-    //                 }
-    //                 if i < 15 && j > 3 {
-    //                     if self.map[i + 1][j - 1] == Some(Piece::Player1) && self.map[i + 2][j - 2] == Some(Piece::Player1) && self.map[i + 3][j - 3] == Some(Piece::Player1) && self.map[i + 4][j - 4] == Some(Piece::Player1) {
-    //                         return (true, "Player 1 wins!".to_string());
-    //                     }
-    //                 }
-    //             }
-    //             if self.map[i][j] == Some(Piece::Player2) {
-    //                 if i < 15 {
-    //                     if self.map[i + 1][j] == Some(Piece::Player2) && self.map[i + 2][j] == Some(Piece::Player2) && self.map[i + 3][j] == Some(Piece::Player2) && self.map[i + 4][j] == Some(Piece::Player2) {
-    //                         return (true, "Player 1 wins!".to_string());
-    //                     }
-    //                 }
-    //                 if j < 15 {
-    //                     if self.map[i][j + 1] == Some(Piece::Player2) && self.map[i][j + 2] == Some(Piece::Player2) && self.map[i][j + 3] == Some(Piece::Player2) && self.map[i][j + 4] == Some(Piece::Player2) {
-    //                         return (true, "Player 1 wins!".to_string());
-    //                     }
-    //                 }
-    //                 if i < 15 && j < 15 {
-    //                     if self.map[i + 1][j + 1] == Some(Piece::Player2) && self.map[i + 2][j + 2] == Some(Piece::Player2) && self.map[i + 3][j + 3] == Some(Piece::Player2) && self.map[i + 4][j + 4] == Some(Piece::Player2) {
-    //                         return (true, "Player 1 wins!".to_string());
-    //                     }
-    //                 }
-    //                 if i < 15 && j > 3 {
-    //                     if self.map[i + 1][j - 1] == Some(Piece::Player2) && self.map[i + 2][j - 2] == Some(Piece::Player2) && self.map[i + 3][j - 3] == Some(Piece::Player2) && self.map[i + 4][j - 4] == Some(Piece::Player2) {
-    //                         return (true, "Player 1 wins!".to_string());
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     (false, "".to_string())
-    // }
-
-
-
+    // NEW CHECK WIN FUNCTION MAYBE NOT WORKING AS EXPECTED
     fn check_win(&self) -> (bool, String) {
         match (self.captured1 >= 10, self.captured2 >= 10) {
             (true, _) => return (true, "Player 1 wins!".to_string()),
@@ -167,11 +108,11 @@ impl Game {
         (false, "".to_string())
     }
 
-
+    // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture_direction(&mut self, x: isize, y: isize, dx: isize, dy: isize, piece: Piece, o_piece: Piece) {
         if (0..3).all(|i| self.map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&Some(o_piece)))
             && self.map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&Some(piece)) {
-            for i in 1..=2 {
+                for i in 1..=2 {
                 if let Some(row) = self.map.get_mut((x + i * dx) as usize) {
                     if let Some(cell) = row.get_mut((y + i * dy) as usize) {
                         *cell = Some(Piece::Empty);
@@ -186,6 +127,7 @@ impl Game {
         }
     }
 
+    // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
         let directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
         for &(dx, dy) in &directions {
@@ -194,134 +136,56 @@ impl Game {
         }
     }
 
-
-    // //i must check like expanding from the actual position to check captures or possible ones right now not working
-    // fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
-    //     println!("x: {:?} y: {:?}", x, y);
-    //     //capturo hacia arriba
-    //     if x > 2 && self.map[x - 1][y] == Some(o_piece) && self.map[x - 2][y] == Some(o_piece) && self.map[x - 3][y] == Some(piece) {
-    //             self.map[x - 1][y] = Some(Piece::Empty);
-    //             self.map[x - 2][y] = Some(Piece::Empty);
-    //             if piece == Piece::Player1 {
-    //                 self.captured1 += 2;
-    //             } else {
-    //                 self.captured2 += 2;
-    //             }
-    //         }
-    //     //capturo hacia abajo
-    //     if x < 16 && self.map[x + 1][y] == Some(o_piece) && self.map[x + 2][y] == Some(o_piece) && self.map[x + 3][y] == Some(piece) {
-    //         self.map[x + 1][y] = Some(Piece::Empty);
-    //         self.map[x + 2][y] = Some(Piece::Empty);
-    //         if piece == Piece::Player1 {
-    //             self.captured1 += 2;
-    //         } else {
-    //             self.captured2 += 2;
-    //         }
-    //     }
-    //     //capturo hacia la izquierda
-    //     if y > 2 && self.map[x][y - 1] == Some(o_piece) && self.map[x][y - 2] == Some(o_piece) && self.map[x][y - 3] == Some(piece) {
-    //         self.map[x][y - 1] = Some(Piece::Empty);
-    //         self.map[x][y - 2] = Some(Piece::Empty);
-    //         if piece == Piece::Player1 {
-    //             self.captured1 += 2;
-    //         } else {
-    //             self.captured2 += 2;
-    //         }
-    //     }
-    //     //capturo hacia la derecha
-    //     if y < 16 && self.map[x][y + 1] == Some(o_piece) && self.map[x][y + 2] == Some(o_piece) && self.map[x][y + 3] == Some(piece) {
-    //         self.map[x][y + 1] = Some(Piece::Empty);
-    //         self.map[x][y + 2] = Some(Piece::Empty);
-    //         if piece == Piece::Player1 {
-    //             self.captured1 += 2;
-    //         } else {
-    //             self.captured2 += 2;
-    //         }
-    //     }
-    //     //capturo diagonal arriba izquierda
-    //     if x > 2 && y > 2 && self.map[x - 1][y - 1] == Some(o_piece) && self.map[x - 2][y - 2] == Some(o_piece) && self.map[x - 3][y - 3] == Some(piece) {
-    //         self.map[x - 1][y - 1] = Some(Piece::Empty);
-    //         self.map[x - 2][y - 2] = Some(Piece::Empty);
-    //         if piece == Piece::Player1 {
-    //             self.captured1 += 2;
-    //         } else {
-    //             self.captured2 += 2;
-    //         }
-    //     }
-    //     // capturo diagonal arriba derecha
-    //     if x>2 && y < 16 && self.map[x - 1][y + 1] == Some(o_piece) && self.map[x - 2][y + 2] == Some(o_piece) && self.map[x - 3][y + 3] == Some(piece) {
-    //         self.map[x - 1][y + 1] = Some(Piece::Empty);
-    //         self.map[x - 2][y + 2] = Some(Piece::Empty);
-    //         if piece == Piece::Player1 {
-    //             self.captured1 += 2;
-    //         } else {
-    //             self.captured2 += 2;
-    //         }
-    //     }
-    //     //capturo diagonal abajo izquierda
-    //     if x < 16 && y > 2 && self.map[x + 1][y - 1] == Some(o_piece) && self.map[x + 2][y - 2] == Some(o_piece) && self.map[x + 3][y - 3] == Some(piece) {
-    //         self.map[x + 1][y - 1] = Some(Piece::Empty);
-    //         self.map[x + 2][y - 2] = Some(Piece::Empty);
-    //         if piece == Piece::Player1 {
-    //             self.captured1 += 2;
-    //         } else {
-    //             self.captured2 += 2;
-    //         }
-    //     }
-    //     //capturo diagonal abajo derecha
-    //     if x < 16 && y < 16 && self.map[x + 1][y + 1] == Some(o_piece) && self.map[x + 2][y + 2] == Some(o_piece) && self.map[x + 3][y + 3] == Some(piece) {
-    //         self.map[x + 1][y + 1] = Some(Piece::Empty);
-    //         self.map[x + 2][y + 2] = Some(Piece::Empty);
-    //         if piece == Piece::Player1 {
-    //             self.captured1 += 2;
-    //         } else {
-    //             self.captured2 += 2;
-    //         }
-    //     }
-    // }
-
+    
+   
+                    
     // free three are three pieces that if another one is added got no counterplay.
     // example: - X X - X -
     // example: - X - X X -
     // example: - X X X -
-    fn check_free_three(&mut self, piece: Piece) ->  {
+    // first i must check if the actual movement creates a free three
+    //  *****************************************************************************************************************************
+    fn check_actual_free_three(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         let mut free_three = 0;
 
+        // check horizontal
+        match piece {
+            Piece::Player1 => {
+                if y > 2 {
+                    if self.map[x][y - 1] == Some(Piece::Player1) && self.map[x][y - 2] == Some(Piece::Player1) && self.map[x][y - 3] == Some(Piece::Empty) {
+                        free_three += 1;
+                    }
+                }
+                if y < 15 {
+                    if self.map[x][y + 1] == Some(Piece::Player1) && self.map[x][y + 2] == Some(Piece::Player1) && self.map[x][y + 3] == Some(Piece::Empty) {
+                        free_three += 1;
+                    }
+                }
+            }
+            Piece::Player2 => {
+                if y > 2 {
+                    if self.map[x][y - 1] == Some(Piece::Player2) && self.map[x][y - 2] == Some(Piece::Player2) && self.map[x][y - 3] == Some(Piece::Empty) {
+                        free_three += 1;
+                    }
+                }
+                if y < 15 {
+                    if self.map[x][y + 1] == Some(Piece::Player2) && self.map[x][y + 2] == Some(Piece::Player2) && self.map[x][y + 3] == Some(Piece::Empty) {
+                        free_three += 1;
+                    }
+                }
+            }
+            _ => (),
+        }
+
+
+        false
     }
-
-    // pub fn capture(&mut self, x: usize, y: usize, piece: Piece) {
-    //     let mut captured = 0;
-
-    //     if x > 0 && self.map[x - 1][y] == Some(piece) {
-    //         captured += 1;
-    //     }
-    //     if x < 18 && self.map[x + 1][y] == Some(piece) {
-    //         captured += 1;
-    //     }
-    //     if y > 0 && self.map[x][y - 1] == Some(piece) {
-    //         captured += 1;
-    //     }
-    //     if y < 18 && self.map[x][y + 1] == Some(piece) {
-    //         captured += 1;
-    //     }
-
-    //     if captured == 4 {
-    //         self.map[x][y] = Some(Piece::Empty);
-
-    //         if piece == Piece::Player1 {
-    //             self.captured1 += 1;
-    //         } else {
-    //             self.captured2 += 1;
-    //         }
-    //     }
-    // }
-
+                    
 }
 
-
+// HELPER FUNCTION FOR TESTING
 use core::panic;
 use std::io::{self, Write};
-
 pub fn terminal_game() {
     let mut game = Game::new();
     let mut input = String::new();
@@ -337,11 +201,8 @@ pub fn terminal_game() {
         io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
         input.clear();
         io::stdin().read_line(&mut input).unwrap();
-        numbers = input
-            .split_whitespace()
-            .map(|s| s.parse().unwrap())
-            .collect();
-
+        numbers = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
+        
         if numbers.len() != 2 {
             println!("numbers: {:?}", numbers);
             println!("You must enter exactly two integers!");
@@ -352,18 +213,165 @@ pub fn terminal_game() {
             continue;
         }
         if movements % 2 == 0 {
-            if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player1) {
-                println!("You can't place a piece there!");
-                continue;
+                if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player1) {
+                    println!("You can't place a piece there!");
+                    continue;
+                }
             }
-        }
-        else {
-            if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player2) {
-                println!("You can't place a piece there!");
-                continue;
+            else {
+                if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player2) {
+                    println!("You can't place a piece there!");
+                    continue;
+                }
             }
-        }
-        numbers.clear();
-        movements += 1;
+            numbers.clear();
+            movements += 1;
     }
 }
+
+
+// -----------------------------------------------------DEPRECATED FUNCTIONS:
+
+// fn check_win(&self) -> (bool, String) {
+//     if self.captured1 >= 10 {
+//         return (true, "Player 1 wins!".to_string());
+//     }
+//     if self.captured2 >= 10 {
+//         return (true, "Player 2 wins!".to_string());
+//     }
+//     for i in 0..19 {
+//         for j in 0..19 {
+//             if self.map[i][j] == Some(Piece::Player1) {
+//                 if i < 15 {
+//                     if self.map[i + 1][j] == Some(Piece::Player1) && self.map[i + 2][j] == Some(Piece::Player1) && self.map[i + 3][j] == Some(Piece::Player1) && self.map[i + 4][j] == Some(Piece::Player1) {
+//                         return (true, "Player 1 wins!".to_string());
+//                     }
+//                 }
+//                 if j < 15 {
+//                     if self.map[i][j + 1] == Some(Piece::Player1) && self.map[i][j + 2] == Some(Piece::Player1) && self.map[i][j + 3] == Some(Piece::Player1) && self.map[i][j + 4] == Some(Piece::Player1) {
+//                         return (true, "Player 1 wins!".to_string());
+//                     }
+//                 }
+//                 if i < 15 && j < 15 {
+//                     if self.map[i + 1][j + 1] == Some(Piece::Player1) && self.map[i + 2][j + 2] == Some(Piece::Player1) && self.map[i + 3][j + 3] == Some(Piece::Player1) && self.map[i + 4][j + 4] == Some(Piece::Player1) {
+//                         return (true, "Player 1 wins!".to_string());
+//                     }
+//                 }
+//                 if i < 15 && j > 3 {
+//                     if self.map[i + 1][j - 1] == Some(Piece::Player1) && self.map[i + 2][j - 2] == Some(Piece::Player1) && self.map[i + 3][j - 3] == Some(Piece::Player1) && self.map[i + 4][j - 4] == Some(Piece::Player1) {
+//                         return (true, "Player 1 wins!".to_string());
+//                     }
+//                 }
+//             }
+//             if self.map[i][j] == Some(Piece::Player2) {
+//                 if i < 15 {
+//                     if self.map[i + 1][j] == Some(Piece::Player2) && self.map[i + 2][j] == Some(Piece::Player2) && self.map[i + 3][j] == Some(Piece::Player2) && self.map[i + 4][j] == Some(Piece::Player2) {
+//                         return (true, "Player 1 wins!".to_string());
+//                     }
+//                 }
+//                 if j < 15 {
+//                     if self.map[i][j + 1] == Some(Piece::Player2) && self.map[i][j + 2] == Some(Piece::Player2) && self.map[i][j + 3] == Some(Piece::Player2) && self.map[i][j + 4] == Some(Piece::Player2) {
+//                         return (true, "Player 1 wins!".to_string());
+//                     }
+//                 }
+//                 if i < 15 && j < 15 {
+//                     if self.map[i + 1][j + 1] == Some(Piece::Player2) && self.map[i + 2][j + 2] == Some(Piece::Player2) && self.map[i + 3][j + 3] == Some(Piece::Player2) && self.map[i + 4][j + 4] == Some(Piece::Player2) {
+//                         return (true, "Player 1 wins!".to_string());
+//                     }
+//                 }
+//                 if i < 15 && j > 3 {
+//                     if self.map[i + 1][j - 1] == Some(Piece::Player2) && self.map[i + 2][j - 2] == Some(Piece::Player2) && self.map[i + 3][j - 3] == Some(Piece::Player2) && self.map[i + 4][j - 4] == Some(Piece::Player2) {
+//                         return (true, "Player 1 wins!".to_string());
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//     (false, "".to_string())
+// }
+
+
+// //i must check like expanding from the actual position to check captures or possible ones right now not working
+// fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
+//     println!("x: {:?} y: {:?}", x, y);
+//     //capturo hacia arriba
+//     if x > 2 && self.map[x - 1][y] == Some(o_piece) && self.map[x - 2][y] == Some(o_piece) && self.map[x - 3][y] == Some(piece) {
+//             self.map[x - 1][y] = Some(Piece::Empty);
+//             self.map[x - 2][y] = Some(Piece::Empty);
+//             if piece == Piece::Player1 {
+//                 self.captured1 += 2;
+//             } else {
+//                 self.captured2 += 2;
+//             }
+//         }
+//     //capturo hacia abajo
+//     if x < 16 && self.map[x + 1][y] == Some(o_piece) && self.map[x + 2][y] == Some(o_piece) && self.map[x + 3][y] == Some(piece) {
+//         self.map[x + 1][y] = Some(Piece::Empty);
+//         self.map[x + 2][y] = Some(Piece::Empty);
+//         if piece == Piece::Player1 {
+//             self.captured1 += 2;
+//         } else {
+//             self.captured2 += 2;
+//         }
+//     }
+//     //capturo hacia la izquierda
+//     if y > 2 && self.map[x][y - 1] == Some(o_piece) && self.map[x][y - 2] == Some(o_piece) && self.map[x][y - 3] == Some(piece) {
+//         self.map[x][y - 1] = Some(Piece::Empty);
+//         self.map[x][y - 2] = Some(Piece::Empty);
+//         if piece == Piece::Player1 {
+//             self.captured1 += 2;
+//         } else {
+//             self.captured2 += 2;
+//         }
+//     }
+//     //capturo hacia la derecha
+//     if y < 16 && self.map[x][y + 1] == Some(o_piece) && self.map[x][y + 2] == Some(o_piece) && self.map[x][y + 3] == Some(piece) {
+//         self.map[x][y + 1] = Some(Piece::Empty);
+//         self.map[x][y + 2] = Some(Piece::Empty);
+//         if piece == Piece::Player1 {
+//             self.captured1 += 2;
+//         } else {
+//             self.captured2 += 2;
+//         }
+//     }
+//     //capturo diagonal arriba izquierda
+//     if x > 2 && y > 2 && self.map[x - 1][y - 1] == Some(o_piece) && self.map[x - 2][y - 2] == Some(o_piece) && self.map[x - 3][y - 3] == Some(piece) {
+//         self.map[x - 1][y - 1] = Some(Piece::Empty);
+//         self.map[x - 2][y - 2] = Some(Piece::Empty);
+//         if piece == Piece::Player1 {
+//             self.captured1 += 2;
+//         } else {
+//             self.captured2 += 2;
+//         }
+//     }
+//     // capturo diagonal arriba derecha
+//     if x>2 && y < 16 && self.map[x - 1][y + 1] == Some(o_piece) && self.map[x - 2][y + 2] == Some(o_piece) && self.map[x - 3][y + 3] == Some(piece) {
+//         self.map[x - 1][y + 1] = Some(Piece::Empty);
+//         self.map[x - 2][y + 2] = Some(Piece::Empty);
+//         if piece == Piece::Player1 {
+//             self.captured1 += 2;
+//         } else {
+//             self.captured2 += 2;
+//         }
+//     }
+//     //capturo diagonal abajo izquierda
+//     if x < 16 && y > 2 && self.map[x + 1][y - 1] == Some(o_piece) && self.map[x + 2][y - 2] == Some(o_piece) && self.map[x + 3][y - 3] == Some(piece) {
+//         self.map[x + 1][y - 1] = Some(Piece::Empty);
+//         self.map[x + 2][y - 2] = Some(Piece::Empty);
+//         if piece == Piece::Player1 {
+//             self.captured1 += 2;
+//         } else {
+//             self.captured2 += 2;
+//         }
+//     }
+//     //capturo diagonal abajo derecha
+//     if x < 16 && y < 16 && self.map[x + 1][y + 1] == Some(o_piece) && self.map[x + 2][y + 2] == Some(o_piece) && self.map[x + 3][y + 3] == Some(piece) {
+//         self.map[x + 1][y + 1] = Some(Piece::Empty);
+//         self.map[x + 2][y + 2] = Some(Piece::Empty);
+//         if piece == Piece::Player1 {
+//             self.captured1 += 2;
+//         } else {
+//             self.captured2 += 2;
+//         }
+//     }
+// }
