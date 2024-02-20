@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::process::exit;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -32,11 +33,12 @@ impl Game {
         } else {
             self.capture(x, y, piece, Piece::Player1);
         }
-        if self.check_actual_free_three(x, y, piece) {
-            self.map[x][y] = Some(Piece::Empty);
-            return false;
-        }
+        // if self.check_actual_free_three(x, y, piece) {
+        //     self.map[x][y] = Some(Piece::Empty);
+        //     return false;
+        // }
         self.print_map();
+        self.find_free_threes(piece);
         let (win, message) = self.check_win();
         if win {
             println!("{}", message);
@@ -173,7 +175,6 @@ impl Game {
                 }
 
                 // NEW BLOCK FOR HORIZONTAL CHECKS
-
                 //  check horizontal this checks for - x X X - where the lower x is the actual position
                 if y > 2 && [1, -3].iter().all(|&i| self.map[x][(y as isize + i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x][y - i] == Some(Piece::Player1)) {
                     println!("------------------------------------------------------------------------------------------------------");;
@@ -184,6 +185,7 @@ impl Game {
                     println!("------------------------------------------------------------------------------------------------------");;
                     // check for another free three;
                 }
+                println!("hola");
                 // check horizontal this checks for - X X x - where the lower x is the actual position
                 if y < 16 && [3, -1].iter().all(|&i| self.map[x][(y as isize + i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x][y + i] == Some(Piece::Player1)) {
                     println!("------------------------------------------------------------------------------------------------------");;
@@ -191,40 +193,41 @@ impl Game {
                 }
 
 
-                // NEW BLOCK FOR DIAGONAL UP RIGHTCHECKS
+                // // NEW BLOCK FOR DIAGONAL UP RIGHTCHECKS
 
-                // check diagonal this checks for - x X X - where the lower x is the actual position
-                if x > 2 && y > 2 && [1, -3].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize + i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x - i][y - i] == Some(Piece::Player1)) {
-                    println!("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                    // check for another free three;
-                }
-                // check diagonal this checks for - X x X - where the lower x is the actual position
-                if x > 1 && x < 17 && y > 1 && y < 17 && [2, -2].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize + i) as usize] == Some(Piece::Empty)) && [1, -1].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize + i) as usize] == Some(Piece::Player1)) {
-                    println!("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                    // check for another free three;
-                }
-                // check diagonal this checks for - X X x - where the lower x is the actual position
-                if x < 16 && y < 16 && [3, -1].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize + i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x + i][y + i] == Some(Piece::Player1)) {
-                    println!("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                    // check for another free three;
-                }
+                // // check diagonal this checks for - x X X - where the lower x is the actual position
+                // if x > 2 && y > 2 && [1, -3].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize + i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x - i][y - i] == Some(Piece::Player1)) {
+                //     println!("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                //     // check for another free three;
+                // }
+                // // check diagonal this checks for - X x X - where the lower x is the actual position
+                // if x > 1 && x < 17 && y > 1 && y < 17 && [2, -2].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize + i) as usize] == Some(Piece::Empty)) && [1, -1].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize + i) as usize] == Some(Piece::Player1)) {
+                //     println!("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                //     // check for another free three;
+                // }
+                // // check diagonal this checks for - X X x - where the lower x is the actual position
+                // if x < 16 && y < 16 && [3, -1].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize + i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x + i][y + i] == Some(Piece::Player1)) {
+                //     println!("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                //     // check for another free three;
+                // }
 
-                // NEW BLOCK FOR HORIZONTAL DOWN CHECKS
-                // check diagonal down this checks for - x X X - where the lower x is the actual position
-                if x < 16 && y > 2 && [1, -3].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize - i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x + i][y - i] == Some(Piece::Player1)) {
-                    println!("=======================================================================================================");
-                    // check for another free three;
-                }
-                // check diagonal down this checks for - X x X - where the lower x is the actual position
-                if x < 17 && x > 1 && y < 17 && y > 1 && [2, -2].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize - i) as usize] == Some(Piece::Empty)) && [1, -1].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize - i) as usize] == Some(Piece::Player1)) {
-                    println!("=======================================================================================================");
-                    // check for another free three;
-                }
-                // check diagonal down this checks for - X X x - where the lower x is the actual position
-                if x > 2 && y < 16 && [3, -1].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize - i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x - i][y + i] == Some(Piece::Player1)) {
-                    println!("=======================================================================================================");
-                    // check for another free three;
-                }
+                // // NEW BLOCK FOR HORIZONTAL DOWN CHECKS
+                // // check diagonal down this checks for - x X X - where the lower x is the actual position
+                // if x < 16 && y > 2 && [1, -3].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize - i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x + i][y - i] == Some(Piece::Player1)) {
+                //     println!("=======================================================================================================");
+                //     // check for another free three;
+                // }
+                // // check diagonal down this checks for - X x X - where the lower x is the actual position
+                // if x < 17 && x > 1 && y < 17 && y > 1 && [2, -2].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize - i) as usize] == Some(Piece::Empty)) && [1, -1].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize - i) as usize] == Some(Piece::Player1)) {
+                //     println!("=======================================================================================================");
+                //     // check for another free three;
+                // }
+                // // check diagonal down this checks for - X X x - where the lower x is the actual position
+                // println!("check {}", (y as isize -1) as usize);
+                // if x > 2 && y < 16 && [3, -1].iter().all(|&i| self.map[(x as isize + i) as usize][(y as isize - i) as usize] == Some(Piece::Empty)) && (1..=2).all(|i| self.map[x - i][y + i] == Some(Piece::Player1)) {
+                //     println!("=======================================================================================================");
+                //     // check for another free three;
+                // }
 
                 // check diagonal up left this checks for - x X X - where the lower x is the actual position
 
@@ -248,6 +251,120 @@ impl Game {
                 }
             }
             _ => (),
+        }
+        false
+    }
+
+
+    // function to check all the free threes in the board for a selected player and keep in memory positions of the actuals one that have been visited.
+    // idea of doing it with a match as them are the only possible pieces
+    // i want to check always from the first piece of the sequence so then i got no issuues with finding multiples at same time
+    fn find_free_threes(&mut self, piece: Piece) -> bool {
+        let mut visited: HashSet<(usize, usize)> = HashSet::new();
+        let posibilities = [
+            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
+            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
+            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2), // - X X X -
+            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty), // - O O O -
+            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1), // - O O O -
+            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2), // - O O O -
+            ];
+
+        let mut free_three_p1 = 0;
+        let mut free_three_p2 = 0;
+        for x in 1..16 {
+            for y in 1..16 {
+                if self.map[x][y] == Some(Piece::Player1) || self.map[x][y] == Some(Piece::Player2) {
+                    // println!("no petardea");
+                    // checking X vertical up
+                    if let [Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)] = [
+                        self.map[x - 1][y],
+                        self.map[x][y],
+                        self.map[x + 1][y],
+                        self.map[x + 2][y],
+                        self.map[x + 3][y],
+                        if x + 4 < 19 { self.map[x + 4][y] } else { Some(Piece::Empty) },
+                    ] {
+                        let sequence = (a, b, c, d, e, f);
+                        // println!("sequence: {:?}", sequence);
+                        if posibilities.contains(&sequence) {
+                            println!("free three found!");
+                            match piece {
+                                Piece::Player1 => free_three_p1 += 1,
+                                Piece::Player2 => free_three_p2 += 1,
+                                _ => (),
+                            }
+                        }
+                    }
+                    // checking Y horizontal right
+                    if let [Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)] = [
+                        self.map[x][y - 1],
+                        self.map[x][y],
+                        self.map[x][y + 1],
+                        self.map[x][y + 2],
+                        self.map[x][y + 3],
+                        if y + 4 < 19 { self.map[x][y + 4] } else { Some(Piece::Empty) },
+                    ] {
+                        let sequence = (a, b, c, d, e, f);
+                        // println!("sequence: {:?}", sequence);
+                        if posibilities.contains(&sequence) {
+                            println!("free three found!");
+                            match piece {
+                                Piece::Player1 => free_three_p1 += 1,
+                                Piece::Player2 => free_three_p2 += 1,
+                                _ => (),
+                            }
+                        }
+                    }
+                    // checking diagonal up right
+                    if let [Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)] = [
+                        self.map[x - 1][y - 1],
+                        self.map[x][y],
+                        self.map[x + 1][y + 1],
+                        self.map[x + 2][y + 2],
+                        self.map[x + 3][y + 3],
+                        if x + 4 < 19 && y + 4 < 19 { self.map[x + 4][y + 4] } else { Some(Piece::Empty) },
+                    ] {
+                        let sequence = (a, b, c, d, e, f);
+                        // println!("sequence: {:?}", sequence);
+                        if posibilities.contains(&sequence) {
+                            println!("free three found!");
+                            match piece {
+                                Piece::Player1 => free_three_p1 += 1,
+                                Piece::Player2 => free_three_p2 += 1,
+                                _ => (),
+                            }
+                        }
+                    }
+                    if x < 3 {
+                        continue;
+                    }
+                    // checking diagonal down right
+                    if let [Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)] = [
+                        self.map[x + 1][y - 1],
+                        self.map[x][y],
+                        self.map[x - 1][y + 1],
+                        self.map[x - 2][y + 2],
+                        self.map[x - 3][y + 3],
+                        if x > 3 && y + 4 < 19 { self.map[x - 4][y + 4] } else { Some(Piece::Empty) },
+                    ] {
+                        let sequence = (a, b, c, d, e, f);
+                        // println!("sequence: {:?}", sequence);
+                        if posibilities.contains(&sequence) {
+                            println!("free three found!");
+                            match self.map[x][y] {
+                                Some(Piece::Player1) => free_three_p1 += 1,
+                                Some(Piece::Player2) => free_three_p2 += 1,
+                                _ => (),
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        println!("free three p1: {:?} | free three p2: {:?}", free_three_p1, free_three_p2);
+        if free_three_p1 > 1 || free_three_p2 > 1 {
+            return true;
         }
         false
     }
