@@ -149,6 +149,7 @@ impl Game {
     //  *****************************************************************************************************************************
     // i could generate a vector with the pieces and match them with the actuals to check if the movement creates a free three
     //  i have to check all directions from a given point.
+    // AIXO NO ESTA ACTIVAT I DE MOMENT NO TIRA
     fn check_actual_free_three(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         if x == 0 || x == 18 || y == 0 || y == 18 {
             return false;
