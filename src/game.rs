@@ -37,8 +37,11 @@ impl Game {
         //     self.map[x][y] = Some(Piece::Empty);
         //     return false;
         // }
+        if self.find_free_threes(piece) {
+            self.map[x][y] = Some(Piece::Empty);
+            return false;
+        }
         self.print_map();
-        self.find_free_threes(piece);
         let (win, message) = self.check_win();
         if win {
             println!("{}", message);
@@ -261,7 +264,6 @@ impl Game {
     // idea of doing it with a match as them are the only possible pieces
     // i want to check always from the first piece of the sequence so then i got no issuues with finding multiples at same time
     fn find_free_threes(&mut self, piece: Piece) -> bool {
-        let mut visited: HashSet<(usize, usize)> = HashSet::new();
         let posibilities = [
             (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
             (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
@@ -269,13 +271,17 @@ impl Game {
             (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty), // - O O O -
             (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1), // - O O O -
             (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2), // - O O O -
+            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty), // - X X - X -
+            (Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty), // - X - X X -
+            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty), // - O O - O -
+            (Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty), // - O - O O -
             ];
 
-        let mut free_three_p1 = 0;
-        let mut free_three_p2 = 0;
+        let mut free_three_p1: i8 = 0;
+        let mut free_three_p2: i8 = 0;
         for x in 1..16 {
             for y in 1..16 {
-                if self.map[x][y] == Some(Piece::Player1) || self.map[x][y] == Some(Piece::Player2) {
+                if self.map[x][y] == Some(piece) {
                     // println!("no petardea");
                     // checking X vertical up
                     if let [Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)] = [
@@ -317,7 +323,7 @@ impl Game {
                             }
                         }
                     }
-                    // checking diagonal up right
+                    // checking diagonal up right /
                     if let [Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)] = [
                         self.map[x - 1][y - 1],
                         self.map[x][y],
@@ -340,7 +346,7 @@ impl Game {
                     if x < 3 {
                         continue;
                     }
-                    // checking diagonal down right
+                    // checking diagonal down right \
                     if let [Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)] = [
                         self.map[x + 1][y - 1],
                         self.map[x][y],
