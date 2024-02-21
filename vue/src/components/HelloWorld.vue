@@ -2,14 +2,9 @@
 defineProps<{
   msg: string
 }>()
-import init, { add , Car} from 'rust';
+import init from 'rust';
 init().then(() => {
   console.log('init wasm-pack');
-  console.log('Add from vue:' + add(5, 6));
-  let c = Car.new();
-  console.log(c.number);
-  c.set_number(2);
-  console.log(c.number);
 });
 </script>
 
@@ -17,9 +12,9 @@ init().then(() => {
   <div class="greetings">
     <h1 class="green">{{ msg }}</h1>
     <h3>
-      You’ve successfully created a project with
-      <a href="https://vitejs.dev/" target="_blank" rel="noopener">Vite</a> +
-      <a href="https://vuejs.org/" target="_blank" rel="noopener">Vue 3</a>. What's next?
+      Built with Vue 3 and Rust. Made with love by 
+      <a href="https://github.com/bielaltes" target="_blank" rel="noopener">@baltes-g</a> and
+      <a href="https://github.com/jareste" target="_blank" rel="noopener">@jareste-</a>.
     </h3>
   </div>
 </template>
