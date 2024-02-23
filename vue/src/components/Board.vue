@@ -16,7 +16,7 @@
     },
     data() {
     return {
-        board: Array(15).fill().map(() => Array(15).fill(null)),
+        board: Array(19).fill().map(() => Array(19).fill(null)),
         game: Game.new(),
         currentPlayer: 'X',
         finished: false,

@@ -18,12 +18,12 @@
         return {
             board: Array(19).fill().map(() => Array(19).fill(null)),
             game: Game.new(),
-            currentPlayer: 'X',
+            currentPlayer: 'O',
             finished: false,
+            ifs: 1,
         };
     },
     created() {
-        console.log("holaIA");
       this.board[9][9] = 'X';
     },
     methods: {
@@ -32,24 +32,14 @@
       console.log(this.finished);
       console.log(this.game);
       if (this.board[i][j] !== null) return;
-      if (this.currentPlayer == 'X'){
-          if (this.game.place_ia(i, j, 1) == true) {
-              this.board[i][j] = this.currentPlayer;
-              this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
-              console.log(this.currentPlayer);
-          }
-          else {
-              console.log("Invalid move");
-          }
+      console.log(9+this.ifs, this.ifs);
+      this.game.place(9, 9+this.ifs, 1);
+      this.board[9][9+this.ifs] = 'X';
+      if (this.game.place(i, j, 2) == true) {
+        this.board[i][j] = 'O';
+        console.log(this.currentPlayer);
       } else {
-          if (this.game.place(i, j, 2) == true) {
-              this.board[i][j] = this.currentPlayer;
-              this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
-              console.log(this.currentPlayer);
-          }
-          else {
-              console.log("Invalid move");
-          }
+        console.log("Invalid move");
       }
       if (this.game.check_win() == true) {
         this.finished = true;
@@ -59,6 +49,7 @@
           console.log("IA wins");
         }
       }
+      this.ifs = this.ifs + 1;
     }
     }
 };
