@@ -2,6 +2,7 @@
 extern crate wasm_bindgen;
 use web_sys::console;
 use wasm_bindgen::prelude::*;
+use std::time::Instant;
 
 use crate::ia::get_possible_moves;
 // use ia::get_possible_moves;
@@ -30,6 +31,39 @@ pub struct Game {
     captured1: i8,
     captured2: i8,
 }
+
+#[wasm_bindgen]
+pub struct IaMove {
+    x: i8,
+    y: i8,
+    time: u64,
+}
+
+#[wasm_bindgen]
+impl IaMove {
+    pub fn new(x: i8, y: i8, time: u64) -> Self {
+        Self {
+            x,
+            y,
+            time,
+        }
+    }
+
+    pub fn get_x(&self) -> i8 {
+        self.x
+    }
+
+    pub fn get_y(&self) -> i8 {
+        self.y
+    }
+    
+
+    pub fn get_time(&self) -> u64 {
+        self.time
+    }
+}
+
+
 
 #[wasm_bindgen]
 impl Game {
@@ -62,11 +96,11 @@ impl Game {
         true
     }
 
-    pub fn place_ia(&mut self) -> bool {
+    pub fn place_ia(&mut self) -> IaMove {
         console::log_1(&"place_ia".into());
         let moves = get_possible_moves(&self.map);
         
-        true
+        return IaMove::new(15, 12, 700);
     }
 
     // terminal game HELPER FUNCTION

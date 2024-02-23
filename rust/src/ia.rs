@@ -7,8 +7,8 @@ use wasm_bindgen::prelude::*;
 
 pub fn get_possible_moves(map: &[[Piece; 19]; 19]) -> Vec<(i8, i8)> {
     let mut moves = Vec::new();
-    for x in 0..19 {
-        for y in 0..19 {
+    for x in 0..17 {
+        for y in 0..17 {
             if map[x][y] == Piece::Empty {
                 moves.push((x as i8, y as i8));
             }

@@ -20,37 +20,52 @@
             game: Game.new(),
             currentPlayer: 'O',
             finished: false,
-            ifs: 1,
         };
     },
     created() {
       this.board[9][9] = 'X';
     },
     methods: {
-    play(i, j) {
-      if (this.finished) return;
-      console.log(this.finished);
-      console.log(this.game);
-      if (this.board[i][j] !== null) return;
-      console.log(9+this.ifs, this.ifs);
-      this.game.place(9, 9+this.ifs, 1);
-      this.board[9][9+this.ifs] = 'X';
-      if (this.game.place(i, j, 2) == true) {
-        this.board[i][j] = 'O';
-        console.log(this.currentPlayer);
-      } else {
-        console.log("Invalid move");
-      }
-      if (this.game.check_win() == true) {
-        this.finished = true;
-        if (this.currentPlayer == 'X') {
-          console.log("Player wins");
+      play(i, j) {
+        if (this.finished) return;
+        console.log(this.finished);
+        console.log(this.game);
+        if (this.board[i][j] !== null) return;
+
+        if (this.game.place(i, j, 2) == true) {
+          this.board[i][j] = 'O';
+          console.log(this.currentPlayer);
         } else {
+          console.log("Invalid move");
+        }
+
+        if (this.game.check_win() == true) {
+          this.finished = true;
+          if (this.currentPlayer == 'X') {
+            console.log("Player wins");
+          } else {
+            console.log("IA wins");
+          }
+        } else {
+          this.playIA();
+        }
+      },
+      playIA() {
+        let iaMove = this.game.place_ia();
+        console.log("ssisisisisissisi", iaMove.get_x(), iaMove.get_y(), iaMove.get_time());
+
+        // if (this.game.place(iaMove.x(), iaMove.y(), 1) == true) {
+        //   this.board[iaMove.x()][iaMove.y()] = 'X';
+        //   console.log(this.currentPlayer);
+        // } else {
+        //   console.log("Invalid move");
+        // }
+
+        if (this.game.check_win() == true) {
+          this.finished = true;
           console.log("IA wins");
         }
       }
-      this.ifs = this.ifs + 1;
-    }
     }
 };
   </script>
