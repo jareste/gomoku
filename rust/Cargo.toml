@@ -11,3 +11,4 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 cfg-if = "1.0.0"
+web-sys = { version = "0.3.55", features = ['console'] }

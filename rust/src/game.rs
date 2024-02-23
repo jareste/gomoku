@@ -1,6 +1,10 @@
-use std::collections::HashSet;
-use std::process::exit;
+// use std::process::exit;
+extern crate wasm_bindgen;
+use web_sys::console;
 
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Piece {
     Empty,
@@ -8,12 +12,24 @@ pub enum Piece {
     Player2,
 }
 
+impl Piece {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Piece::Empty => "Empty",
+            Piece::Player1 => "Player1",
+            Piece::Player2 => "Player2",
+        }
+    }
+}
+
+#[wasm_bindgen]
 pub struct Game {
     map: [[Option<Piece>; 19]; 19],
     captured1: i8,
     captured2: i8,
 }
 
+#[wasm_bindgen]
 impl Game {
     pub fn new() -> Self {
         Self {
@@ -23,12 +39,9 @@ impl Game {
         }
     }
     
-    pub fn place(&mut self, x: usize, y: usize, player: usize) -> bool {
-        let piece = match player {
-            0 => Piece::Player1,
-            1 => Piece::Player2,
-            _ => panic!("Invalid player number"),
-        };
+    pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        let piece_str = JsValue::from_str(piece.as_str());
+        web_sys::console::log_1(&piece_str);
         if self.map[x][y].is_some() && self.map[x][y] != Some(Piece::Empty){
             return false;
         }
@@ -38,11 +51,9 @@ impl Game {
         } else {
             self.capture(x, y, piece, Piece::Player1);
         }
-        // if self.check_actual_free_three(x, y, piece) {
-        //     self.map[x][y] = Some(Piece::Empty);
-        //     return false;
-        // }
+        web_sys::console::log_1(&JsValue::from_str(self.map[x][y].unwrap().as_str()));
         if self.find_free_threes(piece) {
+            web_sys::console::log_1(&JsValue::from_str("free three found"));
             self.map[x][y] = Some(Piece::Empty);
             return false;
         }
@@ -67,10 +78,10 @@ impl Game {
     }
 
     // NEW CHECK WIN FUNCTION MAYBE NOT WORKING AS EXPECTED
-    fn check_win(&self) -> (bool, String) {
+    pub fn check_win(&self) -> bool {
         match (self.captured1 >= 10, self.captured2 >= 10) {
-            (true, _) => return (true, "Player 1 wins!".to_string()),
-            (_, true) => return (true, "Player 2 wins!".to_string()),
+            (true, _) => return true,
+            (_, true) => return true,
             _ => (),
         }
 
@@ -79,37 +90,37 @@ impl Game {
                 match self.map[i][j] {
                     Some(Piece::Player1) => {
                         if i < 15 && (1..=4).all(|k| self.map[i + k][j] == Some(Piece::Player1)) {
-                            return (true, "Player 1 wins!".to_string());
+                            return true;
                         }
                         if j < 15 && self.map[i][j + 1..=j + 4].iter().all(|&x| x == Some(Piece::Player1)) {
-                            return (true, "Player 1 wins!".to_string());
+                            return true;
                         }
                         if i < 15 && j < 15 && (1..=4).all(|k| self.map[i + k][j + k] == Some(Piece::Player1)) {
-                            return (true, "Player 1 wins!".to_string());
+                            return true;
                         }
                         if i < 15 && j > 3 && (1..=4).all(|k| self.map[i + k][j - k] == Some(Piece::Player1)) {
-                            return (true, "Player 1 wins!".to_string());
+                            return true;
                         }
                     }
                     Some(Piece::Player2) => {
                         if i < 15 && (1..=4).all(|k| self.map[i + k][j] == Some(Piece::Player2)) {
-                            return (true, "Player 2 wins!".to_string());
+                            return true;
                         }
                         if j < 15 && (1..=4).all(|k| self.map[i][j + k] == Some(Piece::Player2)) {
-                            return (true, "Player 2 wins!".to_string());
+                            return true;
                         }
                         if i < 15 && j < 15 && (1..=4).all(|k| self.map[i + k][j + k] == Some(Piece::Player2)) {
-                            return (true, "Player 2 wins!".to_string());
+                            return true;
                         }
                         if i < 15 && j > 3 && (1..=4).all(|k| self.map[i + k][j - k] == Some(Piece::Player2)) {
-                            return (true, "Player 2 wins!".to_string());
+                            return true;
                         }
                     }
                     _ => (),
                 }
             }
         }
-        (false, "".to_string())
+        false
     }
 
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
@@ -378,47 +389,47 @@ impl Game {
 }
 
 // HELPER FUNCTION FOR TESTING
-use core::panic;
-use std::io::{self, Write};
-pub fn terminal_game() {
-    let mut game = Game::new();
-    let mut input = String::new();
-    let mut numbers: Vec<i32> = Vec::new();
-    let mut movements: usize = 0;
-    loop {
-        if movements % 2 == 0 {
-            println!("Player 1, please enter your move (x y): ");
-        }
-        else {
-            println!("Player 2, please enter your move (x y): ");
-        }
-        io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
-        input.clear();
-        io::stdin().read_line(&mut input).unwrap();
-        numbers = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
+// use core::panic;
+// use std::io::{self, Write};
+// pub fn terminal_game() {
+//     let mut game = Game::new();
+//     let mut input = String::new();
+//     let mut numbers: Vec<i32> = Vec::new();
+//     let mut movements: usize = 0;
+//     loop {
+//         if movements % 2 == 0 {
+//             println!("Player 1, please enter your move (x y): ");
+//         }
+//         else {
+//             println!("Player 2, please enter your move (x y): ");
+//         }
+//         io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
+//         input.clear();
+//         io::stdin().read_line(&mut input).unwrap();
+//         numbers = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
         
-        if numbers.len() != 2 {
-            println!("numbers: {:?}", numbers);
-            println!("You must enter exactly two integers!");
-            continue;
-        }
-        if numbers[0] <0 || numbers[0] > 18 || numbers[1] < 0 || numbers[1] > 18 {
-            println!("You must enter numbers between 0 and 18!");
-            continue;
-        }
-        if movements % 2 == 0 {
-                if !game.place(numbers[0] as usize, numbers[1] as usize, 0) {
-                    println!("You can't place a piece there!");
-                    continue;
-                }
-            }
-            else {
-                if !game.place(numbers[0] as usize, numbers[1] as usize, 1) {
-                    println!("You can't place a piece there!");
-                    continue;
-                }
-            }
-            numbers.clear();
-            movements += 1;
-    }
-}
+//         if numbers.len() != 2 {
+//             println!("numbers: {:?}", numbers);
+//             println!("You must enter exactly two integers!");
+//             continue;
+//         }
+//         if numbers[0] <0 || numbers[0] > 18 || numbers[1] < 0 || numbers[1] > 18 {
+//             println!("You must enter numbers between 0 and 18!");
+//             continue;
+//         }
+//         if movements % 2 == 0 {
+//                 if !game.place(numbers[0] as usize, numbers[1] as usize, 0) {
+//                     println!("You can't place a piece there!");
+//                     continue;
+//                 }
+//             }
+//             else {
+//                 if !game.place(numbers[0] as usize, numbers[1] as usize, 1) {
+//                     println!("You can't place a piece there!");
+//                     continue;
+//                 }
+//             }
+//             numbers.clear();
+//             movements += 1;
+//     }
+// }
