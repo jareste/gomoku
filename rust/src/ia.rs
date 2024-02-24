@@ -216,14 +216,16 @@ pub fn best_move(map: &[[Piece; 19]; 19]) -> (i8, i8) {
 
 
 
-
-
-
-
-
-
-
-
+// this function is duplicated due to bein an implemetnation of game, if we get rid of wasm we can add this whole file to impl game.
+fn check_sequence(sequence: (Piece, Piece, Piece, Piece, Piece, Piece), piece: Piece, posibilities: &[(Piece, Piece, Piece, Piece, Piece, Piece)], free_three_p1: &mut i8, free_three_p2: &mut i8) {
+    if posibilities.contains(&sequence) {
+        match piece {
+            Piece::Player1 => *free_three_p1 += 1,
+            Piece::Player2 => *free_three_p2 += 1,
+            _ => (),
+        }
+    }
+}
 
 fn find_free_threes(map: &[[Piece; 19]; 19], piece: Piece) -> bool {
     let posibilities = [
@@ -237,103 +239,167 @@ fn find_free_threes(map: &[[Piece; 19]; 19], piece: Piece) -> bool {
         (Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty), // - X - X X -
         (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty), // - O O - O -
         (Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty), // - O - O O -
-        ];
+    ];
 
     let mut free_three_p1: i8 = 0;
     let mut free_three_p2: i8 = 0;
+
     for x in 1..16 {
         for y in 1..16 {
             if map[x][y] == piece {
-                // println!("no petardea");
-                // checking X vertical up
-                if let [a, b, c, d, e, f] = [
-                    map[x - 1][y],
-                    map[x][y],
-                    map[x + 1][y],
-                    map[x + 2][y],
-                    map[x + 3][y],
-                    if x + 4 < 19 { map[x + 4][y] } else { Piece::Empty },
-                ] {
-                    let sequence = (a, b, c, d, e, f);
-                    // println!("sequence: {:?}", sequence);
-                    if posibilities.contains(&sequence) {
-                        println!("free three found!");
-                        match piece {
-                            Piece::Player1 => free_three_p1 += 1,
-                            Piece::Player2 => free_three_p2 += 1,
-                            _ => (),
-                        }
-                    }
-                }
-                // checking Y horizontal right
-                if let [a, b, c, d, e, f] = [
-                    map[x][y - 1],
-                    map[x][y],
-                    map[x][y + 1],
-                    map[x][y + 2],
-                    map[x][y + 3],
-                    if y + 4 < 19 { map[x][y + 4] } else { Piece::Empty },
-                ] {
-                    let sequence = (a, b, c, d, e, f);
-                    // println!("sequence: {:?}", sequence);
-                    if posibilities.contains(&sequence) {
-                        println!("free three found!");
-                        match piece {
-                            Piece::Player1 => free_three_p1 += 1,
-                            Piece::Player2 => free_three_p2 += 1,
-                            _ => (),
-                        }
-                    }
-                }
-                // checking diagonal up right /
-                if let [a, b, c, d, e, f] = [
-                    map[x - 1][y - 1],
-                    map[x][y],
-                    map[x + 1][y + 1],
-                    map[x + 2][y + 2],
-                    map[x + 3][y + 3],
-                    if x + 4 < 19 && y + 4 < 19 { map[x + 4][y + 4] } else { Piece::Empty },
-                ] {
-                    let sequence = (a, b, c, d, e, f);
-                    // println!("sequence: {:?}", sequence);
-                    if posibilities.contains(&sequence) {
-                        println!("free three found!");
-                        match piece {
-                            Piece::Player1 => free_three_p1 += 1,
-                            Piece::Player2 => free_three_p2 += 1,
-                            _ => (),
-                        }
-                    }
-                }
+                check_sequence(
+                    (map[x - 1][y], map[x][y], map[x + 1][y], map[x + 2][y], map[x + 3][y], if x + 4 < 19 { map[x + 4][y] } else { Piece::Empty }),
+                    piece,
+                    &posibilities,
+                    &mut free_three_p1,
+                    &mut free_three_p2,
+                );
+                check_sequence(
+                    (map[x][y - 1], map[x][y], map[x][y + 1], map[x][y + 2], map[x][y + 3], if y + 4 < 19 { map[x][y + 4] } else { Piece::Empty }),
+                    piece,
+                    &posibilities,
+                    &mut free_three_p1,
+                    &mut free_three_p2,
+                );
+                check_sequence(
+                    (map[x - 1][y - 1], map[x][y], map[x + 1][y + 1], map[x + 2][y + 2], map[x + 3][y + 3], if x + 4 < 19 && y + 4 < 19 { map[x + 4][y + 4] } else { Piece::Empty }),
+                    piece,
+                    &posibilities,
+                    &mut free_three_p1,
+                    &mut free_three_p2,
+                );
                 if x < 3 {
                     continue;
                 }
-                // checking diagonal down right \
-                if let [a, b, c, d, e, f] = [
-                    map[x + 1][y - 1],
-                    map[x][y],
-                    map[x - 1][y + 1],
-                    map[x - 2][y + 2],
-                    map[x - 3][y + 3],
-                    if x > 3 && y + 4 < 19 { map[x - 4][y + 4] } else { Piece::Empty },
-                ] {
-                    let sequence = (a, b, c, d, e, f);
-                    // println!("sequence: {:?}", sequence);
-                    if posibilities.contains(&sequence) {
-                        println!("free three found!");
-                        match map[x][y] {
-                            Piece::Player1 => free_three_p1 += 1,
-                            Piece::Player2 => free_three_p2 += 1,
-                            _ => (),
-                        }
-                    }
-                }
+                check_sequence(
+                    (map[x + 1][y - 1], map[x][y], map[x - 1][y + 1], map[x - 2][y + 2], map[x - 3][y + 3], if x > 3 && y + 4 < 19 { map[x - 4][y + 4] } else { Piece::Empty }),
+                    piece,
+                    &posibilities,
+                    &mut free_three_p1,
+                    &mut free_three_p2,
+                );
             }
         }
     }
-    println!("free three p1: {:?} | free three p2: {:?}", free_three_p1, free_three_p2);
-    if free_three_p1 > 1 || free_three_p2 > 1 {
-        return true;
-    }
-    false
+
+    free_three_p1 > 1 || free_three_p2 > 1
 }
+
+
+
+
+
+
+
+// fn find_free_threes(map: &[[Piece; 19]; 19], piece: Piece) -> bool {
+//     let posibilities = [
+//         (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
+//         (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
+//         (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2), // - X X X -
+//         (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty), // - O O O -
+//         (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1), // - O O O -
+//         (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2), // - O O O -
+//         (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty), // - X X - X -
+//         (Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty), // - X - X X -
+//         (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty), // - O O - O -
+//         (Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty), // - O - O O -
+//         ];
+
+//     let mut free_three_p1: i8 = 0;
+//     let mut free_three_p2: i8 = 0;
+//     for x in 1..16 {
+//         for y in 1..16 {
+//             if map[x][y] == piece {
+//                 // println!("no petardea");
+//                 // checking X vertical up
+//                 let [a, b, c, d, e, f] = [
+//                     map[x - 1][y],
+//                     map[x][y],
+//                     map[x + 1][y],
+//                     map[x + 2][y],
+//                     map[x + 3][y],
+//                     if x + 4 < 19 { map[x + 4][y] } else { Piece::Empty },
+//                 ];
+//                 let sequence = (a, b, c, d, e, f);
+//                 // println!("sequence: {:?}", sequence);
+//                 if posibilities.contains(&sequence) {
+//                     println!("free three found!");
+//                     match piece {
+//                         Piece::Player1 => free_three_p1 += 1,
+//                         Piece::Player2 => free_three_p2 += 1,
+//                         _ => (),
+//                     }
+//                 }
+
+//                 // checking Y horizontal right
+//                 let [a, b, c, d, e, f] = [
+//                     map[x][y - 1],
+//                     map[x][y],
+//                     map[x][y + 1],
+//                     map[x][y + 2],
+//                     map[x][y + 3],
+//                     if y + 4 < 19 { map[x][y + 4] } else { Piece::Empty },
+//                 ];
+//                 let sequence = (a, b, c, d, e, f);
+//                 // println!("sequence: {:?}", sequence);
+//                 if posibilities.contains(&sequence) {
+//                     println!("free three found!");
+//                     match piece {
+//                         Piece::Player1 => free_three_p1 += 1,
+//                         Piece::Player2 => free_three_p2 += 1,
+//                         _ => (),
+//                     }
+//                 }
+                
+//                 // checking diagonal up right /
+//                 let [a, b, c, d, e, f] = [
+//                     map[x - 1][y - 1],
+//                     map[x][y],
+//                     map[x + 1][y + 1],
+//                     map[x + 2][y + 2],
+//                     map[x + 3][y + 3],
+//                     if x + 4 < 19 && y + 4 < 19 { map[x + 4][y + 4] } else { Piece::Empty },
+//                 ];
+//                 let sequence = (a, b, c, d, e, f);
+//                 // println!("sequence: {:?}", sequence);
+//                 if posibilities.contains(&sequence) {
+//                     println!("free three found!");
+//                     match piece {
+//                         Piece::Player1 => free_three_p1 += 1,
+//                         Piece::Player2 => free_three_p2 += 1,
+//                         _ => (),
+//                     }
+//                 }
+            
+//                 if x < 3 {
+//                     continue;
+//                 }
+//                 // checking diagonal down right \
+//                 let [a, b, c, d, e, f] = [
+//                     map[x + 1][y - 1],
+//                     map[x][y],
+//                     map[x - 1][y + 1],
+//                     map[x - 2][y + 2],
+//                     map[x - 3][y + 3],
+//                     if x > 3 && y + 4 < 19 { map[x - 4][y + 4] } else { Piece::Empty },
+//                 ];
+//                 let sequence = (a, b, c, d, e, f);
+//                 // println!("sequence: {:?}", sequence);
+//                 if posibilities.contains(&sequence) {
+//                     println!("free three found!");
+//                     match map[x][y] {
+//                         Piece::Player1 => free_three_p1 += 1,
+//                         Piece::Player2 => free_three_p2 += 1,
+//                         _ => (),
+//                     }
+//                 }
+            
+//             }
+//         }
+//     }
+//     println!("free three p1: {:?} | free three p2: {:?}", free_three_p1, free_three_p2);
+//     if free_three_p1 > 1 || free_three_p2 > 1 {
+//         return true;
+//     }
+//     false
+// }
