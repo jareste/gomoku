@@ -96,10 +96,9 @@ impl Game {
     }
 
     pub fn place_ia(&mut self) -> IaMove {
-        console::log_1(&"place_ia".into());
+        self.map[9][9] = Piece::Player1;
         let (x, y) = best_move(&self.map.clone());
         self.map[x as usize][y as usize] = Piece::Player1;
-        console::log_1(&"IA PLAYED".into());
         return IaMove::new(x, y, 700);
     }
 
@@ -315,7 +314,7 @@ impl Game {
     // function to check all the free threes in the board for a selected player and keep in memory positions of the actuals one that have been visited.
     // idea of doing it with a match as them are the only possible pieces
     // i want to check always from the first piece of the sequence so then i got no issuues with finding multiples at same time
-    fn find_free_threes(&mut self, piece: Piece) -> bool {
+    pub fn find_free_threes(&mut self, piece: Piece) -> bool {
         let posibilities = [
             (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
             (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -

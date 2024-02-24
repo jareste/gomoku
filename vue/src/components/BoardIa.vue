@@ -1,10 +1,11 @@
 <template>
     <div class="board">
       <div v-for="(row, i) in board" :key="i" class="row">
+        <!-- <span class="row-number">{{ i + 1 }}</span> -->
         <Cell v-for="(cell, j) in row" :key="j" @click="play(i, j)" :value="cell" />
       </div>
     </div>
-  </template>
+</template>
   
   <script>
   import Cell from './Cell.vue';
@@ -41,25 +42,17 @@
 
         if (this.game.check_win() == true) {
           this.finished = true;
-          if (this.currentPlayer == 'X') {
-            console.log("Player wins");
-          } else {
-            console.log("IA wins");
-          }
+          console.log("Player wins");
         } else {
           this.playIA();
         }
       },
       playIA() {
+        let t0 = performance.now();
         let iaMove = this.game.place_ia();
-        console.log("ssisisisisissisi", iaMove.get_x(), iaMove.get_y(), iaMove.get_time());
-
-        // if (this.game.place(iaMove.x(), iaMove.y(), 1) == true) {
-        //   this.board[iaMove.x()][iaMove.y()] = 'X';
-        //   console.log(this.currentPlayer);
-        // } else {
-        //   console.log("Invalid move");
-        // }
+        let t1 = performance.now();
+        console.log("Call to place_ia took " + ((t1 - t0) / 1000) + " seconds.");
+        this.board[iaMove.get_x()][iaMove.get_y()] = 'X';
 
         if (this.game.check_win() == true) {
           this.finished = true;
