@@ -31,6 +31,7 @@
         if (this.finished) return;
         console.log(this.finished);
         console.log(this.game);
+        console.log("placed at:", i, j);
         if (this.board[i][j] !== null) return;
 
         if (this.game.place(i, j, 2) == true) {
