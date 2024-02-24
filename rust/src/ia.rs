@@ -122,6 +122,37 @@ fn get_consequtive_pieces_score(map: &[[Piece; 19]; 19], player: i8) -> i32 {
     score
 }
 
+fn find_fours(map: &[[Piece; 19]; 19], player: Piece) -> bool {
+    let directions: [(isize, isize); 8] = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
+
+    for x in 0..19 {
+        for y in 0..19 {
+            if map[x][y] == player {
+                for &(dx, dy) in &directions {
+                    let mut consequtive_pieces = 0;
+                    for i in 1..=4 {
+                        let nx = x as isize + i * dx;
+                        let ny = y as isize + i * dy;
+                        if nx < 0 || ny < 0 || nx >= 19 || ny >= 19 {
+                            break;
+                        }
+                        if map[nx as usize][ny as usize] == player {
+                            consequtive_pieces += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    if consequtive_pieces == 4 {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+
 
 fn get_heuristic(map: &[[Piece; 19]; 19]) -> i32 {
     let mut score = 0;
@@ -218,10 +249,15 @@ fn minimax(map: &[[Piece; 19]; 19], depth: u32, mut alpha: i32, mut beta: i32, i
 
             let free_threes_before = find_free_threes(map, Piece::Player2, 0);
             let free_threes_after = find_free_threes(&new_game, Piece::Player2, 0);
+            let fours_before = find_fours(map, Piece::Player2);
+            let fours_after = find_fours(&new_game, Piece::Player2);
 
             let mut score = minimax(&new_game, depth - 1, alpha, beta, false).score;
             if free_threes_before && !free_threes_after {
                 score += 1000;
+            }
+            if fours_before && !fours_after {
+                score += 1000000;
             }
             if score > best_score {
                 best_score = score;
@@ -244,13 +280,18 @@ fn minimax(map: &[[Piece; 19]; 19], depth: u32, mut alpha: i32, mut beta: i32, i
 
             let free_threes_before = find_free_threes(map, Piece::Player1, 0);
             let free_threes_after = find_free_threes(&new_game,  Piece::Player1 , 0);
+            let fours_before = find_fours(map, Piece::Player1);
+            let fours_after = find_fours(&new_game, Piece::Player1);
 
             let mut score = minimax(&new_game, depth - 1, alpha, beta, true).score;
 
             if free_threes_before && !free_threes_after {
                 score -= 1000;
             }
-
+            if fours_before && !fours_after {
+                score -= 1000000;
+            }
+            
             if score < best_score {
                 best_score = score;
                 best_move = moves;
