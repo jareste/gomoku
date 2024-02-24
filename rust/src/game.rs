@@ -4,8 +4,7 @@ use web_sys::console;
 use wasm_bindgen::prelude::*;
 use std::time::Instant;
 
-use crate::ia::get_possible_moves;
-// use ia::get_possible_moves;
+use crate::ia::best_move;
 
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -98,9 +97,10 @@ impl Game {
 
     pub fn place_ia(&mut self) -> IaMove {
         console::log_1(&"place_ia".into());
-        let moves = get_possible_moves(&self.map);
-        
-        return IaMove::new(15, 12, 700);
+        let (x, y) = best_move(&self.map.clone());
+        self.map[x as usize][y as usize] = Piece::Player1;
+        console::log_1(&"IA PLAYED".into());
+        return IaMove::new(x, y, 700);
     }
 
     // terminal game HELPER FUNCTION
