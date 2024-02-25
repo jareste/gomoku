@@ -66,6 +66,7 @@ fn get_consequtive_pieces_score(map: &[[Piece; 19]; 19], player: Piece) -> i32 {
                     if !opponent_piece_found {
                         if consequtive_pieces == 5 {
                             score += 5000000;
+                            if player == Piece::Player1 { score+=5000000 }
                         }
                         if consequtive_pieces == 4 {
                             let nx = x as isize - 1 * dx;
@@ -144,7 +145,29 @@ fn get_heuristic(map: &[[Piece; 19]; 19]) -> i32 {
     score
 }
 
-fn minimax(map: &[[Piece; 19]; 19], depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
+fn capture_direction(map: &[[Piece; 19]; 19], x: isize, y: isize, dx: isize, dy: isize, piece: Piece, o_piece: Piece) -> bool {
+    if (1..3).all(|i| map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&o_piece))
+        && map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&piece) {
+        return true;
+    }
+    false
+}
+
+// NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
+fn capture(map: &[[Piece; 19]; 19], x: usize, y: usize, piece: Piece, o_piece: Piece) -> bool {
+    let directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
+    for &(dx, dy) in &directions {
+        if capture_direction(&map, x as isize, y as isize, dx, dy, piece, o_piece) {
+            return true;
+        }
+        if capture_direction(&map, x as isize, y as isize, -dx, -dy, piece, o_piece) {
+            return true;
+        }
+    }
+    false
+}
+
+fn minimax(map: &[[Piece; 19]; 19], depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool, captured1: i8, captured2: i8) -> Move {
     if depth == 0 || get_possible_moves(&map).is_empty() {
         return Move { index: (0, 0), score: get_heuristic(&map) };
     }
@@ -156,7 +179,13 @@ fn minimax(map: &[[Piece; 19]; 19], depth: i8, mut alpha: i32, mut beta: i32, is
         for &moves in get_possible_moves(&map).iter() {
             let mut new_game = map.clone();
             new_game[moves.0 as usize][moves.1 as usize] = Piece::Player1;
-            let mut score = minimax(&new_game, depth - 1, alpha, beta, false).score;
+            let mut score = minimax(&new_game, depth - 1, alpha, beta, false, captured1, captured2).score;
+            if capture(&mut new_game, moves.0 as usize, moves.1 as usize, Piece::Player1, Piece::Player2) {
+                score += 1000000;
+            }
+            if captured1 > 5 {
+                score += 1000;
+            }
             if score > best_score {
                 best_score = score;
                 best_move = moves;
@@ -166,7 +195,12 @@ fn minimax(map: &[[Piece; 19]; 19], depth: i8, mut alpha: i32, mut beta: i32, is
                 break;
             }
         }
-        
+        if best_move == (9, 7) {
+            console::log_1(&format!("9 7 MAX move score: {:?}", best_score).into());
+        }
+        if best_move == (9, 12) {
+            console::log_1(&format!("9 12 MAX move score: {:?}", best_score).into());
+        }        
         Move { index: best_move, score: best_score }
     } else {
         let mut best_score = i32::MAX;
@@ -176,7 +210,14 @@ fn minimax(map: &[[Piece; 19]; 19], depth: i8, mut alpha: i32, mut beta: i32, is
             let mut new_game = map.clone();
             new_game[moves.0 as usize][moves.1 as usize] = Piece::Player2;
 
-            let mut score = minimax(&new_game, depth - 1, alpha, beta, true).score;            
+            let mut score = minimax(&new_game, depth - 1, alpha, beta, true, captured1, captured2).score;            
+            if capture(&mut new_game, moves.0 as usize, moves.1 as usize, Piece::Player2, Piece::Player1) {
+                console::log_1(&"captureddsafdsgdsgawgwgadgdsgds".into());
+                score -= 1000000;
+            }
+            if captured2 > 5 {
+                score -= 1000;
+            }
             if score < best_score {
                 best_score = score;
                 best_move = moves;
@@ -186,12 +227,19 @@ fn minimax(map: &[[Piece; 19]; 19], depth: i8, mut alpha: i32, mut beta: i32, is
                 break;
             }
         }
+        if best_move == (9, 7) {
+            console::log_1(&format!("9 7 MIN move score: {:?}", best_score).into());
+
+        }
+        if best_move == (9, 12) {
+            console::log_1(&format!("9 12 MIN move score: {:?}", best_score).into());
+        }
         Move { index: best_move, score: best_score }
     }
 }
 
-pub fn best_move(map: &[[Piece; 19]; 19]) -> (i8, i8) {
-    minimax(map, 3, i32::MIN, i32::MAX, true).index
+pub fn best_move(map: &[[Piece; 19]; 19], captured1: i8, captured2: i8) -> (i8, i8) {
+    minimax(map, 3, i32::MIN, i32::MAX, true, captured1, captured2).index
 }
 
 

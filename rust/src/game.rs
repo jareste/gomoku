@@ -75,8 +75,6 @@ impl Game {
     }
     
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
-        web_sys::console::log_1(&JsValue::from_str(&x.to_string()));
-        web_sys::console::log_1(&JsValue::from_str(&y.to_string()));
         if self.map[x][y] != Piece::Empty {
             return false;
         }
@@ -97,9 +95,12 @@ impl Game {
 
     pub fn place_ia(&mut self) -> IaMove {
         // self.map[9][9] = Piece::Player1;
-        console::log_1(&format!("map: {:?}", self.map[9][9].as_str()).into());
-        let (x, y) = best_move(&self.map.clone());
+        // console::log_1(&format!("map: {:?}", self.map[9][9].as_str()).into());
+        let (x, y) = best_move(&self.map.clone(), self.captured1, self.captured2);
         self.map[x as usize][y as usize] = Piece::Player1;
+        self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
+        console::log_1(&format!("IA PLACED AT: x: {:?} y: {:?}", x, y).into());
+        // console::log_1(&format!("map 8 9 status: {:?}", self.map[8][9].as_str()).into());
         return IaMove::new(x, y, 700);
     }
 
@@ -167,15 +168,17 @@ impl Game {
 
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture_direction(&mut self, x: isize, y: isize, dx: isize, dy: isize, piece: Piece, o_piece: Piece) {
-        if (1..2).all(|i| self.map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&o_piece))
+        if (1..3).all(|i| self.map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&o_piece))
             && self.map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&piece) {
-                for i in 1..=2 {
-                if let Some(row) = self.map.get_mut((x + i * dx) as usize) {
-                    if let Some(cell) = row.get_mut((y + i * dy) as usize) {
-                        *cell = Piece::Empty;
-                    }
-                }
-            }
+            console::log_1(&format!("position {:?} {}", x, y).into());
+            console::log_1(&format!("direction {:?} {}", dx, dy).into());
+            console::log_1(&format!("piece {:?} ", piece.as_str()).into());
+            console::log_1(&format!("opiece {:?} ", o_piece.as_str()).into());
+
+            console::log_1(&format!("captured {:?} {:?}", self.map[(x+ 1 * dx) as usize][(y + 1 *dy) as usize].as_str(), self.map[(x+2*dx) as usize][(y+2*dy) as usize].as_str()).into());
+            self.map[(x + 1 * dx) as usize][(y + 1 * dy) as usize] = Piece::Empty;
+            self.map[(x + 2 * dx) as usize][(y + 2 * dy) as usize] = Piece::Empty;
+            console::log_1(&format!("captured {:?} {:?}", self.map[(x+ 1 * dx) as usize][(y + 1 *dy) as usize].as_str(), self.map[(x+2*dx) as usize][(y+2*dy) as usize].as_str()).into());
             if piece == Piece::Player1 {
                 console::log_1(&JsValue::from_str("captured 2"));
                 self.captured1 += 2;
@@ -220,8 +223,12 @@ impl Game {
     }
 
     pub fn start_IA(&mut self)
- {
+    {
         self.map[9][9] = Piece::Player1;
+    }
+    pub fn place_hard(&mut self, x:usize, y:usize)
+    {
+        self.map[x][y] = Piece::Empty;
     }
    
      

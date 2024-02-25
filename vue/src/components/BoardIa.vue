@@ -15,6 +15,10 @@
   import Cell from './Cell.vue';
   import { Game } from 'rust';
   console.log("holaIA");
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   export default {
     components: {
     Cell
@@ -31,12 +35,66 @@
             initialized: false
         };
     },
-    // created() {
-    //   this.board[9][9] = 'X';
-    //   this.game.start_IA();
-    // },
     methods: {
-      updateBoard() {
+      // updateBoard() {
+      //   let flatMap = this.game.get_map();
+      //   for (let i = 0; i < 19; i++) {
+      //     for (let j = 0; j < 19; j++) {
+      //       let value = flatMap[i * 19 + j];
+      //       if (value == 1) {
+      //         this.board[i][j] = 'X';
+      //       } else if (value == 2) {
+      //         this.board[i][j] = 'O';
+      //       } else {
+      //         this.board[i][j] = null;
+      //       }
+      //     }
+      //   }
+      // },
+      play(i, j) {
+        console.log("play on position:", i, j);
+        if (this.initialized == false) {
+          console.log("initializing..........................................................................................");
+          this.game.start_IA();
+          this.board[9][9] = 'X';
+          this.initialized = true;
+        }
+        if (this.finished) return;
+        let captured1_prev = this.captured1;
+        let captured2_prev = this.captured2;
+        console.log(this.finished);
+        console.log(this.game);
+        console.log("placed at:", i, j);
+        if (this.board[i][j] !== null) return;
+
+        if (this.game.place(i, j, 2) == true) {
+          // this.board[i][j] = 'O';
+          this.moveCount++;
+          console.log(this.currentPlayer);
+        } else {
+          console.log("Invalid move");
+        }
+
+        if (this.game.check_win() == true) {
+          this.finished = true;
+          console.log("Player wins");
+        } else {
+          let t0 = performance.now();
+          let iaMove = this.game.place_ia();
+          let t1 = performance.now();
+          console.log("Call to place_ia took " + ((t1 - t0) / 1000) + " seconds.");
+          // this.board[iaMove.get_x()][iaMove.get_y()] = 'X';
+
+          if (this.game.check_win() == true) {
+            this.finished = true;
+            console.log("IA wins");
+          }
+          // this.playIA();
+        }
+        this.captured1 = this.game.get_captured1();
+        this.captured2 = this.game.get_captured2();
+        // this.updateBoard();
+
         let flatMap = this.game.get_map();
         for (let i = 0; i < 19; i++) {
           for (let j = 0; j < 19; j++) {
@@ -51,49 +109,9 @@
           }
         }
       },
-      play(i, j) {
-        if (this.initialized == false) {
-          console.log("initializing..........................................................................................");
-          this.game.start_IA();
-          this.board[9][9] = 'X';
-          this.initialized = true;
-        }
-        if (this.finished) return;
-        console.log(this.finished);
-        console.log(this.game);
-        console.log("placed at:", i, j);
-        if (this.board[i][j] !== null) return;
+      // playIA() {
 
-        if (this.game.place(i, j, 2) == true) {
-          this.board[i][j] = 'O';
-          this.moveCount++;
-          console.log(this.currentPlayer);
-        } else {
-          console.log("Invalid move");
-        }
-
-        if (this.game.check_win() == true) {
-          this.finished = true;
-          console.log("Player wins");
-        } else {
-          this.playIA();
-        }
-        this.captured1 = this.game.get_captured1();
-        this.captured2 = this.game.get_captured2();
-        this.updateBoard();
-      },
-      playIA() {
-        let t0 = performance.now();
-        let iaMove = this.game.place_ia();
-        let t1 = performance.now();
-        console.log("Call to place_ia took " + ((t1 - t0) / 1000) + " seconds.");
-        this.board[iaMove.get_x()][iaMove.get_y()] = 'X';
-
-        if (this.game.check_win() == true) {
-          this.finished = true;
-          console.log("IA wins");
-        }
-      }
+      // }
     }
 };
   </script>
