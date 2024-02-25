@@ -96,7 +96,8 @@ impl Game {
     }
 
     pub fn place_ia(&mut self) -> IaMove {
-        self.map[9][9] = Piece::Player1;
+        // self.map[9][9] = Piece::Player1;
+        console::log_1(&format!("map: {:?}", self.map[9][9].as_str()).into());
         let (x, y) = best_move(&self.map.clone());
         self.map[x as usize][y as usize] = Piece::Player1;
         return IaMove::new(x, y, 700);
@@ -203,6 +204,25 @@ impl Game {
         self.captured2
     }
     
+    #[wasm_bindgen]
+    pub fn get_map(&self) -> Vec<i8> {
+        let mut map_repr = Vec::new();
+        for i in 0..19 {
+            for j in 0..19 {
+                map_repr.push(match self.map[i][j] {
+                    Piece::Player1 => 1,
+                    Piece::Player2 => 2,
+                    Piece::Empty => 0,
+                });
+            }
+        }
+        map_repr
+    }
+
+    pub fn start_IA(&mut self)
+ {
+        self.map[9][9] = Piece::Player1;
+    }
    
      
     // free three are three pieces that if another one is added got no counterplay.

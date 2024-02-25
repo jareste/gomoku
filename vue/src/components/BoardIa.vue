@@ -27,14 +27,37 @@
             finished: false,
             moveCount: 0,
             captured1: 0,
-            captured2: 0
+            captured2: 0,
+            initialized: false
         };
     },
-    created() {
-      this.board[9][9] = 'X';
-    },
+    // created() {
+    //   this.board[9][9] = 'X';
+    //   this.game.start_IA();
+    // },
     methods: {
+      updateBoard() {
+        let flatMap = this.game.get_map();
+        for (let i = 0; i < 19; i++) {
+          for (let j = 0; j < 19; j++) {
+            let value = flatMap[i * 19 + j];
+            if (value == 1) {
+              this.board[i][j] = 'X';
+            } else if (value == 2) {
+              this.board[i][j] = 'O';
+            } else {
+              this.board[i][j] = null;
+            }
+          }
+        }
+      },
       play(i, j) {
+        if (this.initialized == false) {
+          console.log("initializing..........................................................................................");
+          this.game.start_IA();
+          this.board[9][9] = 'X';
+          this.initialized = true;
+        }
         if (this.finished) return;
         console.log(this.finished);
         console.log(this.game);
@@ -57,6 +80,7 @@
         }
         this.captured1 = this.game.get_captured1();
         this.captured2 = this.game.get_captured2();
+        this.updateBoard();
       },
       playIA() {
         let t0 = performance.now();
