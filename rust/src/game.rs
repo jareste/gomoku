@@ -166,7 +166,7 @@ impl Game {
 
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture_direction(&mut self, x: isize, y: isize, dx: isize, dy: isize, piece: Piece, o_piece: Piece) {
-        if (0..3).all(|i| self.map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&o_piece))
+        if (1..2).all(|i| self.map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&o_piece))
             && self.map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&piece) {
                 for i in 1..=2 {
                 if let Some(row) = self.map.get_mut((x + i * dx) as usize) {
@@ -176,8 +176,10 @@ impl Game {
                 }
             }
             if piece == Piece::Player1 {
+                console::log_1(&JsValue::from_str("captured 2"));
                 self.captured1 += 2;
             } else {
+                console::log_1(&JsValue::from_str("captured 1"));
                 self.captured2 += 2;
             }
         }
@@ -192,6 +194,14 @@ impl Game {
         }
     }
 
+    pub fn get_captured1(&self) -> i8 {
+        console::log_1(&JsValue::from_str(&self.captured1.to_string()));
+        self.captured1
+    }
+
+    pub fn get_captured2(&self) -> i8 {
+        self.captured2
+    }
     
    
      

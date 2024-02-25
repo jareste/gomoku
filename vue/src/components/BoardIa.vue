@@ -1,5 +1,9 @@
 <template>
     <div class="board">
+      <div class="move-count">Move count: {{ moveCount }}</div>
+      <div class="current-player">Current player: {{ currentPlayer }}</div>
+      <div class="captured1">Captured1: {{ captured1 }}</div>
+      <div class="captured2">Captured2: {{ captured2 }}</div>
       <div v-for="(row, i) in board" :key="i" class="row">
         <!-- <span class="row-number">{{ i + 1 }}</span> -->
         <Cell v-for="(cell, j) in row" :key="j" @click="play(i, j)" :value="cell" />
@@ -21,6 +25,9 @@
             game: Game.new(),
             currentPlayer: 'O',
             finished: false,
+            moveCount: 0,
+            captured1: 0,
+            captured2: 0
         };
     },
     created() {
@@ -36,6 +43,7 @@
 
         if (this.game.place(i, j, 2) == true) {
           this.board[i][j] = 'O';
+          this.moveCount++;
           console.log(this.currentPlayer);
         } else {
           console.log("Invalid move");
@@ -47,6 +55,8 @@
         } else {
           this.playIA();
         }
+        this.captured1 = this.game.get_captured1();
+        this.captured2 = this.game.get_captured2();
       },
       playIA() {
         let t0 = performance.now();
