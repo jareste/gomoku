@@ -5,9 +5,10 @@
       <div class="captured1">Captured1: {{ captured1 }}</div>
       <div class="captured2">Captured2: {{ captured2 }}</div>
       <div v-for="(row, i) in board" :key="i" class="row">
-        <!-- <span class="row-number">{{ i + 1 }}</span> -->
-        <Cell v-for="(cell, j) in row" :key="j" @click="play(i, j)" :value="cell" />
-      </div>
+          <div v-for="(cell, j) in row" :key="j" @click="play(i, j)" 
+               :class="['cell', cell === 'X' ? 'red' : cell === 'O' ? 'black' : '']">
+          </div>
+        </div>
     </div>
 </template>
   
@@ -60,15 +61,9 @@
           this.initialized = true;
         }
         if (this.finished) return;
-        let captured1_prev = this.captured1;
-        let captured2_prev = this.captured2;
-        console.log(this.finished);
-        console.log(this.game);
-        console.log("placed at:", i, j);
         if (this.board[i][j] !== null) return;
 
         if (this.game.place(i, j, 2) == true) {
-          // this.board[i][j] = 'O';
           this.moveCount++;
           console.log(this.currentPlayer);
         } else {
@@ -109,9 +104,6 @@
           }
         }
       },
-      // playIA() {
-
-      // }
     }
 };
   </script>
@@ -123,5 +115,19 @@
   }
   .row {
     display: flex;
+  }
+  .cell {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #000;
+    display: inline-block;
+    line-height: 30px;
+    text-align: center;
+  }
+  .red {
+    background-color: red;
+  }
+  .black {
+    background-color: black;
   }
   </style>
