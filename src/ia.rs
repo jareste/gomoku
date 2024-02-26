@@ -16,6 +16,7 @@ pub trait IA{
     fn best_move(&mut self) -> (i8, i8);
     fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)>;
     fn evaluate_move(&mut self, moves: (i8, i8), player: Piece) -> i32;
+    // fn iddfs(&mut self, max_depth: i8) -> Move;
 }
 
 
@@ -86,7 +87,6 @@ impl IA for Game {
 
     // rarete
     fn get_consequtive_pieces_score(&mut self, player: Piece) -> i32 {
-        // let directions: [(isize, isize); 8] = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         let mut score = 0;
         for x in 0..19 {
             for y in 0..19 {
@@ -161,47 +161,129 @@ impl IA for Game {
         score
     }
 
-    fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
-        let mut possible_moves = self.get_possible_moves();
-        if depth == 0 {
-            return Move { index: (0, 0), score: self.get_heuristic() };
-        }
-        let game_state = self.to_string();
 
-        if let Some(score) = self.transposition_table.get(&game_state) {
-            return Move { index: (0, 0), score: *score };
-        }
-        let mut best_move = (0, 0);
-        let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
-        possible_moves.sort_by_key(|&moves| -self.evaluate_move(moves, Piece::Player1));
-        for &moves in possible_moves.iter() {
-            self.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
-            let score = self.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
-            self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
-            match is_maximizing_player {
-                true => {
-                    if score > best_score { 
+    fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
+    let mut possible_moves = self.get_possible_moves();
+    if depth == 0 {
+        return Move { index: (0, 0), score: self.get_heuristic() };
+    }
+    let game_state = self.to_string();
+
+    if let Some(score) = self.transposition_table.get(&game_state) {
+        return Move { index: (0, 0), score: *score };
+    }
+    let mut best_move = (0, 0);
+    let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
+    possible_moves.sort_by_key(|&moves| -self.evaluate_move(moves, Piece::Player1));
+    for &moves in possible_moves.iter() {
+        self.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
+        let score = self.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+        self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
+        match is_maximizing_player {
+            true => {
+                if score > best_score { 
+                best_score = score;
+                best_move = moves;
+                }
+                alpha = std::cmp::max(alpha, score);
+            },
+            false => {
+                if score < best_score {
                     best_score = score;
                     best_move = moves;
-                    }
-                    alpha = std::cmp::max(alpha, score);
-                },
-                false => {
-                    if score < best_score {
-                        best_score = score;
-                        best_move = moves;
 
-                    }
-                    beta = std::cmp::min(beta, score);
-                },
-            }
-            if beta <= alpha {
-                break;
+                }
+                beta = std::cmp::min(beta, score);
+            },
+        }
+        if beta <= alpha {
+            break;
+        }
+    }
+    self.transposition_table.insert(game_state, best_score);
+    Move { index: best_move, score: best_score }
+}
+
+
+    // fn best_move(&mut self) -> (i8, i8) {
+    //     let mut best_move = Move { index: (0, 0), score: i32::MIN };
+    //     for depth in 1..=10 {
+    //         let moves = self.minimax(depth, i32::MIN, i32::MAX, true);
+    //         println!("Depth: {} Score: {}, index: {:?}", depth, moves.score, moves.index);
+    //         if moves.score > best_move.score {
+    //             best_move = moves;
+    //         }
+    //     }
+    //     best_move.index
+    // }
+
+    fn best_move(&mut self) -> (i8, i8) {
+        let mut best_move = Move { index: (0, 0), score: i32::MIN };
+        for depth in 1..=10 {
+            let moves = self.minimax(depth, i32::MIN, i32::MAX, true);
+            println!("Depth: {} Score: {}, index: {:?}", depth, moves.score, moves.index);
+            if moves.score > best_move.score {
+                best_move = moves;
             }
         }
-        self.transposition_table.insert(game_state, best_score);
-        Move { index: best_move, score: best_score }
+        best_move.index
     }
+ 
+}
+
+// working scope
+// fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
+//     let mut possible_moves = self.get_possible_moves();
+//     if depth == 0 {
+//         return Move { index: (0, 0), score: self.get_heuristic() };
+//     }
+//     let game_state = self.to_string();
+
+//     if let Some(score) = self.transposition_table.get(&game_state) {
+//         return Move { index: (0, 0), score: *score };
+//     }
+//     let mut best_move = (0, 0);
+//     let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
+//     possible_moves.sort_by_key(|&moves| -self.evaluate_move(moves, Piece::Player1));
+//     for &moves in possible_moves.iter() {
+//         self.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
+//         let score = self.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+//         self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
+//         match is_maximizing_player {
+//             true => {
+//                 if score > best_score { 
+//                 best_score = score;
+//                 best_move = moves;
+//                 }
+//                 alpha = std::cmp::max(alpha, score);
+//             },
+//             false => {
+//                 if score < best_score {
+//                     best_score = score;
+//                     best_move = moves;
+
+//                 }
+//                 beta = std::cmp::min(beta, score);
+//             },
+//         }
+//         if beta <= alpha {
+//             break;
+//         }
+//     }
+//     self.transposition_table.insert(game_state, best_score);
+//     Move { index: best_move, score: best_score }
+// }
+
+
+
+
+
+
+
+
+
+//  threading scope
+
 
 
     // fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
@@ -233,20 +315,73 @@ impl IA for Game {
     //     best_move
     // }
 
+    // iddfs
 
-    fn best_move(&mut self) -> (i8, i8) {
-        let mut best_move = Move { index: (0, 0), score: i32::MIN };
-        for depth in 1..=10 {
-            let moves = self.minimax(depth, i32::MIN, i32::MAX, true);
-            if moves.score > best_move.score {
-                best_move = moves;
-            }
-        }
-        best_move.index
-    }
+    // fn iddfs(&mut self, max_depth: i8) -> Move {
+    //     let mut best_move = Move { index: (0, 0), score: i32::MIN };
+    //     for depth in 1..=max_depth {
+    //         let moves = self.minimax(depth, i32::MIN, i32::MAX, true);
+    //         println!("Depth: {} Score: {}, index: {:?}", depth, moves.score, moves.index);
+    //         if moves.score > best_move.score {
+    //             best_move = moves;
+    //         }
+    //     }
+    //     best_move
+    // }
+
+    // fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
+    //     let mut possible_moves = self.get_possible_moves();
+    //     if depth == 0 {
+    //         return Move { index: (0, 0), score: self.get_heuristic() };
+    //     }
+    //     let game_state = self.to_string();
+
+    //     if let Some(score) = self.transposition_table.get(&game_state) {
+    //         return Move { index: (0, 0), score: *score };
+    //     }
+    //     let mut best_move = (0, 0);
+    //     let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
+    //     possible_moves.sort_by_key(|&moves| -self.evaluate_move(moves, Piece::Player1));
+    //     for &moves in possible_moves.iter() {
+    //         let game_state = self.to_string();
+    //         let score = if self.transposition_table.contains_key(&game_state) {
+    //             *self.transposition_table.get(&game_state).unwrap()
+    //         } else {
+    //             self.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
+    //             let score = self.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+    //             self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
+    //             self.transposition_table.insert(game_state, score);
+    //             score
+    //         };
+
+
+    //         self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
+    //         match is_maximizing_player {
+    //             true => {
+    //                 if score > best_score { 
+    //                 best_score = score;
+    //                 best_move = moves;
+    //                 }
+    //                 alpha = std::cmp::max(alpha, score);
+    //             },
+    //             false => {
+    //                 if score < best_score {
+    //                     best_score = score;
+    //                     best_move = moves;
+
+    //                 }
+    //                 beta = std::cmp::min(beta, score);
+    //             },
+    //         }
+    //         if beta <= alpha {
+    //             break;
+    //         }
+    //     }
+    //     // self.transposition_table.insert(game_state, best_score);
+    //     Move { index: best_move, score: best_score }
+    // }
 
     // fn best_move(&mut self) -> (i8, i8) {
-    //     let result = self.minimax(3, i32::MIN, i32::MAX, true).index
+    //     self.iddfs(7).index
     // }
-}
 

@@ -5,6 +5,13 @@ use game::terminal_game_ia;
 
 
 fn main() {
-    terminal_game_ia();
-    terminal_game();
+    let game = 0;
+    if game == 1 {
+        terminal_game();
+        return;
+    }
+    else if game == 0 {
+        terminal_game_ia();
+        return;
+    }
 }
