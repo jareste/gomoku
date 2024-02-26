@@ -221,7 +221,7 @@ impl IA for Game {
         let mut best_move = Move { index: (0, 0), score: i32::MIN };
         for depth in 1..=10 {
             let moves = self.minimax(depth, i32::MIN, i32::MAX, true);
-            println!("Depth: {} Score: {}, index: {:?}", depth, moves.score, moves.index);
+            // println!("Depth: {} Score: {}, index: {:?}", depth, moves.score, moves.index);
             if moves.score > best_move.score {
                 best_move = moves;
             }

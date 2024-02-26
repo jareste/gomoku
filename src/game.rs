@@ -279,7 +279,7 @@ pub fn terminal_game_ia() {
     let mut game = Game::new();
     let mut input = String::new();
     // let mut numbers: Vec<i32> = Vec::new();
-    let mut movements: usize = 0;
+    let mut movements: usize = 1;
     game.start_ia();
     game.print_map();
     loop {
@@ -287,7 +287,7 @@ pub fn terminal_game_ia() {
         io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
         input.clear();
         io::stdin().read_line(&mut input).unwrap();
-        let numbers: Vec<i32> = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
+        let numbers: Vec<i32> = input.split_whitespace().filter_map(|s| s.parse().ok()).collect();
         
         if numbers.len() != 2 {
             println!("numbers: {:?}", numbers);
