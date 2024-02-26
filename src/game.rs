@@ -1,7 +1,7 @@
 // use std::process::exit;
 use std::time::Instant;
 use crate::ia::IA;
-
+use std::collections::HashMap;
 // use crate::ia::best_move;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -21,11 +21,12 @@ impl Piece {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
+    pub transposition_table: HashMap<String, i32>,
 }
 
 impl Game {
@@ -34,9 +35,21 @@ impl Game {
             map: [[Piece::Empty; 19]; 19],
             captured1: 0,
             captured2: 0,
+            transposition_table: HashMap::new(),
         }
     }
     
+    pub fn to_string(&self) -> String {
+        self.map.iter()
+            .flat_map(|row| row.iter())
+            .map(|piece| match piece {
+                Piece::Empty => "0",
+                Piece::Player1 => "1",
+                Piece::Player2 => "2",
+            })
+            .collect()
+    }
+
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         if self.map[x][y] != Piece::Empty {
             return false;
@@ -47,7 +60,7 @@ impl Game {
         } else {
             self.capture(x, y, piece, Piece::Player1);
         }
-        if self.find_free_threes(piece, 1) {
+        if self.find_free_threes(piece, (x as i8, y as i8), 1) {
             self.map[x][y] = Piece::Empty;
             return false;
         }
@@ -57,9 +70,16 @@ impl Game {
 
     pub fn place_ia(&mut self)  {
         // self.map[9][9] = Piece::Player1;
+        let start = Instant::now();
         let (x, y) = self.best_move();
+        let duration = start.elapsed();
         self.map[x as usize][y as usize] = Piece::Player1;
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
+
+        self.print_map();
+        println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
+        self.transposition_table.clear();
+        println!("IA placed at x: {} y: {}", x, y);
     }
 
     // terminal game HELPER FUNCTION
@@ -155,116 +175,58 @@ impl Game {
     // function to check all the free threes in the board for a selected player and keep in memory positions of the actuals one that have been visited.
     // idea of doing it with a match as them are the only possible pieces
     // i want to check always from the first piece of the sequence so then i got no issuues with finding multiples at same time
-    pub fn find_free_threes(&mut self, piece: Piece, quantity: i8) -> bool {
+    pub fn find_free_threes(&mut self, piece: Piece, last_move: (i8, i8), quantity: i8) -> bool {
         let posibilities = [
-            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
-            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
-            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2), // - X X X -
-            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty), // - O O O -
-            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1), // - O O O -
-            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2), // - O O O -
-            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty), // - X X - X -
-            (Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty), // - X - X X -
-            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty), // - O O - O -
-            (Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty), // - O - O O -
-            ];
+        (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
+        (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
+        (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2), // - X X X -
+        (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty), // - O O O -
+        (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1), // - O O O -
+        (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2), // - O O O -
+        (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty), // - X X - X -
+        (Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty), // - X - X X -
+        (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty), // - O O - O -
+        (Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty), // - O - O O -
+        ];
 
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
-        for x in 1..16 {
-            for y in 1..16 {
-                if self.map[x][y] == piece {
-                    // println!("no petardea");
-                    // checking X vertical up
-                    if let [a, b, c, d, e, f] = [
-                        self.map[x - 1][y],
-                        self.map[x][y],
-                        self.map[x + 1][y],
-                        self.map[x + 2][y],
-                        self.map[x + 3][y],
-                        if x + 4 < 19 { self.map[x + 4][y] } else { Piece::Empty },
-                    ] {
-                        let sequence = (a, b, c, d, e, f);
-                        // println!("sequence: {:?}", sequence);
-                        if posibilities.contains(&sequence) {
-                            // println!("free three found!");
-                            match piece {
-                                Piece::Player1 => free_three_p1 += 1,
-                                Piece::Player2 => free_three_p2 += 1,
-                                _ => (),
-                            }
-                        }
-                    }
-                    // checking Y horizontal right
-                    if let [a, b, c, d, e, f] = [
-                        self.map[x][y - 1],
-                        self.map[x][y],
-                        self.map[x][y + 1],
-                        self.map[x][y + 2],
-                        self.map[x][y + 3],
-                        if y + 4 < 19 { self.map[x][y + 4] } else { Piece::Empty },
-                    ] {
-                        let sequence = (a, b, c, d, e, f);
-                        // println!("sequence: {:?}", sequence);
-                        if posibilities.contains(&sequence) {
-                            // println!("free three found!");
-                            match piece {
-                                Piece::Player1 => free_three_p1 += 1,
-                                Piece::Player2 => free_three_p2 += 1,
-                                _ => (),
-                            }
-                        }
-                    }
-                    // checking diagonal up right /
-                    if let [a, b, c, d, e, f] = [
-                        self.map[x - 1][y - 1],
-                        self.map[x][y],
-                        self.map[x + 1][y + 1],
-                        self.map[x + 2][y + 2],
-                        self.map[x + 3][y + 3],
-                        if x + 4 < 19 && y + 4 < 19 { self.map[x + 4][y + 4] } else { Piece::Empty },
-                    ] {
-                        let sequence = (a, b, c, d, e, f);
-                        // println!("sequence: {:?}", sequence);
-                        if posibilities.contains(&sequence) {
-                            // println!("free three found!");
-                            match piece {
-                                Piece::Player1 => free_three_p1 += 1,
-                                Piece::Player2 => free_three_p2 += 1,
-                                _ => (),
-                            }
-                        }
-                    }
-                    if x < 3 {
-                        continue;
-                    }
-                    // checking diagonal down right \
-                    if let [a, b, c, d, e, f] = [
-                        self.map[x + 1][y - 1],
-                        self.map[x][y],
-                        self.map[x - 1][y + 1],
-                        self.map[x - 2][y + 2],
-                        self.map[x - 3][y + 3],
-                        if x > 3 && y + 4 < 19 { self.map[x - 4][y + 4] } else { Piece::Empty },
-                    ] {
-                        let sequence = (a, b, c, d, e, f);
-                        // println!("sequence: {:?}", sequence);
-                        if posibilities.contains(&sequence) {
-                            match self.map[x][y] {
-                                Piece::Player1 => free_three_p1 += 1,
-                                Piece::Player2 => free_three_p2 += 1,
-                                _ => (),
-                            }
-                        }
+
+        let (last_x, last_y) = (last_move.0 as usize, last_move.1 as usize);
+
+        for direction in &[(1, 0), (0, 1), (1, 1), (-1, 1)] {
+            let (dx, dy) = direction;
+            if let Some(sequence) = self.get_sequence(last_x, last_y, *dx as isize, *dy as isize) {
+                if posibilities.contains(&sequence) {
+                    match self.map[last_x][last_y] {
+                        Piece::Player1 => free_three_p1 += 1,
+                        Piece::Player2 => free_three_p2 += 1,
+                        _ => (),
                     }
                 }
             }
         }
+
         if free_three_p1 > quantity || free_three_p2 > quantity {
             return true;
         }
         false
     }
+
+        // Helper function to get a sequence starting from a position in a specific direction
+        fn get_sequence(&self, x: usize, y: usize, dx: isize, dy: isize) -> Option<(Piece, Piece, Piece, Piece, Piece, Piece)> {
+            let mut sequence = Vec::new();
+            for i in 0..6 {
+                let nx = x as isize + i * dx;
+                let ny = y as isize + i * dy;
+                if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 {
+                    sequence.push(self.map[nx as usize][ny as usize]);
+                } else {
+                    return None;
+                }
+            }
+            Some((sequence[0], sequence[1], sequence[2], sequence[3], sequence[4], sequence[5]))
+        }
                     
 }
 
@@ -344,13 +306,12 @@ pub fn terminal_game_IA() {
             println!("You can't place a piece there!");
             continue;
         }
-        let start = Instant::now();
         game.place_ia();
-        let duration = start.elapsed();
         numbers.clear();
         movements += 1;
-        game.print_map();
-        println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         println!("movements: {:?}", movements);
+        if game.check_win() {
+            break;
+        }
     }
 }
