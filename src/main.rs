@@ -22,7 +22,7 @@ enum IAQuality {
 }
 
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
-struct Volume(u32);
+struct MinMaxProf(u32);
 
 //struct bevyGame(Game);
 
@@ -39,7 +39,7 @@ fn main() {
         .add_plugins(ShapePlugin)
         // Insert as resource the initial value for the settings resources
         .insert_resource(IAQuality::Medium)
-        .insert_resource(Volume(7))
+        .insert_resource(MinMaxProf(7))
         //.insert_resource(bevyGame(Game::new()))
         // Declare the game state, whose starting value is determined by the `Default` trait
         .init_state::<GameState>()
@@ -58,7 +58,7 @@ mod game {
     use bevy::prelude::*;
     use bevy_prototype_lyon::prelude::*;
 
-    use super::{despawn_screen, IAQuality, GameState, Volume, TEXT_COLOR};
+    use super::{despawn_screen, IAQuality, GameState, MinMaxProf, TEXT_COLOR};
 
     // This plugin will contain the game. In this case, it's just be a screen that will
     // display the current settings for 5 seconds before returning to the menu
@@ -79,7 +79,7 @@ mod game {
     fn game_setup(
         mut commands: Commands,
         display_quality: Res<IAQuality>,
-        volume: Res<Volume>,
+        volume: Res<MinMaxProf>,
         mut meshes: ResMut<Assets<Mesh>>,
         mut materials: ResMut<Assets<ColorMaterial>>,
     ) {
@@ -135,7 +135,7 @@ mod game {
 mod menu {
     use bevy::{app::AppExit, prelude::*};
 
-    use super::{despawn_screen, IAQuality, GameState, Volume, TEXT_COLOR};
+    use super::{despawn_screen, IAQuality, GameState, MinMaxProf, TEXT_COLOR};
 
     // This plugin manages the menu, with 5 different screens:
     // - a settings menu with two submenus and a back button
@@ -173,7 +173,7 @@ mod menu {
             .add_systems(OnEnter(MenuState::SettingsSound), sound_settings_menu_setup)
             .add_systems(
                 Update,
-                setting_button::<Volume>.run_if(in_state(MenuState::SettingsSound)),
+                setting_button::<MinMaxProf>.run_if(in_state(MenuState::SettingsSound)),
             )
             .add_systems(
                 OnExit(MenuState::SettingsSound),
@@ -576,7 +576,7 @@ mod menu {
             });
     }
 
-    fn sound_settings_menu_setup(mut commands: Commands, volume: Res<Volume>) {
+    fn sound_settings_menu_setup(mut commands: Commands, volume: Res<MinMaxProf>) {
         let button_style = Style {
             width: Val::Px(200.0),
             height: Val::Px(65.0),
@@ -642,9 +642,9 @@ mod menu {
                                             background_color: NORMAL_BUTTON.into(),
                                             ..default()
                                         },
-                                        Volume(volume_setting),
+                                        MinMaxProf(volume_setting),
                                     ));
-                                    if *volume == Volume(volume_setting) {
+                                    if *volume == MinMaxProf(volume_setting) {
                                         entity.insert(SelectedOption);
                                     }
                                 }
