@@ -1,4 +1,5 @@
 use std::process::exit;
+use bevy::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Piece {
@@ -7,6 +8,7 @@ pub enum Piece {
     Player2,
 }
 
+#[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
 pub struct Game {
     map: [[Option<Piece>; 19]; 19],
     captured1: i8,
@@ -22,7 +24,13 @@ impl Game {
         }
     }
     
-    pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+    pub fn place(&mut self, x: usize, y: usize, pl: usize) -> bool {
+        let piece = match pl {
+            0 => Piece::Player1,
+            1 => Piece::Player2,
+            _ => panic!("Invalid player number"),
+        };
+
         if self.map[x][y].is_some() && self.map[x][y] != Some(Piece::Empty){
             return false;
         }
@@ -213,13 +221,13 @@ pub fn terminal_game() {
             continue;
         }
         if movements % 2 == 0 {
-                if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player1) {
+                if !game.place(numbers[0] as usize, numbers[1] as usize, 0) {
                     println!("You can't place a piece there!");
                     continue;
                 }
             }
             else {
-                if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player2) {
+                if !game.place(numbers[0] as usize, numbers[1] as usize, 1) {
                     println!("You can't place a piece there!");
                     continue;
                 }
