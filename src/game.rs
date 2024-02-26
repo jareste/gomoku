@@ -11,15 +11,15 @@ pub enum Piece {
     Player2,
 }
 
-impl Piece {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Piece::Empty => "Empty",
-            Piece::Player1 => "Player1",
-            Piece::Player2 => "Player2",
-        }
-    }
-}
+// impl Piece {
+//     pub fn as_str(&self) -> &str {
+//         match self {
+//             Piece::Empty => "Empty",
+//             Piece::Player1 => "Player1",
+//             Piece::Player2 => "Player2",
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Game {
@@ -60,7 +60,7 @@ impl Game {
         } else {
             self.capture(x, y, piece, Piece::Player1);
         }
-        if self.find_free_threes(piece, (x as i8, y as i8), 1) {
+        if self.find_free_threes( (x as i8, y as i8), 1) {
             self.map[x][y] = Piece::Empty;
             return false;
         }
@@ -167,7 +167,7 @@ impl Game {
         }
     }
 
-    pub fn start_IA(&mut self)
+    pub fn start_ia(&mut self)
     {
         self.map[9][9] = Piece::Player1;
     }
@@ -175,7 +175,7 @@ impl Game {
     // function to check all the free threes in the board for a selected player and keep in memory positions of the actuals one that have been visited.
     // idea of doing it with a match as them are the only possible pieces
     // i want to check always from the first piece of the sequence so then i got no issuues with finding multiples at same time
-    pub fn find_free_threes(&mut self, piece: Piece, last_move: (i8, i8), quantity: i8) -> bool {
+    pub fn find_free_threes(&mut self, last_move: (i8, i8), quantity: i8) -> bool {
         let posibilities = [
         (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
         (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
@@ -231,12 +231,10 @@ impl Game {
 }
 
 // HELPER FUNCTION FOR TESTING
-use core::panic;
 use std::io::{self, Write};
 pub fn terminal_game() {
     let mut game = Game::new();
     let mut input = String::new();
-    let mut numbers: Vec<i32> = Vec::new();
     let mut movements: usize = 0;
     loop {
         if movements % 2 == 0 {
@@ -248,7 +246,7 @@ pub fn terminal_game() {
         io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
         input.clear();
         io::stdin().read_line(&mut input).unwrap();
-        numbers = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
+        let numbers: Vec<i32> = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
         
         if numbers.len() != 2 {
             println!("numbers: {:?}", numbers);
@@ -271,26 +269,25 @@ pub fn terminal_game() {
                 continue;
             }
         }
-        numbers.clear();
         movements += 1;
         game.print_map();
     }
 }
 
 
-pub fn terminal_game_IA() {
+pub fn terminal_game_ia() {
     let mut game = Game::new();
     let mut input = String::new();
-    let mut numbers: Vec<i32> = Vec::new();
+    // let mut numbers: Vec<i32> = Vec::new();
     let mut movements: usize = 0;
-    game.start_IA();
+    game.start_ia();
     game.print_map();
     loop {
         println!("Player 2, please enter your move (x y): ");
         io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
         input.clear();
         io::stdin().read_line(&mut input).unwrap();
-        numbers = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
+        let numbers: Vec<i32> = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
         
         if numbers.len() != 2 {
             println!("numbers: {:?}", numbers);
@@ -307,7 +304,7 @@ pub fn terminal_game_IA() {
             continue;
         }
         game.place_ia();
-        numbers.clear();
+        // numbers.clear();
         movements += 1;
         println!("movements: {:?}", movements);
         if game.check_win() {

@@ -1,10 +1,8 @@
+// use rayon::prelude::*;
 use std::collections::HashSet;
-use std::thread;
 use crate::game::{Game, Piece};
-// use crate::game;
 
-
-struct Move {
+pub struct Move {
     index: (i8, i8),
     score: i32,
 }
@@ -22,7 +20,6 @@ pub trait IA{
 
 
 impl IA for Game {
-    // this function will check the squares around the possible movement and return false if there is no piece in squares_to_check around the movement
     fn dfs_check_movement(&mut self, x: i8, y: i8, squares_to_check: i8) -> bool {
         let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         for &(dx, dy) in &directions {
@@ -40,21 +37,19 @@ impl IA for Game {
         false
     }
 
-     
     fn get_possible_moves(&mut self) -> Vec<(i8, i8)> {
         let mut moves = HashSet::new();
         let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         for x in 0..19 {
             for y in 0..19 {
                 if self.map[x][y] != Piece::Empty {
-                    let player = self.map[x][y];
                     for &(dx, dy) in &directions {
                         for i in 1..=2 {
                             let nx = x as isize + i * dx;
                             let ny = y as isize + i * dy;
                             if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && self.map[nx as usize][ny as usize] == Piece::Empty  {
-                                self.map[nx as usize][ny as usize] = player;
-                                if !self.find_free_threes(player, (nx as i8, ny as i8), 1) {
+                                self.map[nx as usize][ny as usize] = self.map[x][y];
+                                if !self.find_free_threes((nx as i8, ny as i8), 1) {
                                     moves.insert((nx as i8, ny as i8));
                                 }
                                 self.map[nx as usize][ny as usize] = Piece::Empty;
@@ -134,6 +129,7 @@ impl IA for Game {
         score
     }
 
+    // should be reviewed but it's working.
     fn get_heuristic(&mut self) -> i32 {
         let mut score = 0;
         score += self.get_consequtive_pieces_score(Piece::Player1);
@@ -166,6 +162,7 @@ impl IA for Game {
     }
 
     fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
+        let mut possible_moves = self.get_possible_moves();
         if depth == 0 {
             return Move { index: (0, 0), score: self.get_heuristic() };
         }
@@ -176,19 +173,10 @@ impl IA for Game {
         }
         let mut best_move = (0, 0);
         let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
-        let mut possible_moves = self.get_possible_moves();
         possible_moves.sort_by_key(|&moves| -self.evaluate_move(moves, Piece::Player1));
         for &moves in possible_moves.iter() {
             self.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
-            // this will check if the direct next movement is a winning movement so it stops.
-            if depth == 3 { 
-                let score = self.get_consequtive_pieces_score(if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
-                if score >= 1_000_000 {
-                    self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
-                    return Move { index: moves, score };
-                }
-            }
-            let mut score = self.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+            let score = self.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
             self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
             match is_maximizing_player {
                 true => {
@@ -215,28 +203,50 @@ impl IA for Game {
         Move { index: best_move, score: best_score }
     }
 
+
+    // fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
+    //     let mut possible_moves = self.get_possible_moves();
+    //     if depth == 0 {
+    //         return Move { index: (0, 0), score: self.get_heuristic() };
+    //     }
+    //     let game_state = self.to_string();
+
+    //     if let Some(score) = self.transposition_table.get(&game_state) {
+    //         return Move { index: (0, 0), score: *score };
+    //     }
+    //     let mut best_move = (0, 0);
+    //     let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
+    //     possible_moves.sort_by_key(|&moves| -self.evaluate_move(moves, Piece::Player1));
+
+    //     let best_move = possible_moves.into_par_iter()
+    //         .map_init(|| self.clone(), |ia, moves| {
+    //             ia.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
+    //             let score = ia.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+    //             ia.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
+    //             (moves, score)
+    //         })
+    //         .max_by_key(|&(_, score)| score)
+    //         .map(|(moves, score)| Move { index: moves, score })
+    //         .unwrap_or_else(|| Move { index: (0, 0), score: self.get_heuristic() });
+
+    //     self.transposition_table.insert(game_state, best_score);
+    //     best_move
+    // }
+
+
     fn best_move(&mut self) -> (i8, i8) {
-        self.minimax(3, i32::MIN, i32::MAX, true).index
+        let mut best_move = Move { index: (0, 0), score: i32::MIN };
+        for depth in 1..=10 {
+            let moves = self.minimax(depth, i32::MIN, i32::MAX, true);
+            if moves.score > best_move.score {
+                best_move = moves;
+            }
+        }
+        best_move.index
     }
+
+    // fn best_move(&mut self) -> (i8, i8) {
+    //     let result = self.minimax(3, i32::MIN, i32::MAX, true).index
+    // }
 }
 
-// fn capture_direction(&mut self, x: isize, y: isize, dx: isize, dy: isize, piece: Piece, o_piece: Piece) -> bool {
-//     if (1..3).all(|i| self.map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&o_piece))
-//         && self.map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&piece) {
-//         return true;
-//     }
-//     false
-// }
-
-// fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) -> bool {
-//     let directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
-//     for &(dx, dy) in &directions {
-//         if capture_direction(&self.map, x as isize, y as isize, dx, dy, piece, o_piece) {
-//             return true;
-//         }
-//         if capture_direction(&self.map, x as isize, y as isize, -dx, -dy, piece, o_piece) {
-//             return true;
-//         }
-//     }
-//     false
-// }
