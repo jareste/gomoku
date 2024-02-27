@@ -5,6 +5,7 @@ use std::collections::HashMap;
 // use crate::ia::best_move;
 use std::process::exit;
 use bevy::prelude::*;
+use std::fmt;
 
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -14,15 +15,26 @@ pub enum Piece {
     Player2,
 }
 
-// impl Piece {
-//     pub fn as_str(&self) -> &str {
-//         match self {
-//             Piece::Empty => "Empty",
-//             Piece::Player1 => "Player1",
-//             Piece::Player2 => "Player2",
-//         }
-//     }
-// }
+
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Piece::Empty => write!(f, "-"),
+            Piece::Player1 => write!(f, "X"),
+            Piece::Player2 => write!(f, "O"),
+        }
+    }
+}
+
+impl Piece {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Piece::Empty => "Empty",
+            Piece::Player1 => "Player1",
+            Piece::Player2 => "Player2",
+        }
+    }
+}
 
 #[derive(Resource, Debug, Component, PartialEq, Clone)]
 pub struct Game {
@@ -82,7 +94,6 @@ impl Game {
 
         // self.print_map();
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
-        self.transposition_table.clear();
         println!("IA placed at x: {} y: {}", x, y);
         (x as usize, y as usize)
     }
