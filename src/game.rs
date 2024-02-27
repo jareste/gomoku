@@ -2,6 +2,7 @@
 use std::time::Instant;
 use crate::ia::IA;
 use std::collections::HashMap;
+use crate::tess::math::Vector;
 // use crate::ia::best_move;
 use std::process::exit;
 use bevy::prelude::*;
@@ -41,7 +42,8 @@ pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
-    pub transposition_table: HashMap<String, i32>,
+    pub movements: Vec<((i8, i8), Piece)>,
+    pub transposition_table: HashMap<String, i8>,
 }
 
 impl Game {
@@ -51,6 +53,7 @@ impl Game {
             captured1: 0,
             captured2: 0,
             transposition_table: HashMap::new(),
+            movements: Vec::new(),
         }
     }
     
@@ -81,6 +84,7 @@ impl Game {
             return false;
         }
         // self.print_map();
+        self.movements.push(((x as i8, y as i8), piece));
         true
     }
 
@@ -95,6 +99,7 @@ impl Game {
         // self.print_map();
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         println!("IA placed at x: {} y: {}", x, y);
+        self.movements.push(((x, y), Piece::Player1));
         (x as usize, y as usize)
     }
 
@@ -174,6 +179,18 @@ impl Game {
         if (1..3).all(|i| self.map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&o_piece))
             && self.map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&piece) {
 
+            let pos1 = ((x + 1 * dx) as i8 , (y + 1 * dy) as i8);
+            let pos2 = ((x + 2 * dx) as i8, (y + 2 * dy) as i8);
+
+            let index1 = self.movements.iter().position(|&((x, y), _)| (x, y) == pos1);
+            let index2 = self.movements.iter().position(|&((x, y), _)| (x, y) == pos2);
+
+            if let Some(index1) = index1 {
+                self.movements.remove(index1);
+            }
+            if let Some(index2) = index2 {
+                self.movements.remove(index2);
+            }
             self.map[(x + 1 * dx) as usize][(y + 1 * dy) as usize] = Piece::Empty;
             self.map[(x + 2 * dx) as usize][(y + 2 * dy) as usize] = Piece::Empty;
             if piece == Piece::Player1 {
@@ -196,6 +213,7 @@ impl Game {
     pub fn start_ia(&mut self)
     {
         self.map[9][9] = Piece::Player1;
+        self.movements.push(((9, 9), Piece::Player1));
     }
 
     // function to check all the free threes in the board for a selected player and keep in memory positions of the actuals one that have been visited.
