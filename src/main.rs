@@ -1,3 +1,4 @@
+#![allow(warnings)]
 mod game;
 mod ia;
 use game::terminal_game;
@@ -42,9 +43,7 @@ enum Mode {
 }
 
 //struct bevyGame(Game);
-
 fn main() {
-// <<<<<<< HEAD
 //     let game = 0;
 //     if game == 1 {
 //         terminal_game();
@@ -55,8 +54,9 @@ fn main() {
 //         return;
 //     }
 // }
-// =======
-    App::new()
+    let game = 0;
+    if game == 1 {
+        App::new()
 
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -79,6 +79,33 @@ fn main() {
         // Adds the plugins for each state
         .add_plugins((menu::menu_plugin, gameUI::gameUI_plugin))
         .run();
+    }
+    else if game == 0 {
+        App::new()
+
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                resolution: WindowResolution::new(1200., 800.).with_scale_factor_override(1.0),
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_plugins(ShapePlugin)
+        // Insert as resource the initial value for the settings resources
+        .insert_resource(IAQuality::Medium)
+        .insert_resource(MinMaxProf(7))
+        .insert_resource(Player::P2)
+        .insert_resource(game::Game::new())
+        .insert_resource(Mode::IA)
+        //.insert_resource(bevyGame(Game::new()))
+        // Declare the game state, whose starting value is determined by the `Default` trait
+        .init_state::<GameState>()
+        .add_systems(Startup, setup)
+        // Adds the plugins for each state
+        .add_plugins((menu::menu_plugin, gameUI::gameUI_plugin))
+        .run();
+    }
+
 }
 
 fn setup(mut commands: Commands) {

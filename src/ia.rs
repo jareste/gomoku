@@ -133,7 +133,7 @@ impl IA for Game {
     fn get_heuristic(&mut self) -> i32 {
         let mut score = 0;
         score += self.get_consequtive_pieces_score(Piece::Player1);
-        score -= self.get_consequtive_pieces_score(Piece::Player2);
+        score -= ((self.get_consequtive_pieces_score(Piece::Player2) as f32) * 1.2) as i32;
         score
     }
 

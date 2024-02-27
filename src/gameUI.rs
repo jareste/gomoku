@@ -1,9 +1,12 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use game::Game;
+use game::Piece;
 
 use super::{despawn_screen,Mode, game, GameState, Player, TEXT_COLOR};
 use bevy::prelude::Sprite;
+
+use std::process::exit;
 
 // This plugin will contain the game. In this case, it's just be a screen that will
 // display the current settings for 5 seconds before returning to the menu
@@ -69,6 +72,8 @@ impl Position {
 fn gameUI_setup(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mode: Res<Mode>,
+    mut game: ResMut<Game>,
 ) {
     let board = 500.0 + (20.0 * 10.0);
     let tile_size = 500.0 /19.0;
@@ -101,6 +106,22 @@ fn gameUI_setup(
                     ..Default::default()
                 });
         }
+    }
+    if *mode == Mode::IA {
+        let position = Position { row: 9, col: 9};
+        let tile_size = 500.0 /19.0;
+        game.start_ia();
+        commands
+        .spawn(SpriteBundle {
+            //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(tile_size, tile_size)),
+                color: Color::rgba_u8(238, 50, 50, 250).into(),
+                ..default()
+            },
+            transform: Transform::from_translation(position.to_vec3()),
+            ..Default::default()
+        });
     }
     // Spawn a 5 seconds timer to trigger going back to the menu
 
@@ -140,9 +161,10 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
         info!("{}", windows.single().cursor_position().unwrap());
         info!("row: {}, col: {}, pl: {:?}", row, col, *player);
         
-        if *player == Player::P1 {
+        if *mode == Mode::IA {
             let p_back = position.clone().to_backend();
-            if !game.place(p_back.0, p_back.1, 0) {
+            info!("click on coordinates: {} {}", p_back.0, p_back.1);
+            if !game.place(p_back.0, p_back.1, Piece::Player2) {
                 info!("Invalid move");
                 return;
             }
@@ -151,48 +173,89 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
                     //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
                     sprite: Sprite {
                         custom_size: Some(Vec2::new(tile_size, tile_size)),
-                        color: Color::rgba_u8(238, 50, 50, 250).into(),
+                        color: Color::rgba_u8(50, 50, 218, 255).into(),
                         ..default()
                     },
                     transform: Transform::from_translation(position.to_vec3()),
                     ..Default::default()
-                });
-            *player = Player::P2;
+            });
+            let ia_move = game.place_ia();
+            let position_ia = Position { row: 18 - ia_move.0 , col: ia_move.1};
+            commands
+            .spawn(SpriteBundle {
+                //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
+                sprite: Sprite {
+                    custom_size: Some(Vec2::new(tile_size, tile_size)),
+                    color: Color::rgba_u8(238, 50, 50, 250).into(),
+                    ..default()
+                },
+                transform: Transform::from_translation(position_ia.to_vec3()),
+                ..Default::default()
+            });
 
-            if *mode == Mode::IA {
-                //position (x, y) = game.predict_move();
-                /* commands
-                .spawn(SpriteBundle {
-                    //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(tile_size, tile_size)),
-                        color: Color::rgba_u8(50, 50, 218, 255).into(),
-                        ..default()
-                    },
-                    transform: Transform::from_translation(position.to_vec3()),
-                    ..Default::default()
-                }); */
-                //*player = Player::P1;
-            }
         }
-        else{
-            let p_back = position.clone().to_backend();
-            if !game.place(p_back.0, p_back.1, 1) {
-                info!("Invalid move");
-                return;
-            }
-            commands
-                .spawn(SpriteBundle {
-                    //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(tile_size, tile_size)),
-                        color: Color::rgba_u8(50, 50, 218, 255).into(),
-                        ..default()
-                    },
-                    transform: Transform::from_translation(position.to_vec3()),
-                    ..Default::default()
-                });
-            *player = Player::P1;
+
+        // if *player == Player::P1 {
+        //     match *mode {
+        //         Mode::Normal => {
+        //             let p_back = position.clone().to_backend();
+        //             if !game.place(p_back.0, p_back.1, Piece::Player1) {
+        //                 info!("Invalid move");
+        //                 return;
+        //             }
+        //             commands
+        //                 .spawn(SpriteBundle {
+        //                     //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
+        //                     sprite: Sprite {
+        //                         custom_size: Some(Vec2::new(tile_size, tile_size)),
+        //                         color: Color::rgba_u8(238, 50, 50, 250).into(),
+        //                         ..default()
+        //                     },
+        //                     transform: Transform::from_translation(position.to_vec3()),
+        //                     ..Default::default()
+        //                 });
+        //             *player = Player::P2;
+        //         },
+        //         Mode::IA => {
+        //         let ia_move = game.place_ia();
+        //         let position_ia = Position { row: ia_move.0 , col: ia_move.1};
+        //         commands
+        //         .spawn(SpriteBundle {
+        //             //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
+        //             sprite: Sprite {
+        //                 custom_size: Some(Vec2::new(tile_size, tile_size)),
+        //                 color: Color::rgba_u8(238, 50, 50, 250).into(),
+        //                 ..default()
+        //             },
+        //             transform: Transform::from_translation(position_ia.to_vec3()),
+        //             ..Default::default()
+        //         });
+        //         *player = Player::P2;
+        //         },
+        //     }
+        // }
+        // else{
+        //     let p_back = position.clone().to_backend();
+        //     if !game.place(p_back.0, p_back.1, Piece::Player2) {
+        //         info!("Invalid move");
+        //         return;
+        //     }
+        //     commands
+        //         .spawn(SpriteBundle {
+        //             //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
+        //             sprite: Sprite {
+        //                 custom_size: Some(Vec2::new(tile_size, tile_size)),
+        //                 color: Color::rgba_u8(50, 50, 218, 255).into(),
+        //                 ..default()
+        //             },
+        //             transform: Transform::from_translation(position.to_vec3()),
+        //             ..Default::default()
+        //         });
+        //     *player = Player::P1;
+        // }
+        if game.check_win() {
+            info!("Winner");
+            exit(0);
         }
             
     }

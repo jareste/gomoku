@@ -24,7 +24,7 @@ pub enum Piece {
 //     }
 // }
 
-#[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
+#[derive(Resource, Debug, Component, PartialEq, Clone)]
 pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
@@ -54,6 +54,7 @@ impl Game {
     }
 
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        println!("siiii");
         if self.map[x][y] != Piece::Empty {
             return false;
         }
@@ -71,7 +72,7 @@ impl Game {
         true
     }
 
-    pub fn place_ia(&mut self)  {
+    pub fn place_ia(&mut self) -> (usize, usize) {
         // self.map[9][9] = Piece::Player1;
         let start = Instant::now();
         let (x, y) = self.best_move();
@@ -79,10 +80,11 @@ impl Game {
         self.map[x as usize][y as usize] = Piece::Player1;
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
 
-        self.print_map();
+        // self.print_map();
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         self.transposition_table.clear();
         println!("IA placed at x: {} y: {}", x, y);
+        (x as usize, y as usize)
     }
 
     // terminal game HELPER FUNCTION
@@ -108,6 +110,8 @@ impl Game {
             _ => (),
         }
 
+        println!("Checking win");
+        self.print_map();
         for i in 0..19 {
             for j in 0..19 {
                 match self.map[i][j] {
