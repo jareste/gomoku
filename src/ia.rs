@@ -166,7 +166,12 @@ impl IA for Game {
                     consecutive_pieces += 1;
                 }
             }
-            score += consecutive_pieces;
+            match player {
+                Piece::Empty => (),
+                Piece::Player1 => score += consecutive_pieces,
+                Piece::Player2 => score -= consecutive_pieces,
+            }
+            // score += consecutive_pieces;
         }
 
         self.map[x as usize][y as usize] = Piece::Empty;

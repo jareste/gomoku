@@ -122,35 +122,42 @@ impl Game {
         }
 
         println!("Checking win");
-        self.print_map();
         for i in 0..19 {
             for j in 0..19 {
                 match self.map[i][j] {
                     Piece::Player1 => {
                         if i < 15 && (1..=4).all(|k| self.map[i + k][j] == Piece::Player1) {
+                            self.print_map();
                             return true;
                         }
                         if j < 15 && self.map[i][j + 1..=j + 4].iter().all(|&x| x == Piece::Player1) {
+                            self.print_map();
                             return true;
                         }
                         if i < 15 && j < 15 && (1..=4).all(|k| self.map[i + k][j + k] == Piece::Player1) {
+                            self.print_map();
                             return true;
                         }
                         if i < 15 && j > 3 && (1..=4).all(|k| self.map[i + k][j - k] == Piece::Player1) {
+                            self.print_map();
                             return true;
                         }
                     }
                     Piece::Player2 => {
                         if i < 15 && (1..=4).all(|k| self.map[i + k][j] == Piece::Player2) {
+                            self.print_map();
                             return true;
                         }
                         if j < 15 && (1..=4).all(|k| self.map[i][j + k] == Piece::Player2) {
+                            self.print_map();
                             return true;
                         }
                         if i < 15 && j < 15 && (1..=4).all(|k| self.map[i + k][j + k] == Piece::Player2) {
+                            self.print_map();
                             return true;
                         }
                         if i < 15 && j > 3 && (1..=4).all(|k| self.map[i + k][j - k] == Piece::Player2) {
+                            self.print_map();
                             return true;
                         }
                     }
@@ -158,6 +165,7 @@ impl Game {
                 }
             }
         }
+        self.print_map();
         false
     }
 
