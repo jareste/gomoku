@@ -3,6 +3,9 @@ use std::time::Instant;
 use crate::ia::IA;
 use std::collections::HashMap;
 // use crate::ia::best_move;
+use std::process::exit;
+use bevy::prelude::*;
+
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Piece {
@@ -21,7 +24,7 @@ pub enum Piece {
 //     }
 // }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
 pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
