@@ -7,9 +7,10 @@ use crate::tess::math::Vector;
 use std::process::exit;
 use bevy::prelude::*;
 use std::fmt;
+use std::collections::HashSet;
 
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Piece {
     Empty,
     Player1,
@@ -42,8 +43,8 @@ pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
-    pub movements: Vec<((i8, i8), Piece)>,
-    pub transposition_table: HashMap<String, i8>,
+    pub movements: HashSet<((i8, i8), Piece)>,
+    pub transposition_table: HashMap<String, (i128, (i8, i8), i8)>,
 }
 
 impl Game {
@@ -53,7 +54,7 @@ impl Game {
             captured1: 0,
             captured2: 0,
             transposition_table: HashMap::new(),
-            movements: Vec::new(),
+            movements: HashSet::new(),
         }
     }
     
@@ -84,7 +85,7 @@ impl Game {
             return false;
         }
         // self.print_map();
-        self.movements.push(((x as i8, y as i8), piece));
+        self.movements.insert(((x as i8, y as i8), piece));
         true
     }
 
@@ -99,7 +100,8 @@ impl Game {
         // self.print_map();
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         println!("IA placed at x: {} y: {}", x, y);
-        self.movements.push(((x, y), Piece::Player1));
+        self.movements.insert(((x, y), Piece::Player1));
+        println!("Movements: {:?}", self.movements);
         (x as usize, y as usize)
     }
 
@@ -182,14 +184,14 @@ impl Game {
             let pos1 = ((x + 1 * dx) as i8 , (y + 1 * dy) as i8);
             let pos2 = ((x + 2 * dx) as i8, (y + 2 * dy) as i8);
 
-            let index1 = self.movements.iter().position(|&((x, y), _)| (x, y) == pos1);
-            let index2 = self.movements.iter().position(|&((x, y), _)| (x, y) == pos2);
+            let pos1_piece = self.movements.take(&((pos1.0, pos1.1), o_piece));
+            let pos2_piece = self.movements.take(&((pos2.0, pos2.1), o_piece));
 
-            if let Some(index1) = index1 {
-                self.movements.remove(index1);
+            if pos1_piece.is_some() {
+                self.movements.remove(&pos1_piece.unwrap());
             }
-            if let Some(index2) = index2 {
-                self.movements.remove(index2);
+            if pos2_piece.is_some() {
+                self.movements.remove(&pos2_piece.unwrap());
             }
             self.map[(x + 1 * dx) as usize][(y + 1 * dy) as usize] = Piece::Empty;
             self.map[(x + 2 * dx) as usize][(y + 2 * dy) as usize] = Piece::Empty;
@@ -213,7 +215,7 @@ impl Game {
     pub fn start_ia(&mut self)
     {
         self.map[9][9] = Piece::Player1;
-        self.movements.push(((9, 9), Piece::Player1));
+        self.movements.insert(((9, 9), Piece::Player1));
     }
 
     // function to check all the free threes in the board for a selected player and keep in memory positions of the actuals one that have been visited.
