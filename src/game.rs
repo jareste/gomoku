@@ -150,7 +150,6 @@ impl Game {
                 let directions = [(1, 0), (0, 1), (1, 1), (1, -1)];
                 for &(dx, dy) in &directions {
                     if self.check_five_in_a_row(piece, i, j, dx, dy) {
-                        self.print_map();
                         return (true, piece);
                     }
                 }
