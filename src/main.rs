@@ -1,8 +1,8 @@
 #![allow(warnings)]
 mod game;
 mod ia;
-use game::terminal_game;
-use game::terminal_game_ia;
+//use game::terminal_game;
+//use game::terminal_game_ia;
 mod gameUI;
 mod menu;
 

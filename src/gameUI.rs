@@ -253,8 +253,9 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
         //         });
         //     *player = Player::P1;
         // }
-        if game.check_win() {
-            info!("Winner");
+        game.print_map();
+        if (game.check_win() == (true, Piece::Player1)) || (game.check_win() == (true, Piece::Player2)) {
+            println!("Segmentation Fault (core dumped)");
             exit(0);
         }
             

@@ -65,22 +65,21 @@ impl Game {
             .collect()
     }
 
+    //removed from place to not waste that much time
+    /*if self.map[x][y] != Piece::Empty {
+        return false;
+    }**/
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
-        println!("siiii");
-        if self.map[x][y] != Piece::Empty {
-            return false;
-        }
         self.map[x][y] = piece;
-        if piece == Piece::Player1 {
-            self.capture(x, y, piece, Piece::Player2);
-        } else {
-            self.capture(x, y, piece, Piece::Player1);
-        }
         if self.find_free_threes( (x as i8, y as i8), 1) {
             self.map[x][y] = Piece::Empty;
             return false;
         }
-        // self.print_map();
+        match piece {
+            Piece::Player1 => self.capture(x, y, piece, Piece::Player2),
+            Piece::Player2 => self.capture(x, y, piece, Piece::Player1),
+            _ => (),
+        }
         true
     }
 
@@ -99,7 +98,7 @@ impl Game {
     }
 
     // terminal game HELPER FUNCTION
-    fn print_map(&self) {
+    pub fn print_map(&self) {
         for i in 0..19 {
             for j in 0..19 {
                 match self.map[i][j] {
@@ -114,10 +113,10 @@ impl Game {
     }
 
     // NEW CHECK WIN FUNCTION MAYBE NOT WORKING AS EXPECTED
-    pub fn check_win(&self) -> bool {
+    pub fn check_win(&self) -> (bool, Piece) {
         match (self.captured1 >= 10, self.captured2 >= 10) {
-            (true, _) => return true,
-            (_, true) => return true,
+            (true, _) => return (true, Piece::Player1),
+            (_, true) => return (true, Piece::Player2),
             _ => (),
         }
 
@@ -128,45 +127,45 @@ impl Game {
                     Piece::Player1 => {
                         if i < 15 && (1..=4).all(|k| self.map[i + k][j] == Piece::Player1) {
                             self.print_map();
-                            return true;
+                            return (true, Piece::Player1);
                         }
                         if j < 15 && self.map[i][j + 1..=j + 4].iter().all(|&x| x == Piece::Player1) {
                             self.print_map();
-                            return true;
+                            return (true, Piece::Player1);
                         }
                         if i < 15 && j < 15 && (1..=4).all(|k| self.map[i + k][j + k] == Piece::Player1) {
                             self.print_map();
-                            return true;
+                            return (true, Piece::Player1);
                         }
                         if i < 15 && j > 3 && (1..=4).all(|k| self.map[i + k][j - k] == Piece::Player1) {
                             self.print_map();
-                            return true;
+                            return (true, Piece::Player1);
                         }
                     }
                     Piece::Player2 => {
                         if i < 15 && (1..=4).all(|k| self.map[i + k][j] == Piece::Player2) {
                             self.print_map();
-                            return true;
+                            return (true, Piece::Player2);
                         }
                         if j < 15 && (1..=4).all(|k| self.map[i][j + k] == Piece::Player2) {
                             self.print_map();
-                            return true;
+                            return (true, Piece::Player2);
                         }
                         if i < 15 && j < 15 && (1..=4).all(|k| self.map[i + k][j + k] == Piece::Player2) {
                             self.print_map();
-                            return true;
+                            return (true, Piece::Player2);
                         }
                         if i < 15 && j > 3 && (1..=4).all(|k| self.map[i + k][j - k] == Piece::Player2) {
                             self.print_map();
-                            return true;
+                            return (true, Piece::Player2);
                         }
                     }
                     _ => (),
                 }
             }
         }
-        self.print_map();
-        false
+        //self.print_map();
+        (false, Piece::Empty)
     }
 
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
@@ -255,7 +254,7 @@ impl Game {
     }
                 
 }
-
+/*
 // HELPER FUNCTION FOR TESTING
 use std::io::{self, Write};
 pub fn terminal_game() {
@@ -338,3 +337,4 @@ pub fn terminal_game_ia() {
         }
     }
 }
+*/
