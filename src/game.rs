@@ -15,6 +15,19 @@ pub enum Piece {
     Player2,
 }
 
+pub const POSSIBILITIES: [[Piece; 6]; 10] = [
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty], // - X X X -
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1], // - X X X -
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2], // - X X X -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty], // - O O O -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1], // - O O O -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2], // - O O O -
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty], // - X X - X -
+    [Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty], // - X - X X -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty], // - O O - O -
+    [Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty], // - O - O O -
+];
+
 
 impl fmt::Display for Piece {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -197,64 +210,170 @@ impl Game {
         self.map[9][9] = Piece::Player1;
     }
 
-    // function to check all the free threes in the board for a selected player and keep in memory positions of the actuals one that have been visited.
-    // idea of doing it with a match as them are the only possible pieces
-    // i want to check always from the first piece of the sequence so then i got no issuues with finding multiples at same time
     pub fn find_free_threes(&mut self, last_move: (i8, i8), quantity: i8) -> bool {
+        let piece = self.map[last_move.0 as usize][last_move.1 as usize];
         let posibilities = [
-        (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
-        (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
-        (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2), // - X X X -
-        (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty), // - O O O -
-        (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1), // - O O O -
-        (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2), // - O O O -
-        (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty), // - X X - X -
-        (Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty), // - X - X X -
-        (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty), // - O O - O -
-        (Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty), // - O - O O -
-        ];
+            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
+            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
+            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2), // - X X X -
+            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty), // - O O O -
+            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1), // - O O O -
+            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2), // - O O O -
+            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty), // - X X - X -
+            (Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty), // - X - X X -
+            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty), // - O O - O -
+            (Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty), // - O - O O -
+            ];
 
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
-
-        let (last_x, last_y) = (last_move.0 as usize, last_move.1 as usize);
-
-        for direction in &[(1, 0), (0, 1), (1, 1), (-1, 1)] {
-            let (dx, dy) = direction;
-            let sequence = self.get_sequence(last_x, last_y, *dx as isize, *dy as isize);
-            if posibilities.contains(&sequence) {
-                println!("sequence: {:?}", sequence);
-                match sequence.1 {
-                    Piece::Player1 => free_three_p1 += 1,
-                    Piece::Player2 => free_three_p2 += 1,
-                    _ => (),
+        let x_range = 
+        for x in 1..16 {
+            for y in 1..16 {
+                if self.map[x][y] == piece {
+                    // println!("no petardea");
+                    // checking X vertical up
+                    if let [a, b, c, d, e, f] = [
+                        self.map[x - 1][y],
+                        self.map[x][y],
+                        self.map[x + 1][y],
+                        self.map[x + 2][y],
+                        self.map[x + 3][y],
+                        if x + 4 < 19 { self.map[x + 4][y] } else { Piece::Empty },
+                    ] {
+                        let sequence = [a, b, c, d, e, f];
+                        // println!("sequence: {:?}", sequence);
+                        if POSSIBILITIES.contains(&sequence) {
+                            match piece {
+                                Piece::Player1 => {
+                                    if free_three_p1 > quantity {
+                                        return true;
+                                    }
+                                    free_three_p1 += 1
+                                },
+                                Piece::Player2 => {
+                                    if free_three_p2 > quantity {
+                                        return true;
+                                    }
+                                    free_three_p2 += 1
+                                },
+                                _ => (),
+                            }
+                        }
+                    }
+                    // checking Y horizontal right
+                    if let [a, b, c, d, e, f] = [
+                        self.map[x][y - 1],
+                        self.map[x][y],
+                        self.map[x][y + 1],
+                        self.map[x][y + 2],
+                        self.map[x][y + 3],
+                        if y + 4 < 19 { self.map[x][y + 4] } else { Piece::Empty },
+                    ] {
+                        let sequence = [a, b, c, d, e, f];
+                        // println!("sequence: {:?}", sequence);
+                        if POSSIBILITIES.contains(&sequence) {
+                            match piece {
+                                Piece::Player1 => {
+                                    if free_three_p1 > quantity {
+                                        return true;
+                                    }
+                                    free_three_p1 += 1
+                                },
+                                Piece::Player2 => {
+                                    if free_three_p2 > quantity {
+                                        return true;
+                                    }
+                                    free_three_p2 += 1
+                                },
+                                _ => (),
+                            }
+                        }
+                    }
+                    // checking diagonal up right /
+                    if let [a, b, c, d, e, f] = [
+                        self.map[x - 1][y - 1],
+                        self.map[x][y],
+                        self.map[x + 1][y + 1],
+                        self.map[x + 2][y + 2],
+                        self.map[x + 3][y + 3],
+                        if x + 4 < 19 && y + 4 < 19 { self.map[x + 4][y + 4] } else { Piece::Empty },
+                    ] {
+                        let sequence = [a, b, c, d, e, f];
+                        // println!("sequence: {:?}", sequence);
+                        if POSSIBILITIES.contains(&sequence) {
+                            match piece {
+                                Piece::Player1 => {
+                                    if free_three_p1 > quantity {
+                                        return true;
+                                    }
+                                    free_three_p1 += 1
+                                },
+                                Piece::Player2 => {
+                                    if free_three_p2 > quantity {
+                                        return true;
+                                    }
+                                    free_three_p2 += 1
+                                },
+                                _ => (),
+                            }
+                        }
+                    }
+                    if x < 3 {
+                        continue;
+                    }
+                    // checking diagonal down right \
+                    if let [a, b, c, d, e, f] = [
+                        self.map[x + 1][y - 1],
+                        self.map[x][y],
+                        self.map[x - 1][y + 1],
+                        self.map[x - 2][y + 2],
+                        self.map[x - 3][y + 3],
+                        if x > 3 && y + 4 < 19 { self.map[x - 4][y + 4] } else { Piece::Empty },
+                    ] {
+                        let sequence = [a, b, c, d, e, f];
+                        // println!("sequence: {:?}", sequence);
+                        if POSSIBILITIES.contains(&sequence) {
+                            match self.map[x][y] {
+                                Piece::Player1 => {
+                                    if free_three_p1 > quantity {
+                                        return true;
+                                    }
+                                    free_three_p1 += 1
+                                },
+                                Piece::Player2 => {
+                                    if free_three_p2 > quantity {
+                                        return true;
+                                    }
+                                    free_three_p2 += 1
+                                },
+                                _ => (),
+                            }
+                        }
+                    }
                 }
             }
-        }
-        // println!("free_three_p1: {} | free_three_p2: {}", free_three_p1, free_three_p2);
+        };
+
+        // println!("free three p1: {:?} | free three p2: {:?}", free_three_p1, free_three_p2);
         if free_three_p1 > quantity || free_three_p2 > quantity {
             return true;
         }
         false
     }
-
-        // Helper function to get a sequence starting from a position in a specific direction
-    fn get_sequence(&self, x: usize, y: usize, dx: isize, dy: isize) -> (Piece, Piece, Piece, Piece, Piece, Piece) {
-        let mut sequence = Vec::new();
-        for i in 0..6 {
-            let nx = x as isize + i * dx;
-            let ny = y as isize + i * dy;
-            if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 {
-                sequence.push(self.map[nx as usize][ny as usize]);
-            } else {
-                sequence.push(Piece::Empty); // Return Piece::Empty for positions outside the board
-            }
-        }
-        (sequence[0], sequence[1], sequence[2], sequence[3], sequence[4], sequence[5])
-    }
-                
 }
+
+
+
+
+
+
 /*
+
+
+
+
+
 // HELPER FUNCTION FOR TESTING
 use std::io::{self, Write};
 pub fn terminal_game() {

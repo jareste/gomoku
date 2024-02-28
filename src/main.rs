@@ -54,6 +54,19 @@ fn main() {
 //         return;
 //     }
 // }
+    let mut geme = game::Game::new();
+    // geme.map[8][9] = game::Piece::Player1;
+    geme.map[8][8] = game::Piece::Player1;
+    geme.map[9][8] = game::Piece::Player1;
+    geme.map[9][9] = game::Piece::Player1;
+    geme.map[9][10] = game::Piece::Player1;
+    geme.map[10][7] = game::Piece::Player1;
+    geme.map[10][8] = game::Piece::Player1;
+    geme.map[10][9] = game::Piece::Player1;
+    geme.map[10][10] = game::Piece::Player1;
+    geme.map[11][8] = game::Piece::Player1;
+    println!("test: {}", geme.find_free_threes((9, 10), 1));
+    geme.print_map(); 
     let game = 0;
     if game == 1 {
         App::new()
