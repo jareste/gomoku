@@ -222,17 +222,17 @@ impl Game {
 
         for direction in &[(1, 0), (0, 1), (1, 1), (-1, 1)] {
             let (dx, dy) = direction;
-            if let Some(sequence) = self.get_sequence(last_x, last_y, *dx as isize, *dy as isize) {
-                if posibilities.contains(&sequence) {
-                    match self.map[last_x][last_y] {
-                        Piece::Player1 => free_three_p1 += 1,
-                        Piece::Player2 => free_three_p2 += 1,
-                        _ => (),
-                    }
+            let sequence = self.get_sequence(last_x, last_y, *dx as isize, *dy as isize);
+            if posibilities.contains(&sequence) {
+                println!("sequence: {:?}", sequence);
+                match sequence.1 {
+                    Piece::Player1 => free_three_p1 += 1,
+                    Piece::Player2 => free_three_p2 += 1,
+                    _ => (),
                 }
             }
         }
-
+        // println!("free_three_p1: {} | free_three_p2: {}", free_three_p1, free_three_p2);
         if free_three_p1 > quantity || free_three_p2 > quantity {
             return true;
         }
@@ -240,20 +240,20 @@ impl Game {
     }
 
         // Helper function to get a sequence starting from a position in a specific direction
-        fn get_sequence(&self, x: usize, y: usize, dx: isize, dy: isize) -> Option<(Piece, Piece, Piece, Piece, Piece, Piece)> {
-            let mut sequence = Vec::new();
-            for i in 0..6 {
-                let nx = x as isize + i * dx;
-                let ny = y as isize + i * dy;
-                if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 {
-                    sequence.push(self.map[nx as usize][ny as usize]);
-                } else {
-                    return None;
-                }
+    fn get_sequence(&self, x: usize, y: usize, dx: isize, dy: isize) -> (Piece, Piece, Piece, Piece, Piece, Piece) {
+        let mut sequence = Vec::new();
+        for i in 0..6 {
+            let nx = x as isize + i * dx;
+            let ny = y as isize + i * dy;
+            if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 {
+                sequence.push(self.map[nx as usize][ny as usize]);
+            } else {
+                sequence.push(Piece::Empty); // Return Piece::Empty for positions outside the board
             }
-            Some((sequence[0], sequence[1], sequence[2], sequence[3], sequence[4], sequence[5]))
         }
-                    
+        (sequence[0], sequence[1], sequence[2], sequence[3], sequence[4], sequence[5])
+    }
+                
 }
 
 // HELPER FUNCTION FOR TESTING
