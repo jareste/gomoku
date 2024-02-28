@@ -220,13 +220,17 @@ impl IA for Game {
         }
         let mut best_move = (0, 0);
         let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
-       // possible_moves.sort_by_key(|&moves| -self.evaluate_move(moves, Piece::Player1));
-        for &moves in possible_moves.iter() {
+    
+        let results: Vec<(i32, (i8, i8))> = possible_moves.par_iter().map(|&moves| {
             let mut new_game = self.clone();
             if !new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 }) {
-                continue;
+                return (i32::MIN, moves); // or some other default value
             }
             let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+            (score, moves)
+        }).collect();
+    
+        for (score, moves) in results {
             match is_maximizing_player {
                 true => {
                     if score > best_score { 
@@ -239,7 +243,7 @@ impl IA for Game {
                     if score < best_score {
                         best_score = score;
                         best_move = moves;
-
+    
                     }
                     beta = std::cmp::min(beta, score);
                 },
@@ -253,7 +257,7 @@ impl IA for Game {
     }
   
      fn best_move(&mut self) -> (i8, i8) {
-         self.minimax(1, i32::MIN, i32::MAX, true).index
+         self.minimax(4, i32::MIN, i32::MAX, true).index
      }
 
   /*  fn best_move(&mut self) -> (i8, i8) {
