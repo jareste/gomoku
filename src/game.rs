@@ -83,6 +83,9 @@ impl Game {
         return false;
     }**/
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        if self.map[x][y] != Piece::Empty {
+            return false;
+        }
         self.map[x][y] = piece;
         if self.find_free_threes( (x as i8, y as i8), 1) {
             self.map[x][y] = Piece::Empty;
@@ -178,10 +181,13 @@ impl Game {
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
         let directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
+        // let prev_capture1 = self.captured1;
+        // let prev_capture2 = self.captured2;
         for &(dx, dy) in &directions {
             self.capture_direction(x as isize, y as isize, dx, dy, piece, o_piece);
             self.capture_direction(x as isize, y as isize, -dx, -dy, piece, o_piece);
         }
+        // (self.captured1 - prev_capture1, self.captured2 - prev_capture2)
     }
 
     pub fn start_ia(&mut self)

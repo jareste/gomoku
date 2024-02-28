@@ -150,6 +150,15 @@ impl IA for Game {
             (true,Piece::Player2) => score -= LOSING_PENALTY,
             _ => (),
         }
+        if self.captured1 > 0 {
+            score += self.captured1 as i32 * 100;
+        }
+        if self.captured2 > 0 {
+            score -= self.captured2 as i32 * 100;
+        }
+        if self.captured1 > self.captured2 + 2 {
+            score += 1_000;
+        }
         // score -= ((self.get_consequtive_pieces_score(Piece::Player2) as f32) * 1.2) as i32;
         score
     }
@@ -244,7 +253,7 @@ impl IA for Game {
     }
   
      fn best_move(&mut self) -> (i8, i8) {
-         self.minimax(3, i32::MIN, i32::MAX, true).index
+         self.minimax(1, i32::MIN, i32::MAX, true).index
      }
 
   /*  fn best_move(&mut self) -> (i8, i8) {
