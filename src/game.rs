@@ -125,7 +125,14 @@ impl Game {
         println!("Captured 1: {} | Captured2: {}", self.captured1, self.captured2);
     }
 
-    // NEW CHECK WIN FUNCTION MAYBE NOT WORKING AS EXPECTED
+    pub fn check_five_in_a_row(&self, piece: Piece, start_x: usize, start_y: usize, dx: isize, dy: isize) -> bool {
+        (0..5).all(|i| {
+            let x = (start_x as isize + i * dx) as usize;
+            let y = (start_y as isize + i * dy) as usize;
+            self.map.get(x).and_then(|row| row.get(y)) == Some(&piece)
+        })
+    }
+
     pub fn check_win(&self) -> (bool, Piece) {
         match (self.captured1 >= 10, self.captured2 >= 10) {
             (true, _) => return (true, Piece::Player1),
@@ -133,53 +140,26 @@ impl Game {
             _ => (),
         }
 
-        println!("Checking win");
         for i in 0..19 {
             for j in 0..19 {
-                match self.map[i][j] {
-                    Piece::Player1 => {
-                        if i < 15 && (1..=4).all(|k| self.map[i + k][j] == Piece::Player1) {
-                            self.print_map();
-                            return (true, Piece::Player1);
-                        }
-                        if j < 15 && self.map[i][j + 1..=j + 4].iter().all(|&x| x == Piece::Player1) {
-                            self.print_map();
-                            return (true, Piece::Player1);
-                        }
-                        if i < 15 && j < 15 && (1..=4).all(|k| self.map[i + k][j + k] == Piece::Player1) {
-                            self.print_map();
-                            return (true, Piece::Player1);
-                        }
-                        if i < 15 && j > 3 && (1..=4).all(|k| self.map[i + k][j - k] == Piece::Player1) {
-                            self.print_map();
-                            return (true, Piece::Player1);
-                        }
+                let piece = self.map[i][j];
+                if piece == Piece::Empty {
+                    continue;
+                }
+
+                let directions = [(1, 0), (0, 1), (1, 1), (1, -1)];
+                for &(dx, dy) in &directions {
+                    if self.check_five_in_a_row(piece, i, j, dx, dy) {
+                        self.print_map();
+                        return (true, piece);
                     }
-                    Piece::Player2 => {
-                        if i < 15 && (1..=4).all(|k| self.map[i + k][j] == Piece::Player2) {
-                            self.print_map();
-                            return (true, Piece::Player2);
-                        }
-                        if j < 15 && (1..=4).all(|k| self.map[i][j + k] == Piece::Player2) {
-                            self.print_map();
-                            return (true, Piece::Player2);
-                        }
-                        if i < 15 && j < 15 && (1..=4).all(|k| self.map[i + k][j + k] == Piece::Player2) {
-                            self.print_map();
-                            return (true, Piece::Player2);
-                        }
-                        if i < 15 && j > 3 && (1..=4).all(|k| self.map[i + k][j - k] == Piece::Player2) {
-                            self.print_map();
-                            return (true, Piece::Player2);
-                        }
-                    }
-                    _ => (),
                 }
             }
         }
-        //self.print_map();
+
         (false, Piece::Empty)
     }
+
 
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture_direction(&mut self, x: isize, y: isize, dx: isize, dy: isize, piece: Piece, o_piece: Piece) {
@@ -212,19 +192,6 @@ impl Game {
 
     pub fn find_free_threes(&mut self, last_move: (i8, i8), quantity: i8) -> bool {
         let piece = self.map[last_move.0 as usize][last_move.1 as usize];
-        let posibilities = [
-            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty), // - X X X -
-            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1), // - X X X -
-            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2), // - X X X -
-            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty), // - O O O -
-            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1), // - O O O -
-            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2), // - O O O -
-            (Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty), // - X X - X -
-            (Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty), // - X - X X -
-            (Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty), // - O O - O -
-            (Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty), // - O - O O -
-            ];
-
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
         let x_range = 
@@ -261,7 +228,6 @@ impl Game {
                             }
                         }
                     }
-                    // checking Y horizontal right
                     if let [a, b, c, d, e, f] = [
                         self.map[x][y - 1],
                         self.map[x][y],
@@ -271,7 +237,6 @@ impl Game {
                         if y + 4 < 19 { self.map[x][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        // println!("sequence: {:?}", sequence);
                         if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
@@ -300,7 +265,6 @@ impl Game {
                         if x + 4 < 19 && y + 4 < 19 { self.map[x + 4][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        // println!("sequence: {:?}", sequence);
                         if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
@@ -322,7 +286,6 @@ impl Game {
                     if x < 3 {
                         continue;
                     }
-                    // checking diagonal down right \
                     if let [a, b, c, d, e, f] = [
                         self.map[x + 1][y - 1],
                         self.map[x][y],
