@@ -54,7 +54,8 @@ pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
-    pub transposition_table: HashMap<String, i32>,
+    pub heuristic: i32,
+    // pub transposition_table: HashMap<String, i32>,
 }
 
 impl Game {
@@ -63,7 +64,8 @@ impl Game {
             map: [[Piece::Empty; 19]; 19],
             captured1: 0,
             captured2: 0,
-            transposition_table: HashMap::new(),
+            heuristic: 0,
+            // transposition_table: HashMap::new(),
         }
     }
     
@@ -96,6 +98,7 @@ impl Game {
             Piece::Player2 => self.capture(x, y, piece, Piece::Player1),
             _ => (),
         }
+        self.evaluate_move((x as i8, y as i8), piece);
         true
     }
 
@@ -126,6 +129,7 @@ impl Game {
             println!();
         }
         println!("Captured 1: {} | Captured2: {}", self.captured1, self.captured2);
+        println!("Heuristic: {}", self.heuristic);
     }
 
     pub fn check_five_in_a_row(&self, piece: Piece, start_x: usize, start_y: usize, dx: isize, dy: isize) -> bool {
@@ -192,7 +196,8 @@ impl Game {
 
     pub fn start_ia(&mut self)
     {
-        self.map[9][9] = Piece::Player1;
+        self.place(9, 9, Piece::Player1);
+        // self.map[9][9] = Piece::Player1;
     }
 
     pub fn find_free_threes(&mut self, last_move: (i8, i8), quantity: i8) -> bool {
