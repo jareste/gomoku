@@ -261,7 +261,7 @@ impl IA for Game {
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        self.minimax(1, i32::MIN, i32::MAX, true).index
+        self.minimax(2, i32::MIN, i32::MAX, true).index
     }
 
 }
