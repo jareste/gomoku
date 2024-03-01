@@ -54,7 +54,6 @@ pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
-    pub transposition_table: HashMap<String, i32>,
 }
 
 impl Game {
@@ -63,21 +62,9 @@ impl Game {
             map: [[Piece::Empty; 19]; 19],
             captured1: 0,
             captured2: 0,
-            transposition_table: HashMap::new(),
         }
     }
     
-    pub fn to_string(&self) -> String {
-        self.map.iter()
-            .flat_map(|row| row.iter())
-            .map(|piece| match piece {
-                Piece::Empty => "0",
-                Piece::Player1 => "1",
-                Piece::Player2 => "2",
-            })
-            .collect()
-    }
-
     //removed from place to not waste that much time
     /*if self.map[x][y] != Piece::Empty {
         return false;
@@ -87,10 +74,11 @@ impl Game {
             return false;
         }
         self.map[x][y] = piece;
-        if self.find_free_threes( (x as i8, y as i8), 1) {
-            self.map[x][y] = Piece::Empty;
-            return false;
-        }
+        // will have to evaluate it for the player as the ia is supposed to not do free-threes
+        // if self.find_free_threes( (x as i8, y as i8), 1) {
+        //     self.map[x][y] = Piece::Empty;
+        //     return false;
+        // }
         match piece {
             Piece::Player1 => self.capture(x, y, piece, Piece::Player2),
             Piece::Player2 => self.capture(x, y, piece, Piece::Player1),
@@ -100,14 +88,12 @@ impl Game {
     }
 
     pub fn place_ia(&mut self) -> (usize, usize) {
-        // self.map[9][9] = Piece::Player1;
         let start = Instant::now();
         let (x, y) = self.best_move();
         let duration = start.elapsed();
         self.map[x as usize][y as usize] = Piece::Player1;
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
 
-        // self.print_map();
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         println!("IA placed at x: {} y: {}", x, y);
         (x as usize, y as usize)
