@@ -13,6 +13,7 @@ pub struct KillerMove {
     killer: Move,
 }
 
+const TEN: i8 = 1;
 const WINNING_BONUS: i32 = 1_000_000;
 const LOSING_PENALTY: i32 = -1_000_000;
 const THREATENING_BONUS: i32 = 100_000;
@@ -189,7 +190,7 @@ impl IA for Game {
 
 
      fn best_move(&mut self) -> (i8, i8) {
-        let best_move =  self.minimax(1, i32::MIN, i32::MAX, true);
+        let best_move =  self.minimax(TEN, i32::MIN, i32::MAX, true);
         println!("Best move: {:?}", best_move);
         best_move.index
      }

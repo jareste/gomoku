@@ -80,19 +80,16 @@ impl Game {
             .collect()
     }
 
-    //removed from place to not waste that much time
-    /*if self.map[x][y] != Piece::Empty {
-        return false;
-    }**/
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         if self.map[x][y] != Piece::Empty {
             return false;
         }
         self.map[x][y] = piece;
-        if self.find_free_threes( (x as i8, y as i8), 1) {
-            self.map[x][y] = Piece::Empty;
-            return false;
-        }
+        // s'haura d'evaluar el moviment del player ja q la ia se suposa no en fara
+        // if self.find_free_threes( (x as i8, y as i8), 1) {
+        //     self.map[x][y] = Piece::Empty;
+        //     return false;
+        // }
         match piece {
             Piece::Player1 => self.capture(x, y, piece, Piece::Player2),
             Piece::Player2 => self.capture(x, y, piece, Piece::Player1),
@@ -103,14 +100,11 @@ impl Game {
     }
 
     pub fn place_ia(&mut self) -> (usize, usize) {
-        // self.map[9][9] = Piece::Player1;
         let start = Instant::now();
         let (x, y) = self.best_move();
         let duration = start.elapsed();
         self.map[x as usize][y as usize] = Piece::Player1;
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
-
-        // self.print_map();
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         println!("IA placed at x: {} y: {}", x, y);
         (x as usize, y as usize)
@@ -146,15 +140,13 @@ impl Game {
             (_, true) => return (true, Piece::Player2),
             _ => (),
         }
-
+        let directions = [(1, 0), (0, 1), (1, 1), (1, -1)];
         for i in 0..19 {
             for j in 0..19 {
                 let piece = self.map[i][j];
                 if piece == Piece::Empty {
                     continue;
                 }
-
-                let directions = [(1, 0), (0, 1), (1, 1), (1, -1)];
                 for &(dx, dy) in &directions {
                     if self.check_five_in_a_row(piece, i, j, dx, dy) {
                         return (true, piece);
@@ -162,7 +154,6 @@ impl Game {
                 }
             }
         }
-
         (false, Piece::Empty)
     }
 
@@ -185,13 +176,10 @@ impl Game {
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
         let directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
-        // let prev_capture1 = self.captured1;
-        // let prev_capture2 = self.captured2;
         for &(dx, dy) in &directions {
             self.capture_direction(x as isize, y as isize, dx, dy, piece, o_piece);
             self.capture_direction(x as isize, y as isize, -dx, -dy, piece, o_piece);
         }
-        // (self.captured1 - prev_capture1, self.captured2 - prev_capture2)
     }
 
     pub fn start_ia(&mut self)
@@ -305,7 +293,6 @@ impl Game {
                         if x > 3 && y + 4 < 19 { self.map[x - 4][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        // println!("sequence: {:?}", sequence);
                         if POSSIBILITIES.contains(&sequence) {
                             match self.map[x][y] {
                                 Piece::Player1 => {
@@ -327,8 +314,6 @@ impl Game {
                 }
             }
         };
-
-        // println!("free three p1: {:?} | free three p2: {:?}", free_three_p1, free_three_p2);
         if free_three_p1 > quantity || free_three_p2 > quantity {
             return true;
         }
