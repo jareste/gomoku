@@ -54,6 +54,8 @@ pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
+    pub last_move_p1: (i8, i8),
+    pub last_move_p2: (i8, i8),
 }
 
 impl Game {
@@ -62,26 +64,32 @@ impl Game {
             map: [[Piece::Empty; 19]; 19],
             captured1: 0,
             captured2: 0,
+            last_move_p1: (-1, -1),
+            last_move_p2: (-1, -1),
         }
     }
     
     //removed from place to not waste that much time
-    /*if self.map[x][y] != Piece::Empty {
-        return false;
-    }**/
+    // will have to evaluate it for the player as the ia is supposed to not do free-threes
+    // if self.find_free_threes( (x as i8, y as i8), 1) {
+    //     self.map[x][y] = Piece::Empty;
+    //     return false;
+    // }
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         if self.map[x][y] != Piece::Empty {
             return false;
         }
         self.map[x][y] = piece;
-        // will have to evaluate it for the player as the ia is supposed to not do free-threes
-        // if self.find_free_threes( (x as i8, y as i8), 1) {
-        //     self.map[x][y] = Piece::Empty;
-        //     return false;
-        // }
+
         match piece {
-            Piece::Player1 => self.capture(x, y, piece, Piece::Player2),
-            Piece::Player2 => self.capture(x, y, piece, Piece::Player1),
+            Piece::Player1 => {
+                self.capture(x, y, piece, Piece::Player2);
+                self.last_move_p1 = (x as i8, y as i8);
+            },
+            Piece::Player2 => {
+                self.capture(x, y, piece, Piece::Player1);
+                self.last_move_p2 = (x as i8, y as i8);
+        },
             _ => (),
         }
         true
@@ -147,7 +155,6 @@ impl Game {
 
         (false, Piece::Empty)
     }
-
 
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture_direction(&mut self, x: isize, y: isize, dx: isize, dy: isize, piece: Piece, o_piece: Piece) {

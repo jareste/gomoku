@@ -19,7 +19,7 @@ const THREATENING_BONUS: i32 = 100_000;
 
 pub trait IA{
     fn dfs_check_movement(&mut self, x: i8, y: i8, squares_to_check: i8) -> bool;
-    fn get_possible_moves(&mut self) -> Vec<(i8, i8)>;
+    fn get_possible_moves(&mut self, is_maximizing_player: bool) -> Vec<(i8, i8)>;
     fn get_consequtive_pieces_score(&mut self, player: Piece) -> i32;
     fn get_heuristic(&mut self) -> i32;
     fn minimax(&mut self, depth: i8, alpha: i32, beta: i32, is_maximizing_player: bool) -> Move;
@@ -27,6 +27,8 @@ pub trait IA{
     fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)>;
     fn evaluate_move(&mut self, moves: (i8, i8), player: Piece) -> i32;
     fn get_heuristic_moves(&mut self, possible_moves: &Vec<(i8, i8)>, is_maximizing_player: bool) -> Vec<Move>;
+    fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
+
     // fn iddfs(&mut self, max_depth: i8) -> Move;
 }
 
@@ -49,7 +51,11 @@ impl IA for Game {
         false
     }
 
-    fn get_possible_moves(&mut self) -> Vec<(i8, i8)> {
+    fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8 {
+        ((a.0 - b.0).abs() + (a.1 - b.1).abs()) as i8
+    }
+
+    fn get_possible_moves(&mut self, is_maximizing_player: bool) -> Vec<(i8, i8)> {
         let mut moves = HashSet::new();
         let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         for x in 0..19 {
@@ -71,7 +77,17 @@ impl IA for Game {
                 }
             }
         }
-        moves.into_iter().collect()
+        let mut vec_moves: Vec<_> = moves.into_iter().collect();
+        let last_move = match is_maximizing_player {
+            true => self.last_move_p1,
+            false => self.last_move_p2,
+        };
+        vec_moves.sort_by(|a, b| {
+            let da = self.distance(*a, last_move);
+            let db = self.distance(*b, last_move);
+            da.cmp(&db)
+        });
+        vec_moves
     }
 
     fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)> {
@@ -172,7 +188,7 @@ impl IA for Game {
         let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         for &(dx, dy) in &directions {
             let mut consecutive_pieces = 0;
-            for i in -1..=1 {
+            for i in -4..=4 { // Change this line
                 let nx = x as isize + i * dx;
                 let ny = y as isize + i * dy;
                 if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && self.map[nx as usize][ny as usize] == player {
@@ -204,14 +220,14 @@ impl IA for Game {
 
 
     fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
-        let mut possible_moves = self.get_possible_moves();
+        let mut possible_moves = self.get_possible_moves(is_maximizing_player);
         if depth == 0 {
             return Move { index: (0, 0), score: self.get_heuristic() };
         }
         let mut best_move = (0, 0);
         let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
         
-        possible_moves = self.get_heuristic_moves(&possible_moves, is_maximizing_player).iter().map(|&moves| moves.index).collect();
+        // possible_moves = self.get_heuristic_moves(&possible_moves, is_maximizing_player).iter().map(|&moves| moves.index).collect();
 
         for &moves in possible_moves.iter() {
             let mut new_game = self.clone();
@@ -244,12 +260,9 @@ impl IA for Game {
         Move { index: best_move, score: best_score }
     }
 
-
-
-  
-     fn best_move(&mut self) -> (i8, i8) {
-         self.minimax(3, i32::MIN, i32::MAX, true).index
-     }
+    fn best_move(&mut self) -> (i8, i8) {
+        self.minimax(1, i32::MIN, i32::MAX, true).index
+    }
 
 }
 
