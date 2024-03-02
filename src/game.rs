@@ -53,6 +53,7 @@ impl Piece {
 pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub values: [[i32; 19]; 19],
+    pub score: i64,
     pub captured1: i8,
     pub captured2: i8,
     pub last_move_p1: (i8, i8),
@@ -64,6 +65,7 @@ impl Game {
         Self {
             map: [[Piece::Empty; 19]; 19],
             values: [[0; 19]; 19],
+            score: 0,
             captured1: 0,
             captured2: 0,
             last_move_p1: (-1, -1),
@@ -71,13 +73,36 @@ impl Game {
         }
     }
     
-    //removed from place to not waste that much time
-    // will have to evaluate it for the player as the ia is supposed to not do free-threes
-    // if self.find_free_threes( (x as i8, y as i8), 1) {
-    //     self.map[x][y] = Piece::Empty;
-    //     return false;
-    // }
+    fn validate_movement(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        if x < 0 || x > 18 || y < 0 || y > 18 {
+            return false;
+        }
+        if self.map[x][y] != Piece::Empty {
+            return false;
+        }
+        self.map[x][y] = Piece::Player2;
+        if self.find_free_threes((x as i8, y as i8), 1) {
+            self.map[x][y] = Piece::Empty;
+            return false;
+        }
+        self.map[x][y] = Piece::Empty;
+        true
+    }
+
+    pub fn update_game(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        if !self.validate_movement(x, y, piece) {
+            return false;
+        }
+        if !self.place(x, y, piece) {
+            return false;
+        }
+        true
+    }
+
     pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
+        if !self.validate_movement(x, y, Piece::Player2) {
+            return false;
+        }
         if !self.place(x, y, Piece::Player2) {
             return false;
         }
@@ -87,12 +112,9 @@ impl Game {
         self.place_ia();
         true
     }
-    pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
-        if self.map[x][y] != Piece::Empty {
-            return false;
-        }
-        self.map[x][y] = piece;
 
+    pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        self.map[x][y] = piece;
         match piece {
             Piece::Player1 => {
                 self.capture(x, y, piece, Piece::Player2);

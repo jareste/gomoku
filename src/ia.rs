@@ -28,6 +28,8 @@ pub trait IA{
     fn evaluate_move(&mut self, moves: (i8, i8), player: Piece) -> i32;
     fn get_heuristic_moves(&mut self, possible_moves: &Vec<(i8, i8)>, is_maximizing_player: bool) -> Vec<Move>;
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
+    fn evaluate_map(&self) -> i32;
+    fn evaluate_piece(&self, x: usize, y: usize, piece: Piece) -> i32;
 
     // fn iddfs(&mut self, max_depth: i8) -> Move;
 }
@@ -73,13 +75,28 @@ impl IA for Game {
         vec_moves
     }
 
-    fn evaluate_piece(&self, x: usize, y: usize) -> i32 {
-        let piece = self.map[x][y];
+    fn evaluate_map(&self) -> i32 {
         let mut value = 0;
+        for x in 0..19 {
+            for y in 0..19 {
+                match self.map[x][y] {
+                    Piece::Empty => (),
+                    Piece::Player1 => value += self.evaluate_piece(x, y, Piece::Player1),
+                    Piece::Player2 => value -= self.evaluate_piece(x, y, Piece::Player2),
+                }
+            }
+        }
+        value
+    }
 
+    fn evaluate_piece(&self, x: usize, y: usize, piece: Piece) -> i32 {
+        // let piece = self.map[x][y];
+        let mut value = 0;
+        let x_isize = x as isize;
+        let y_isize = y as isize;
         // Check for lines in all directions
-        for dx in -1..=1 {
-            for dy in -1..=1 {
+        for dx in -1..=1 as isize {
+            for dy in -1..=1 as isize {
                 if dx == 0 && dy == 0 {
                     continue;
                 }
@@ -88,23 +105,36 @@ impl IA for Game {
 
                 // Check in one direction
                 let mut i = 1;
-                while self.map.get(x + i*dx).and_then(|row| row.get(y + i*dy)) == Some(&piece) {
+                while self.map.get(((x_isize + i*dx).max(0)) as usize)
+                    .and_then(|row| row.get(((y_isize + i*dy).max(0)) as usize)) == Some(&piece) {
                     line_length += 1;
                     i += 1;
                 }
-                if self.map.get(x + i*dx).and_then(|row| row.get(y + i*dy)) == Some(&Piece::Empty) {
-                    open_ends += 1;
+                if let Some(row) = self.map.get((x as isize + i*dx) as usize) {
+                    if row.get((y as isize + i*dy) as usize) == Some(&Piece::Empty) {
+                        open_ends += 1;
+                        // ...
+                    }
                 }
+                // if self.map.get(x + i*dx).and_then(|row| row.get(y + i*dy)) == Some(&Piece::Empty) {
+                // }
 
                 // Check in the other direction
                 let mut i = 1;
-                while self.map.get(x - i*dx).and_then(|row| row.get(y - i*dy)) == Some(&piece) {
+                while self.map.get(((x_isize - i*dx).max(0)) as usize)
+                    .and_then(|row| row.get(((y_isize - i*dy).max(0)) as usize)) == Some(&piece) {
                     line_length += 1;
                     i += 1;
                 }
-                if self.map.get(x - i*dx).and_then(|row| row.get(y - i*dy)) == Some(&Piece::Empty) {
-                    open_ends += 1;
+                if let Some(row) = self.map.get((x as isize + i*dx) as usize) {
+                    if row.get((y as isize + i*dy) as usize) == Some(&Piece::Empty) {
+                        open_ends += 1;
+                        // ...
+                    }
                 }
+                // if self.map.get(x_isize - i*dx).and_then(|row| row.get(y_isize - i*dy)) == Some(&Piece::Empty) {
+                //     open_ends += 1;
+                // }
 
                 // Update value based on line length and open ends
                 if line_length >= 4 && open_ends > 0 {
