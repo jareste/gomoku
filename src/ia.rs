@@ -15,7 +15,7 @@ pub struct KillerMove {
 
 const DEPTH: i8 = 7;
 const WINNING_BONUS: i32 = 10_000_000;
-const LOSING_PENALTY: i32 = -11_000_000;
+const LOSING_PENALTY: i32 = -10_000_000;
 const THREATENING_BONUS: i32 = 100_000;
 
 pub trait IA{
@@ -28,7 +28,7 @@ pub trait IA{
     fn evaluate_move(&mut self, moves: (i8, i8), player: Piece) -> i32;
     fn get_heuristic_moves(&mut self, possible_moves: &Vec<(i8, i8)>, is_maximizing_player: bool) -> Vec<Move>;
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
-    fn evaluate_map(&self) -> i32;
+    fn evaluate_map(&self, player: Piece) -> i32;
     fn evaluate_piece(&self, x: usize, y: usize, piece: Piece) -> i32;
 
     // fn iddfs(&mut self, max_depth: i8) -> Move;
@@ -80,24 +80,27 @@ impl IA for Game {
         });
         // println!("depth: {}", depth);
         if depth - 4 <= 0 {
-            let threshold = 50;
+            let threshold = 49;
             vec_moves.retain(|&moves| self.evaluate_piece(moves.0 as usize, moves.1 as usize, player) >= threshold);
         }
         vec_moves
     }
 
-    fn evaluate_map(&self) -> i32 {
+    fn evaluate_map(&self, player: Piece) -> i32 {
         let mut value: i32 = 0;
         for x in 0..19 {
             for y in 0..19 {
                 match self.map[x][y] {
-                    Piece::Empty => (),
-                    Piece::Player1 => value += self.evaluate_piece(x, y, Piece::Player1),
-                    Piece::Player2 => value -= self.evaluate_piece(x, y, Piece::Player2),
+                    player => value += self.evaluate_piece(x, y, player),
+                    _ => (),
                 }
             }
         }
-        value
+        match player {
+            Piece::Player1 => value,
+            Piece::Player2 => -value,
+            _ => 0,
+        }
     }
 
     fn evaluate_piece(&self, x: usize, y: usize, piece: Piece) -> i32 {
@@ -300,7 +303,7 @@ impl IA for Game {
     fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
         let mut possible_moves = self.get_possible_moves(is_maximizing_player, depth);
         if depth == 0 {
-            return Move { index: (18,18), score: self.evaluate_map() };
+            return Move { index: (18,18), score: self.evaluate_map(if is_maximizing_player { Piece::Player1 } else { Piece::Player2 } ) };
         }
         let mut best_move = (0, 0);
         let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };

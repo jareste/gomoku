@@ -80,7 +80,7 @@ impl Game {
         if self.map[x][y] != Piece::Empty {
             return false;
         }
-        self.map[x][y] = Piece::Player2;
+        self.map[x][y] = piece;
         if self.find_free_threes((x as i8, y as i8), 1) {
             self.map[x][y] = Piece::Empty;
             return false;
@@ -109,9 +109,11 @@ impl Game {
         if self.check_win() == (true, Piece::Player2) {
             return true;
         }
-        self.score = self.evaluate_map();
-        println!("scoremap : {}", self.score);
         self.place_ia();
+        // self.score = self.evaluate_map(Piece::Player1);
+        // println!("scoremap before1 : {}", self.score);
+        // self.score = self.evaluate_map(Piece::Player2);
+        // println!("scoremap after2 : {}", self.score);
         true
     }
 
