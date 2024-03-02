@@ -13,6 +13,7 @@ pub struct KillerMove {
     killer: Move,
 }
 
+const DEPTH: i8 = 3;
 const WINNING_BONUS: i32 = 10_000_000;
 const LOSING_PENALTY: i32 = -11_000_000;
 const THREATENING_BONUS: i32 = 100_000;
@@ -71,6 +72,58 @@ impl IA for Game {
         });
         vec_moves
     }
+
+    fn evaluate_piece(&self, x: usize, y: usize) -> i32 {
+        let piece = self.map[x][y];
+        let mut value = 0;
+
+        // Check for lines in all directions
+        for dx in -1..=1 {
+            for dy in -1..=1 {
+                if dx == 0 && dy == 0 {
+                    continue;
+                }
+                let mut line_length = 0;
+                let mut open_ends = 0;
+
+                // Check in one direction
+                let mut i = 1;
+                while self.map.get(x + i*dx).and_then(|row| row.get(y + i*dy)) == Some(&piece) {
+                    line_length += 1;
+                    i += 1;
+                }
+                if self.map.get(x + i*dx).and_then(|row| row.get(y + i*dy)) == Some(&Piece::Empty) {
+                    open_ends += 1;
+                }
+
+                // Check in the other direction
+                let mut i = 1;
+                while self.map.get(x - i*dx).and_then(|row| row.get(y - i*dy)) == Some(&piece) {
+                    line_length += 1;
+                    i += 1;
+                }
+                if self.map.get(x - i*dx).and_then(|row| row.get(y - i*dy)) == Some(&Piece::Empty) {
+                    open_ends += 1;
+                }
+
+                // Update value based on line length and open ends
+                if line_length >= 4 && open_ends > 0 {
+                    value += 1000;  // Winning threat
+                } else if line_length == 3 && open_ends == 2 {
+                    value += 100;  // Open three
+                } else if line_length == 3 && open_ends == 1 {
+                    value += 50;  // Half-open three
+                } else if line_length == 2 && open_ends == 2 {
+                    value += 10;  // Open two
+                } else if line_length == 2 && open_ends == 1 {
+                    value += 5;  // Half-open two
+                }
+            }
+        }
+
+        value
+    }
+
 
     fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)> {
         let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
@@ -244,7 +297,7 @@ impl IA for Game {
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        let best_move = self.minimax(3, i32::MIN, i32::MAX, true);
+        let best_move = self.minimax(DEPTH, i32::MIN, i32::MAX, true);
         println!("best:score: {}", best_move.score);
         best_move.index
     }

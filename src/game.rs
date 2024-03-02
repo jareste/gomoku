@@ -52,6 +52,7 @@ impl Piece {
 #[derive(Resource, Debug, Component, PartialEq, Clone)]
 pub struct Game {
     pub map: [[Piece; 19]; 19],
+    pub values: [[i32; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
     pub last_move_p1: (i8, i8),
@@ -62,6 +63,7 @@ impl Game {
     pub fn new() -> Self {
         Self {
             map: [[Piece::Empty; 19]; 19],
+            values: [[0; 19]; 19],
             captured1: 0,
             captured2: 0,
             last_move_p1: (-1, -1),
