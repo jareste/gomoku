@@ -79,6 +79,9 @@ impl Game {
         if !self.place(x, y, Piece::Player2) {
             return false;
         }
+        if self.check_win() == (true, Piece::Player2) {
+            return true;
+        }
         self.place_ia();
         true
     }

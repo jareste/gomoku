@@ -13,8 +13,8 @@ pub struct KillerMove {
     killer: Move,
 }
 
-const WINNING_BONUS: i32 = 1_000_000;
-const LOSING_PENALTY: i32 = -1_000_000;
+const WINNING_BONUS: i32 = 10_000_000;
+const LOSING_PENALTY: i32 = -11_000_000;
 const THREATENING_BONUS: i32 = 100_000;
 
 pub trait IA{
@@ -138,14 +138,14 @@ impl IA for Game {
 
     // should be reviewed but it's working.
     fn get_heuristic(&mut self) -> i32 {
+        match self.check_win() {
+            (true,Piece::Player1) => return WINNING_BONUS,
+            (true,Piece::Player2) => return LOSING_PENALTY,
+            _ => (),
+        }
         let mut score = 0;
         score += self.get_consequtive_pieces_score(Piece::Player1);
         score -= (self.get_consequtive_pieces_score(Piece::Player2));
-        match self.check_win() {
-            (true,Piece::Player1) => score += WINNING_BONUS,
-            (true,Piece::Player2) => score -= LOSING_PENALTY,
-            _ => (),
-        }
         if self.captured1 > 0 {
             score += self.captured1 as i32 * 100;
         }
@@ -237,11 +237,16 @@ impl IA for Game {
                 break;
             }
         }
+        if best_move == (5, 11) {
+            println!("score: {:?}", best_score);
+        }
         Move { index: best_move, score: best_score }
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        self.minimax(3, i32::MIN, i32::MAX, true).index
+        let best_move = self.minimax(3, i32::MIN, i32::MAX, true);
+        println!("best:score: {}", best_move.score);
+        best_move.index
     }
 
 }
