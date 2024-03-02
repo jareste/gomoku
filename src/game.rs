@@ -53,7 +53,7 @@ impl Piece {
 pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub values: [[i32; 19]; 19],
-    pub score: i64,
+    pub score: i32,
     pub captured1: i8,
     pub captured2: i8,
     pub last_move_p1: (i8, i8),
@@ -109,6 +109,8 @@ impl Game {
         if self.check_win() == (true, Piece::Player2) {
             return true;
         }
+        self.score = self.evaluate_map();
+        println!("scoremap : {}", self.score);
         self.place_ia();
         true
     }
@@ -196,7 +198,9 @@ impl Game {
             && self.map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&piece) {
 
             self.map[(x + 1 * dx) as usize][(y + 1 * dy) as usize] = Piece::Empty;
+            self.values[(x + 1 * dx) as usize][(y + 1 * dy) as usize] = 0;
             self.map[(x + 2 * dx) as usize][(y + 2 * dy) as usize] = Piece::Empty;
+            self.values[(x + 2 * dx) as usize][(y + 2 * dy) as usize] = 0;
             if piece == Piece::Player1 {
                 self.captured1 += 2;
             } else {
