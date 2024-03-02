@@ -8,6 +8,7 @@ use bevy::prelude::Sprite;
 
 use std::process::exit;
 
+
 // This plugin will contain the game. In this case, it's just be a screen that will
 // display the current settings for 5 seconds before returning to the menu
 pub fn gameUI_plugin(app: &mut App) {
@@ -90,39 +91,10 @@ fn gameUI_setup(
         });
 
     // Creating a grid of empty tiles.
-    for row in 0..19 {
-        for col in 0..19 {
-            let position = Position { row, col };
-
-            commands
-                .spawn(SpriteBundle {
-                    //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(tile_size, tile_size)),
-                        color: Color::rgba_u8(238, 228, 218, 90).into(),
-                        ..default()
-                    },
-                    transform: Transform::from_translation(position.to_vec3()),
-                    ..Default::default()
-                });
-        }
-    }
     if *mode == Mode::IA {
-        let position = Position { row: 9, col: 9};
-        let tile_size = 500.0 /19.0;
         game.start_ia();
-        commands
-        .spawn(SpriteBundle {
-            //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-            sprite: Sprite {
-                custom_size: Some(Vec2::new(tile_size, tile_size)),
-                color: Color::rgba_u8(238, 50, 50, 250).into(),
-                ..default()
-            },
-            transform: Transform::from_translation(position.to_vec3()),
-            ..Default::default()
-        });
     }
+    print_ui_map(&game, &mut commands, tile_size);
     // Spawn a 5 seconds timer to trigger going back to the menu
 
     
@@ -138,15 +110,70 @@ fn gameUI(
     //}
 }
 
+fn print_ui_empty_tile(position: Position, tile_size: f32, commands: &mut Commands) {
+    let empty_tile : Color = Color::rgba_u8(238, 228, 218, 250);
+    commands
+    .spawn(SpriteBundle {
+        //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
+        sprite: Sprite {
+            custom_size: Some(Vec2::new(tile_size, tile_size)),
+            color: empty_tile.into(),
+            ..default()
+        },
+        transform: Transform::from_translation(position.to_vec3()),
+        ..Default::default()
+    });
+}
+
+fn print_ui_p1_tile(position: Position, tile_size: f32, commands: &mut Commands) {
+    let p1_tile : Color = Color::rgba_u8(238, 50, 50, 250);
+    commands
+    .spawn(SpriteBundle {
+        //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
+        sprite: Sprite {
+            custom_size: Some(Vec2::new(tile_size, tile_size)),
+            color: p1_tile.into(),
+            ..default()
+        },
+        transform: Transform::from_translation(position.to_vec3()),
+        ..Default::default()
+    });
+}
+
+fn print_ui_p2_tile(position: Position, tile_size: f32, commands: &mut Commands) {
+    let p2_tile : Color = Color::rgba_u8(50, 50, 218, 255);
+    commands
+    .spawn(SpriteBundle {
+        //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
+        sprite: Sprite {
+            custom_size: Some(Vec2::new(tile_size, tile_size)),
+            color: p2_tile.into(),
+            ..default()
+        },
+        transform: Transform::from_translation(position.to_vec3()),
+        ..Default::default()
+    });
+}
+
+fn print_ui_map(game: &Game, commands: &mut Commands, tile_size: f32) {
+    for i in 0..19 {
+        for j in 0..19 {
+            let position = Position { row: 18 - i, col: j};
+            match game.map[i][j] {
+                Piece::Empty => print_ui_empty_tile(position, tile_size, commands),
+                Piece::Player1 => print_ui_p1_tile(position, tile_size, commands),
+                Piece::Player2 => print_ui_p2_tile(position, tile_size, commands)
+            }
+        }
+    }
+}
+
 fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInput<MouseButton>>,  windows: Query<&Window>, mut player: ResMut<Player>, mut game : ResMut<Game> , mode : Res<Mode>) {
 
     let center = Vec2::new(600.0, 400.0);
     let board = 500.0 + (20.0 * 10.0);
     let tile_size = 500.0 /19.0;
     let tile_spacing = 10.0;
-
-    
-
 
     if mouse_button_input.just_pressed(MouseButton::Left) {
         let mouse: Vec2 = windows.single().cursor_position().unwrap() - Vec2::new(260.0, 60.0);
@@ -164,35 +191,11 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
         if *mode == Mode::IA {
             let p_back = position.clone().to_backend();
             info!("click on coordinates: {} {}", p_back.0, p_back.1);
-            if !game.place(p_back.0, p_back.1, Piece::Player2) {
+            if !game.update_game_ia(p_back.0, p_back.1) {
                 info!("Invalid move");
                 return;
             }
-            commands
-                .spawn(SpriteBundle {
-                    //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(tile_size, tile_size)),
-                        color: Color::rgba_u8(50, 50, 218, 255).into(),
-                        ..default()
-                    },
-                    transform: Transform::from_translation(position.to_vec3()),
-                    ..Default::default()
-            });
-            let ia_move = game.place_ia();
-            let position_ia = Position { row: 18 - ia_move.0 , col: ia_move.1};
-            commands
-            .spawn(SpriteBundle {
-                //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-                sprite: Sprite {
-                    custom_size: Some(Vec2::new(tile_size, tile_size)),
-                    color: Color::rgba_u8(238, 50, 50, 250).into(),
-                    ..default()
-                },
-                transform: Transform::from_translation(position_ia.to_vec3()),
-                ..Default::default()
-            });
-
+            print_ui_map(&game, &mut commands, tile_size);
         }
 
         // if *player == Player::P1 {

@@ -75,6 +75,13 @@ impl Game {
     //     self.map[x][y] = Piece::Empty;
     //     return false;
     // }
+    pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
+        if !self.place(x, y, Piece::Player2) {
+            return false;
+        }
+        self.place_ia();
+        true
+    }
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         if self.map[x][y] != Piece::Empty {
             return false;
