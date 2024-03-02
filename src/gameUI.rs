@@ -110,44 +110,13 @@ fn gameUI(
     //}
 }
 
-fn print_ui_empty_tile(position: Position, tile_size: f32, commands: &mut Commands) {
-    let empty_tile : Color = Color::rgba_u8(238, 228, 218, 250);
+fn print_ui_tile(position: Position, tile_size: f32, commands: &mut Commands, color: Color) {
     commands
     .spawn(SpriteBundle {
         //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
         sprite: Sprite {
             custom_size: Some(Vec2::new(tile_size, tile_size)),
-            color: empty_tile.into(),
-            ..default()
-        },
-        transform: Transform::from_translation(position.to_vec3()),
-        ..Default::default()
-    });
-}
-
-fn print_ui_p1_tile(position: Position, tile_size: f32, commands: &mut Commands) {
-    let p1_tile : Color = Color::rgba_u8(238, 50, 50, 250);
-    commands
-    .spawn(SpriteBundle {
-        //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-        sprite: Sprite {
-            custom_size: Some(Vec2::new(tile_size, tile_size)),
-            color: p1_tile.into(),
-            ..default()
-        },
-        transform: Transform::from_translation(position.to_vec3()),
-        ..Default::default()
-    });
-}
-
-fn print_ui_p2_tile(position: Position, tile_size: f32, commands: &mut Commands) {
-    let p2_tile : Color = Color::rgba_u8(50, 50, 218, 255);
-    commands
-    .spawn(SpriteBundle {
-        //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-        sprite: Sprite {
-            custom_size: Some(Vec2::new(tile_size, tile_size)),
-            color: p2_tile.into(),
+            color: color.into(),
             ..default()
         },
         transform: Transform::from_translation(position.to_vec3()),
@@ -156,13 +125,16 @@ fn print_ui_p2_tile(position: Position, tile_size: f32, commands: &mut Commands)
 }
 
 fn print_ui_map(game: &Game, commands: &mut Commands, tile_size: f32) {
+    let empty_tile : Color = Color::rgba_u8(238, 228, 218, 250);
+    let p1_tile : Color = Color::rgba_u8(238, 50, 50, 250);
+    let p2_tile : Color = Color::rgba_u8(50, 50, 218, 255);
     for i in 0..19 {
         for j in 0..19 {
             let position = Position { row: 18 - i, col: j};
             match game.map[i][j] {
-                Piece::Empty => print_ui_empty_tile(position, tile_size, commands),
-                Piece::Player1 => print_ui_p1_tile(position, tile_size, commands),
-                Piece::Player2 => print_ui_p2_tile(position, tile_size, commands)
+                Piece::Empty => print_ui_tile(position, tile_size, commands, empty_tile),
+                Piece::Player1 => print_ui_tile(position, tile_size, commands, p1_tile),
+                Piece::Player2 => print_ui_tile(position, tile_size, commands, p2_tile)
             }
         }
     }
@@ -188,74 +160,27 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
         info!("{}", windows.single().cursor_position().unwrap());
         info!("row: {}, col: {}, pl: {:?}", row, col, *player);
         
-        if *mode == Mode::IA {
-            let p_back = position.clone().to_backend();
-            info!("click on coordinates: {} {}", p_back.0, p_back.1);
-            if !game.update_game_ia(p_back.0, p_back.1) {
-                info!("Invalid move");
-                return;
+        match *mode {
+            Mode::Normal => {
+                let p_back = position.clone().to_backend();
+                info!("click on coordinates: {} {}", p_back.0, p_back.1);
+                if !game.place(p_back.0, p_back.1, if *player == Player::P1 {Piece::Player1} else {Piece::Player2}) {
+                    info!("Invalid move");
+                    return;
+                }
+                if *player == Player::P1 { *player = Player::P2 } else { *player = Player::P1 };
+                print_ui_map(&game, &mut commands, tile_size);
+            },
+            Mode::IA => {
+                let p_back = position.clone().to_backend();
+                info!("click on coordinates: {} {}", p_back.0, p_back.1);
+                if !game.update_game_ia(p_back.0, p_back.1) {
+                    info!("Invalid move");
+                    return;
+                }
+                print_ui_map(&game, &mut commands, tile_size);
             }
-            print_ui_map(&game, &mut commands, tile_size);
         }
-
-        // if *player == Player::P1 {
-        //     match *mode {
-        //         Mode::Normal => {
-        //             let p_back = position.clone().to_backend();
-        //             if !game.place(p_back.0, p_back.1, Piece::Player1) {
-        //                 info!("Invalid move");
-        //                 return;
-        //             }
-        //             commands
-        //                 .spawn(SpriteBundle {
-        //                     //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-        //                     sprite: Sprite {
-        //                         custom_size: Some(Vec2::new(tile_size, tile_size)),
-        //                         color: Color::rgba_u8(238, 50, 50, 250).into(),
-        //                         ..default()
-        //                     },
-        //                     transform: Transform::from_translation(position.to_vec3()),
-        //                     ..Default::default()
-        //                 });
-        //             *player = Player::P2;
-        //         },
-        //         Mode::IA => {
-        //         let ia_move = game.place_ia();
-        //         let position_ia = Position { row: ia_move.0 , col: ia_move.1};
-        //         commands
-        //         .spawn(SpriteBundle {
-        //             //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-        //             sprite: Sprite {
-        //                 custom_size: Some(Vec2::new(tile_size, tile_size)),
-        //                 color: Color::rgba_u8(238, 50, 50, 250).into(),
-        //                 ..default()
-        //             },
-        //             transform: Transform::from_translation(position_ia.to_vec3()),
-        //             ..Default::default()
-        //         });
-        //         *player = Player::P2;
-        //         },
-        //     }
-        // }
-        // else{
-        //     let p_back = position.clone().to_backend();
-        //     if !game.place(p_back.0, p_back.1, Piece::Player2) {
-        //         info!("Invalid move");
-        //         return;
-        //     }
-        //     commands
-        //         .spawn(SpriteBundle {
-        //             //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
-        //             sprite: Sprite {
-        //                 custom_size: Some(Vec2::new(tile_size, tile_size)),
-        //                 color: Color::rgba_u8(50, 50, 218, 255).into(),
-        //                 ..default()
-        //             },
-        //             transform: Transform::from_translation(position.to_vec3()),
-        //             ..Default::default()
-        //         });
-        //     *player = Player::P1;
-        // }
         game.print_map();
         if (game.check_win() == (true, Piece::Player1)) || (game.check_win() == (true, Piece::Player2)) {
             println!("Segmentation Fault (core dumped)");
