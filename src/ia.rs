@@ -18,7 +18,6 @@ const LOSING_PENALTY: i32 = -1_000_000;
 const THREATENING_BONUS: i32 = 100_000;
 
 pub trait IA{
-    fn dfs_check_movement(&mut self, x: i8, y: i8, squares_to_check: i8) -> bool;
     fn get_possible_moves(&mut self, is_maximizing_player: bool) -> Vec<(i8, i8)>;
     fn get_consequtive_pieces_score(&mut self, player: Piece) -> i32;
     fn get_heuristic(&mut self) -> i32;
@@ -34,23 +33,6 @@ pub trait IA{
 
 
 impl IA for Game {
-    fn dfs_check_movement(&mut self, x: i8, y: i8, squares_to_check: i8) -> bool {
-        let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
-        for &(dx, dy) in &directions {
-            for i in 1..=squares_to_check {
-                let nx = x + i * dx;
-                let ny = y + i * dy;
-                if nx < 0 || ny < 0 || nx >= 19 || ny >= 19 {
-                    break;
-                }
-                if self.map[nx as usize][ny as usize] != Piece::Empty {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8 {
         ((a.0 - b.0).abs() + (a.1 - b.1).abs()) as i8
     }
@@ -62,7 +44,7 @@ impl IA for Game {
             for y in 0..19 {
                 if self.map[x][y] != Piece::Empty {
                     for &(dx, dy) in &directions {
-                        for i in 1..=2 {
+                        for i in 1..=1 {
                             let nx = x as isize + i * dx;
                             let ny = y as isize + i * dy;
                             if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && self.map[nx as usize][ny as usize] == Piece::Empty  {
@@ -93,7 +75,6 @@ impl IA for Game {
     fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)> {
         let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         let mut valid_directions = Vec::new();
-
         for &(dx, dy) in &directions {
             let mut consecutive_pieces = 0;
             for i in -1..=1 {
@@ -107,7 +88,6 @@ impl IA for Game {
                 valid_directions.push((dx, dy));
             }
         }
-
         valid_directions
     }
    
@@ -261,22 +241,17 @@ impl IA for Game {
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        self.minimax(2, i32::MIN, i32::MAX, true).index
+        self.minimax(3, i32::MIN, i32::MAX, true).index
     }
 
 }
 
-
 // fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
-//     let mut possible_moves = self.get_possible_moves();
+//     let mut possible_moves = self.get_possible_moves(is_maximizing_player);
 //     if depth == 0 {
 //         return Move { index: (0, 0), score: self.get_heuristic() };
 //     }
-//     let game_state = self.to_string();
 
-//     if let Some(score) = self.transposition_table.get(&game_state) {
-//         return Move { index: (0, 0), score: *score };
-//     }
 //     let mut best_move = (0, 0);
 //     let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
 
@@ -311,6 +286,5 @@ impl IA for Game {
 //             break;
 //         }
 //     }
-//     self.transposition_table.insert(game_state, best_score);
 //     Move { index: best_move, score: best_score }
 // }
