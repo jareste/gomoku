@@ -56,34 +56,17 @@ impl IA for Game {
             }
         }
         let mut vec_moves: Vec<_> = moves.into_iter().collect();
-        let (last_move, player) = match is_maximizing_player {
-            true => (self.last_move_p1, Piece::Player1),
-            false => (self.last_move_p2, Piece::Player2),
-        };
-        // println!("depth: {}", depth);
-        // if depth - 4 <= 0 {
-        //     let threshold = 49;
-        //     vec_moves.retain(|&moves| self.evaluate_piece(moves.0 as usize, moves.1 as usize, player) >= threshold);
-        // }
+        vec_moves.sort_by(|a, b| {
+            let a_distance = self.distance(*a, (9, 9));
+            let b_distance = self.distance(*b, (9, 9));
+            a_distance.cmp(&b_distance)
+        });
         vec_moves
     }
-    // PatternsValue = {
-//     Patterns.POTENTIAL_CAPTURE        : 1,
-//     Patterns.AX_DEVELOPING_TO_2       : 10,
-//     Patterns.AX_DEVELOPING_TO_3       : 100,
-//     Patterns.CAPTURE                  : 2000,
-//     Patterns.AX_DEVELOPING_TO_4       : 10_000,
-//     Patterns.FREE_3                   : 100_000,
-//     Patterns.FREE_4                   : 1_000_000,
-//     Patterns.FIVE_IN_A_ROW            : float('inf'),
-// }
-
-// use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DEVELOPING_TWO,\
-//     FREE_THREE, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
-
 
     fn evaluate_move(&self, is_maximizing_player: bool, last_move: (i8, i8)) -> i128 {
         let mut score: i128 = 0;
+        println!("last_move: {:?}", last_move);
         let (player, opponent) = match is_maximizing_player {
             true => (Piece::Player1, Piece::Player2),
             false => (Piece::Player2, Piece::Player1),
@@ -107,9 +90,11 @@ impl IA for Game {
                 // println!("sequence: {:?}", sequence);
                 let array_sequence = [sequence[0], sequence[1], sequence[2], sequence[3]];
                 if POSSIBLE_CAPTURE.contains(&array_sequence) {
+                    println!("POSSIBLE_CAPTURE: {:?}, last_move: {:?}", array_sequence, last_move);
                     score += 1;
                 }
                 if CAPTURE.contains(&array_sequence) {
+                    println!("CAPTURE: {:?}, last_move: {:?}", array_sequence, last_move);
                     score += 2_000;
                 }
             }
@@ -127,19 +112,26 @@ impl IA for Game {
                     score += 100;
                 }
                 if DEVELOPING_TWO.contains(&array_sequence) {
+                    println!("DEVELOPING_TWO: {:?}, last_move: {:?}", array_sequence, last_move);
                     score += 10;
                 }
             }
             if sequence.len() == 6 {
                 let array_sequence = [sequence[0], sequence[1], sequence[2], sequence[3], sequence[4], sequence[5]];
                 if FREE_FOUR.contains(&array_sequence) {
+                    println!("FREE_FOUR: {:?}, last_move: {:?}", array_sequence, last_move);
                     score += 1_000_000;
                 }
                 if FREE_THREE.contains(&array_sequence) {
+                    println!("FREE_THREE: {:?}, last_move: {:?}", array_sequence, last_move);
                     score += 100_000;
                 }
             }
         }
+        if !is_maximizing_player {
+            score *= -1;
+        }
+        println!("score: {}", score);
         score
     }
 
@@ -162,7 +154,7 @@ impl IA for Game {
     fn minimax(&mut self, depth: i8, mut alpha: i128, mut beta: i128, is_maximizing_player: bool) -> Move {
         let mut possible_moves = self.get_possible_moves(is_maximizing_player, depth);
         if depth == 0 {
-            return self.get_best_movement(is_maximizing_player, possible_moves);
+            return Move { index: (0,0), score: self.get_best_movement(is_maximizing_player, possible_moves).score };
         }
         let mut best_move = (0, 0);
         let mut best_score = if is_maximizing_player { i128::MIN } else { i128::MAX };
@@ -203,6 +195,7 @@ impl IA for Game {
     fn best_move(&mut self) -> (i8, i8) {
         let best_move = self.minimax(DEPTH, i128::MIN, i128::MAX, true);
         println!("best:score: {}", best_move.score);
+        self.evaluate_move(true, best_move.index);
         best_move.index
     }
 
