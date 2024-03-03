@@ -92,17 +92,19 @@ impl IA for Game {
         let mut opponent_score = 0;
         for &(dx, dy) in &DIRECTIONS {
             let mut sequence = Vec::new();
-            for i in -1..=5 as i8 {
+            for i in -1..=4 as i8 {
                 let nx = last_move.0 + i * dx;
                 let ny = last_move.1 + i * dy;
                 if nx >= 0 && nx < 19 && ny >= 0 && ny < 19 {
                     sequence.push(self.map[nx as usize][ny as usize]);
                 }
             }
+            // println!("sequence: {:?}", sequence);
             if sequence.len() < 4 {
                 continue;
             }
-            if sequence.len() == 4 {
+            if sequence.len() >= 4 {
+                // println!("sequence: {:?}", sequence);
                 let array_sequence = [sequence[0], sequence[1], sequence[2], sequence[3]];
                 if POSSIBLE_CAPTURE.contains(&array_sequence) {
                     score += 1;
@@ -111,15 +113,17 @@ impl IA for Game {
                     score += 2_000;
                 }
             }
-            if sequence.len() == 5 {
+            if sequence.len() >= 5 {
                 let array_sequence = [sequence[0], sequence[1], sequence[2], sequence[3], sequence[4]];
                 if FIVE_IN_A_ROW.contains(&array_sequence) {
-                    score += i128::MAX;
+                    return i128::MAX;
                 }
                 if DEVELOPING_FOUR.contains(&array_sequence) {
+                    println!("DEVELOPING_FOUR: {:?}, last_move: {:?}", array_sequence, last_move);
                     score += 10_000;
                 }
                 if DEVELOPING_THREE.contains(&array_sequence) {
+                    println!("DEVELOPING_THREE: {:?}, last_move: {:?}", array_sequence, last_move);
                     score += 100;
                 }
                 if DEVELOPING_TWO.contains(&array_sequence) {
@@ -145,6 +149,7 @@ impl IA for Game {
         for &moves in possible_moves.iter() {
             self.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
             let score = self.evaluate_move(is_maximizing_player, moves);
+            // println!("score: {}", score);
             self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
             if score > best_score {
                 best_score = score;
