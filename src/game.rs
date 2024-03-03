@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::process::exit;
 use bevy::prelude::*;
 use std::fmt;
+use crate::constants::{FREE_THREE, FIVE_IN_A_ROW};
 
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -14,19 +15,6 @@ pub enum Piece {
     Player1,
     Player2,
 }
-
-pub const POSSIBILITIES: [[Piece; 6]; 10] = [
-    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty], // - X X X -
-    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1], // - X X X -
-    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2], // - X X X -
-    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty], // - O O O -
-    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1], // - O O O -
-    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2], // - O O O -
-    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty], // - X X - X -
-    [Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty], // - X - X X -
-    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty], // - O O - O -
-    [Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty], // - O - O O -
-];
 
 
 impl fmt::Display for Piece {
@@ -248,7 +236,7 @@ impl Game {
                     ] {
                         let sequence = [a, b, c, d, e, f];
                         // println!("sequence: {:?}", sequence);
-                        if POSSIBILITIES.contains(&sequence) {
+                        if FREE_THREE.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
@@ -275,7 +263,7 @@ impl Game {
                         if y + 4 < 19 { self.map[x][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        if POSSIBILITIES.contains(&sequence) {
+                        if FREE_THREE.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
@@ -303,7 +291,7 @@ impl Game {
                         if x + 4 < 19 && y + 4 < 19 { self.map[x + 4][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        if POSSIBILITIES.contains(&sequence) {
+                        if FREE_THREE.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
@@ -334,7 +322,7 @@ impl Game {
                     ] {
                         let sequence = [a, b, c, d, e, f];
                         // println!("sequence: {:?}", sequence);
-                        if POSSIBILITIES.contains(&sequence) {
+                        if FREE_THREE.contains(&sequence) {
                             match self.map[x][y] {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {

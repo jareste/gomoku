@@ -5,6 +5,7 @@ mod ia;
 //use game::terminal_game_ia;
 mod gameUI;
 mod menu;
+mod constants;
 
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_prototype_lyon::prelude::*;

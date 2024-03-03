@@ -1,6 +1,8 @@
 use rayon::prelude::*;
 use std::collections::HashSet;
 use crate::game::{Game, Piece};
+use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY};
+
 
 #[derive(Clone, Copy, Debug)]
 pub struct Move {
@@ -12,11 +14,6 @@ pub struct KillerMove {
     depth: i8,
     killer: Move,
 }
-
-const DEPTH: i8 = 7;
-const WINNING_BONUS: i32 = 10_000_000;
-const LOSING_PENALTY: i32 = -10_000_000;
-const THREATENING_BONUS: i32 = 100_000;
 
 pub trait IA{
     fn get_possible_moves(&mut self, is_maximizing_player: bool, depth: i8) -> Vec<(i8, i8)>;
