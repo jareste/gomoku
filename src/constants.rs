@@ -89,4 +89,20 @@ pub const FIVE_IN_A_ROW: [[Piece; 5]; 2] = [
     [Piece::Player2, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Player2], // O O O O O
 ];
 
-pub const POSSIBLE_CAPTURE 
+pub const POSSIBLE_CAPTURE: [[Piece: 4]; 4] = [
+    [Piece::Player1, Piece::Player2, Piece::Player2, Piece::Empty], // X O O -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player1], // - O O X
+    [Piece::Player2, Piece::Player1, Piece::Player1, Piece::Empty], // O X X -
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player2], // - X X O
+]
+
+// PatternsValue = {
+//     Patterns.POTENTIAL_CAPTURE        : 1,
+//     Patterns.AX_DEVELOPING_TO_2       : 10,
+//     Patterns.AX_DEVELOPING_TO_3       : 100,
+//     Patterns.CAPTURE                  : 2000,
+//     Patterns.AX_DEVELOPING_TO_4       : 10000,
+//     Patterns.FREE_3                   : 100000,
+//     Patterns.FREE_4                   : 1000000,
+//     Patterns.FIVE_IN_A_ROW            : float('inf'),
+// }
