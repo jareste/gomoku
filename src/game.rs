@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::process::exit;
 use bevy::prelude::*;
 use std::fmt;
-use crate::constants::{FREE_THREE, FIVE_IN_A_ROW};
+use crate::constants::{FREE_THREE_FIVE, FREE_THREE_SIX, FIVE_IN_A_ROW};
 
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -220,7 +220,6 @@ impl Game {
         let piece = self.map[last_move.0 as usize][last_move.1 as usize];
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
-        let x_range = 
         for x in 1..16 {
             for y in 1..16 {
                 if self.map[x][y] == piece {
@@ -236,7 +235,7 @@ impl Game {
                     ] {
                         let sequence = [a, b, c, d, e, f];
                         // println!("sequence: {:?}", sequence);
-                        if FREE_THREE.contains(&sequence) {
+                        if FREE_THREE_SIX.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
@@ -263,7 +262,7 @@ impl Game {
                         if y + 4 < 19 { self.map[x][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        if FREE_THREE.contains(&sequence) {
+                        if FREE_THREE_SIX.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
@@ -291,7 +290,7 @@ impl Game {
                         if x + 4 < 19 && y + 4 < 19 { self.map[x + 4][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        if FREE_THREE.contains(&sequence) {
+                        if FREE_THREE_SIX.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
@@ -322,7 +321,7 @@ impl Game {
                     ] {
                         let sequence = [a, b, c, d, e, f];
                         // println!("sequence: {:?}", sequence);
-                        if FREE_THREE.contains(&sequence) {
+                        if FREE_THREE_SIX.contains(&sequence) {
                             match self.map[x][y] {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
