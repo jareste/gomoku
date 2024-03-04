@@ -2,6 +2,8 @@ use rayon::prelude::*;
 use std::collections::HashSet;
 use std::collections::HashMap;
 use crate::game::{Game, Piece};
+use rand::seq::SliceRandom;
+use rand::prelude::IteratorRandom;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Move {
@@ -14,6 +16,7 @@ pub struct KillerMove {
     killer: Move,
 }
 
+const DEPTH: i8 = 3;
 const WINNING_BONUS: i32 = 10_000_000;
 const LOSING_PENALTY: i32 = -11_000_000;
 const THREATENING_BONUS: i32 = 100_000;
@@ -72,15 +75,30 @@ impl IA for Game {
             }
         }
         let mut vec_moves: Vec<_> = moves.into_iter().collect();
-        let last_move = match is_maximizing_player {
-            true => self.last_move_p1,
-            false => self.last_move_p2,
-        };
         vec_moves.sort_by(|a, b| {
-            let da = self.distance(*a, last_move);
-            let db = self.distance(*b, last_move);
+            let da1 = self.distance(*a, self.last_move_p1);
+            let da2 = self.distance(*a, self.last_move_p2);
+            let db1 = self.distance(*b, self.last_move_p1);
+            let db2 = self.distance(*b, self.last_move_p2);
+            let da = da1.min(da2);
+            let db = db1.min(db2);
             da.cmp(&db)
         });
+    
+
+
+        let second_half_start = vec_moves.len() / 2;
+        let mut second_half: Vec<_> = vec_moves.split_off(second_half_start);
+        let num_to_remove = (second_half.len() as f64 * 0.20).round() as usize;
+
+        let rng = &mut rand::thread_rng();
+        let indices_to_remove: Vec<_> = (0..second_half.len()).choose_multiple(rng, num_to_remove);
+        second_half = second_half.into_iter().enumerate().filter(|(i, _)| !indices_to_remove.contains(i)).map(|(_, item)| item).collect();
+
+        vec_moves.extend(second_half);
+
+
+
         vec_moves
     }
 
@@ -175,10 +193,7 @@ impl IA for Game {
 
 
     fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
-        let state_string = self.state_to_string();
-        if let Some(cached_move) = self.get_transposition_table().get(&state_string) {
-            return *cached_move;
-        }
+
         let mut possible_moves = self.get_possible_moves(is_maximizing_player);
         if depth == 0 {
             return Move { index: (0, 0), score: self.get_heuristic() };
@@ -187,6 +202,10 @@ impl IA for Game {
         if winner == (true, Piece::Player1) || winner == (true, Piece::Player2) {
             // println!("depth: {}, winner: {}", depth, winner.1);
             return Move { index: (0,0), score: if (winner == (true, Piece::Player1)) { i32::MAX } else { i32::MIN }};
+        }
+        let state_string = self.state_to_string();
+        if let Some(cached_move) = self.get_transposition_table().get(&state_string) {
+            return *cached_move;
         }
         let (best_move, best_score) = possible_moves.par_iter()
         .map(|&moves| {
@@ -209,9 +228,25 @@ impl IA for Game {
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        let best_move = self.minimax(3, i32::MIN, i32::MAX, true);
-        println!("best:score: {}", best_move.score);
-        best_move.index
+        // let mut best_score = i32::MIN;
+        // let mut best_index = (0, 0);
+        // let mut best_move = Move { index: (0, 0), score: i32::MIN };
+
+        // for i in 1..5 {
+        //     self.get_transposition_table().clear();
+        //     best_move = self.minimax(i, i32::MIN, i32::MAX, true);
+        //     println!("depth: {}, best:score: {}", i, best_move.score);
+        //     if best_move.score > best_score {
+        //         best_score = best_move.score;
+        //         best_index = best_move.index;
+        //     }
+        //     // Update the transposition table with the best move found at this depth
+        //     let state_string = self.state_to_string();
+        //     self.get_transposition_table().insert(state_string, best_move);
+        // }
+
+        // best_index
+        self.minimax(3, i32::MIN, i32::MAX, true).index
     }
 
 }

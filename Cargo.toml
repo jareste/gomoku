@@ -10,6 +10,7 @@ rayon = "1.5.1"
 bevy = { version = "0.13.0", features = ["dynamic_linking"] }
 bevy_prototype_lyon = "0.11.0"
 bevy_simple_text_input = "0.4.0"
+rand = "0.8.4"
 
 [workspace]
 resolver = "2" # Important! wgpu/Bevy needs this!
