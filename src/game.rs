@@ -6,9 +6,9 @@ use std::collections::HashMap;
 use std::process::exit;
 use bevy::prelude::*;
 use std::fmt;
+use crate::ia::Move;
 
-
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Piece {
     Empty,
     Player1,
@@ -49,13 +49,14 @@ impl Piece {
     }
 }
 
-#[derive(Resource, Debug, Component, PartialEq, Clone)]
+#[derive(Resource, Debug, Component, PartialEq, Clone, Eq)]
 pub struct Game {
     pub map: [[Piece; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
     pub last_move_p1: (i8, i8),
     pub last_move_p2: (i8, i8),
+    pub transposition_table: HashMap<String, Move>,
 }
 
 impl Game {
@@ -66,9 +67,23 @@ impl Game {
             captured2: 0,
             last_move_p1: (-1, -1),
             last_move_p2: (-1, -1),
+            transposition_table: HashMap::new(),
         }
     }
     
+    pub fn state_to_string(&self) -> String {
+        self.map.iter()
+            .map(|row| row.iter()
+                .map(|&cell| match cell {
+                    Piece::Player1 => 'X',
+                    Piece::Player2 => 'O',
+                    Piece::Empty => ' ',
+                })
+                .collect::<String>())
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
     //removed from place to not waste that much time
     // will have to evaluate it for the player as the ia is supposed to not do free-threes
     // if self.find_free_threes( (x as i8, y as i8), 1) {

@@ -1,8 +1,9 @@
 use rayon::prelude::*;
 use std::collections::HashSet;
+use std::collections::HashMap;
 use crate::game::{Game, Piece};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Move {
     index: (i8, i8),
     score: i32,
@@ -26,11 +27,24 @@ pub trait IA{
     fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)>;
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
 
+
+    fn get_transposition_table(&mut self) -> &mut HashMap<String, Move>;
+    fn set_transposition_table(&mut self, transposition_table: HashMap<String, Move>);
     // fn iddfs(&mut self, max_depth: i8) -> Move;
 }
 
 
 impl IA for Game {
+
+    fn get_transposition_table(&mut self) -> &mut HashMap<String, Move> {
+        &mut self.transposition_table
+    }
+
+    fn set_transposition_table(&mut self, transposition_table: HashMap<String, Move>) {
+        self.transposition_table = transposition_table;
+    }
+
+
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8 {
         ((a.0 - b.0).abs() + (a.1 - b.1).abs()) as i8
     }
@@ -161,6 +175,10 @@ impl IA for Game {
 
 
     fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
+        let state_string = self.state_to_string();
+        if let Some(cached_move) = self.get_transposition_table().get(&state_string) {
+            return *cached_move;
+        }
         let mut possible_moves = self.get_possible_moves(is_maximizing_player);
         if depth == 0 {
             return Move { index: (0, 0), score: self.get_heuristic() };
@@ -185,7 +203,9 @@ impl IA for Game {
             }
         }).unwrap();
 
-        Move { index: best_move, score: best_score }
+        let best_move = Move { index: best_move, score: best_score };
+        self.get_transposition_table().insert(state_string, best_move);
+        best_move
     }
 
     fn best_move(&mut self) -> (i8, i8) {
