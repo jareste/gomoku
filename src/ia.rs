@@ -93,8 +93,8 @@ impl IA for Game {
     // rarete
     fn get_consequtive_pieces_score(&mut self, player: Piece) -> i32 {
         let mut score = 0;
-        for x in 0..19 {
-            for y in 0..19 {
+        for x in 2..16 {
+            for y in 2..16 {
                 if self.map[x][y] == player {
                     let directions = self.is_part_of_line(x, y, player);
                     for &(dx, dy) in &directions {
@@ -167,7 +167,7 @@ impl IA for Game {
         }
         let winner = self.check_win();
         if winner == (true, Piece::Player1) || winner == (true, Piece::Player2) {
-            println!("depth: {}, winner: {}", depth, winner.1);
+            // println!("depth: {}, winner: {}", depth, winner.1);
             return Move { index: (0,0), score: if (winner == (true, Piece::Player1)) { i32::MAX } else { i32::MIN }};
         }
         let (best_move, best_score) = possible_moves.par_iter()
@@ -177,17 +177,16 @@ impl IA for Game {
             let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
             (moves, score)
         })
-        .reduce(|| ((0, 0), if is_maximizing_player { i32::MIN } else { i32::MAX }),
-                |(best_move, best_score), (moves, score)| {
-                    if is_maximizing_player && score > best_score || !is_maximizing_player && score < best_score {
-                        (moves, score)
-                    } else {
-                        (best_move, best_score)
-                    }
-                });
+        .reduce_with(|(best_move1, best_score1), (best_move2, best_score2)| {
+            if is_maximizing_player && best_score1 > best_score2 || !is_maximizing_player && best_score1 < best_score2 {
+                (best_move1, best_score1)
+            } else {
+                (best_move2, best_score2)
+            }
+        }).unwrap();
 
-    Move { index: best_move, score: best_score }
-}
+        Move { index: best_move, score: best_score }
+    }
 
     fn best_move(&mut self) -> (i8, i8) {
         let best_move = self.minimax(3, i32::MIN, i32::MAX, true);
