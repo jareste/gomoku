@@ -164,7 +164,7 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
             Mode::Normal => {
                 let p_back = position.clone().to_backend();
                 info!("click on coordinates: {} {}", p_back.0, p_back.1);
-                if !game.place(p_back.0, p_back.1, if *player == Player::P1 {Piece::Player1} else {Piece::Player2}) {
+                if !game.update_game(p_back.0, p_back.1, if *player == Player::P1 {Piece::Player1} else {Piece::Player2}) {
                     info!("Invalid move");
                     return;
                 }

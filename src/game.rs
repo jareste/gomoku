@@ -85,12 +85,35 @@ impl Game {
         self.place_ia();
         true
     }
-    pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+
+    fn validate_movement(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        if x < 0 || x > 18 || y < 0 || y > 18 {
+            return false;
+        }
         if self.map[x][y] != Piece::Empty {
             return false;
         }
         self.map[x][y] = piece;
+        if self.find_free_threes((x as i8, y as i8), 1) {
+            self.map[x][y] = Piece::Empty;
+            return false;
+        }
+        self.map[x][y] = Piece::Empty;
+        true
+    }
 
+    pub fn update_game(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        if !self.validate_movement(x, y, piece) {
+            return false;
+        }
+        if !self.place(x, y, piece) {
+            return false;
+        }
+        true
+    }
+
+    pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
+        self.map[x][y] = piece;
         match piece {
             Piece::Player1 => {
                 self.capture(x, y, piece, Piece::Player2);
@@ -195,7 +218,7 @@ impl Game {
 
     pub fn start_ia(&mut self)
     {
-        self.map[9][9] = Piece::Player1;
+        self.place(9, 9, Piece::Player1);
     }
 
     pub fn find_free_threes(&mut self, last_move: (i8, i8), quantity: i8) -> bool {

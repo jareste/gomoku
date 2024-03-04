@@ -119,9 +119,11 @@ impl IA for Game {
                                 open_line -= 1;
                             }
                         }
+                        if consequtive_pieces == 5 {
+                            score += i16::MAX as i32;
+                        }
                         if open_line > 0 {
                             score += match consequtive_pieces {
-                                5 => 1_000_000,
                                 4 => 100_000,
                                 3 => 10_000,
                                 2 => 1_000,
@@ -204,6 +206,11 @@ impl IA for Game {
         if depth == 0 {
             return Move { index: (0, 0), score: self.get_heuristic() };
         }
+        let winner = self.check_win();
+        if winner == (true, Piece::Player1) || winner == (true, Piece::Player2) {
+            println!("depth: {}", depth);
+            return Move { index: (0,0), score: if (winner == (true, Piece::Player1)) { i32::MAX } else { i32::MIN }};
+        }
         let mut best_move = (0, 0);
         let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
         
@@ -211,9 +218,7 @@ impl IA for Game {
 
         for &moves in possible_moves.iter() {
             let mut new_game = self.clone();
-            if !new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 }) {
-                continue;
-            }
+            new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
             let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
             // println!("Score: {}", score);
             match is_maximizing_player {
@@ -237,9 +242,9 @@ impl IA for Game {
                 break;
             }
         }
-        if best_move == (5, 11) {
-            println!("score: {:?}", best_score);
-        }
+        // if best_move == (5, 11) {
+        //     println!("score: {:?}", best_score);
+        // }
         Move { index: best_move, score: best_score }
     }
 
