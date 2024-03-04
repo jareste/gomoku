@@ -24,8 +24,6 @@ pub trait IA{
     fn minimax(&mut self, depth: i8, alpha: i32, beta: i32, is_maximizing_player: bool) -> Move;
     fn best_move(&mut self) -> (i8, i8);
     fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)>;
-    fn evaluate_move(&mut self, moves: (i8, i8), player: Piece) -> i32;
-    fn get_heuristic_moves(&mut self, possible_moves: &Vec<(i8, i8)>, is_maximizing_player: bool) -> Vec<Move>;
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
 
     // fn iddfs(&mut self, max_depth: i8) -> Move;
@@ -161,45 +159,6 @@ impl IA for Game {
         score
     }
 
-    fn evaluate_move(&mut self, moves: (i8, i8), player: Piece) -> i32 {
-        let (x, y) = moves;
-        let mut score = 0;
-
-        self.map[x as usize][y as usize] = player;
-
-        let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
-        for &(dx, dy) in &directions {
-            let mut consecutive_pieces = 0;
-            for i in -4..=4 { // Change this line
-                let nx = x as isize + i * dx;
-                let ny = y as isize + i * dy;
-                if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && self.map[nx as usize][ny as usize] == player {
-                    consecutive_pieces += 1;
-                }
-            }
-            match player {
-                Piece::Empty => (),
-                Piece::Player1 => score += consecutive_pieces,
-                Piece::Player2 => score -= consecutive_pieces,
-            }
-        }
-        self.map[x as usize][y as usize] = Piece::Empty;
-        score
-    }
-
-    fn get_heuristic_moves(&mut self, possible_moves: &Vec<(i8, i8)>, is_maximizing_player: bool) -> Vec<Move> {
-        let mut heuristic_moves = Vec::new();
-        for &moves in possible_moves.iter() {
-            let mut ia = self.clone();
-            ia.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
-            let score = ia.evaluate_move(moves, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
-            let moves = Move { index: moves, score: score };
-            heuristic_moves.push(moves);
-        }
-        heuristic_moves.sort_by_key(|&k| -k.score);
-        heuristic_moves.into_iter().collect()
-    }
-
 
     fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
         let mut possible_moves = self.get_possible_moves(is_maximizing_player);
@@ -208,45 +167,27 @@ impl IA for Game {
         }
         let winner = self.check_win();
         if winner == (true, Piece::Player1) || winner == (true, Piece::Player2) {
-            println!("depth: {}", depth);
+            println!("depth: {}, winner: {}", depth, winner.1);
             return Move { index: (0,0), score: if (winner == (true, Piece::Player1)) { i32::MAX } else { i32::MIN }};
         }
-        let mut best_move = (0, 0);
-        let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
-        
-        // possible_moves = self.get_heuristic_moves(&possible_moves, is_maximizing_player).iter().map(|&moves| moves.index).collect();
-
-        for &moves in possible_moves.iter() {
+        let (best_move, best_score) = possible_moves.par_iter()
+        .map(|&moves| {
             let mut new_game = self.clone();
             new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
             let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
-            // println!("Score: {}", score);
-            match is_maximizing_player {
-                true => {
-                    if score > best_score { 
-                    best_score = score;
-                    best_move = moves;
+            (moves, score)
+        })
+        .reduce(|| ((0, 0), if is_maximizing_player { i32::MIN } else { i32::MAX }),
+                |(best_move, best_score), (moves, score)| {
+                    if is_maximizing_player && score > best_score || !is_maximizing_player && score < best_score {
+                        (moves, score)
+                    } else {
+                        (best_move, best_score)
                     }
-                    alpha = std::cmp::max(alpha, score);
-                },
-                false => {
-                    if score < best_score {
-                        best_score = score;
-                        best_move = moves;
+                });
 
-                    }
-                    beta = std::cmp::min(beta, score);
-                },
-            }
-            if beta <= alpha {
-                break;
-            }
-        }
-        // if best_move == (5, 11) {
-        //     println!("score: {:?}", best_score);
-        // }
-        Move { index: best_move, score: best_score }
-    }
+    Move { index: best_move, score: best_score }
+}
 
     fn best_move(&mut self) -> (i8, i8) {
         let best_move = self.minimax(3, i32::MIN, i32::MAX, true);
