@@ -182,7 +182,7 @@ impl IA for Game {
                         best_move = moves;
 
                     }
-                    beta = std::cmp::min(beta, score);
+                    beta = std::cmp::max(beta, score);
                 },
             }
             if beta <= alpha {
