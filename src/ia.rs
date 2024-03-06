@@ -80,21 +80,13 @@ impl IA for Game {
             let hb = self.heat_map[b.0 as usize][b.1 as usize];
             hb.cmp(&ha) // sort in descending order of heat
         });
-    
-
-
-        let second_half_start = vec_moves.len() / 2;
-        let mut second_half: Vec<_> = vec_moves.split_off(second_half_start);
-        let num_to_remove = (second_half.len() as f64 * 0.20).round() as usize;
-
-        let rng = &mut rand::thread_rng();
-        let indices_to_remove: Vec<_> = (0..second_half.len()).choose_multiple(rng, num_to_remove);
-        second_half = second_half.into_iter().enumerate().filter(|(i, _)| !indices_to_remove.contains(i)).map(|(_, item)| item).collect();
-
-        vec_moves.extend(second_half);
-
-
-
+        // let second_half_start = vec_moves.len() / 2;
+        // let mut second_half: Vec<_> = vec_moves.split_off(second_half_start);
+        // let num_to_remove = (second_half.len() as f64 * 0.20).round() as usize;
+        // let rng = &mut rand::thread_rng();
+        // let indices_to_remove: Vec<_> = (0..second_half.len()).choose_multiple(rng, num_to_remove);
+        // second_half = second_half.into_iter().enumerate().filter(|(i, _)| !indices_to_remove.contains(i)).map(|(_, item)| item).collect();
+        // vec_moves.extend(second_half);
         vec_moves
     }
 
@@ -121,10 +113,11 @@ impl IA for Game {
     // rarete
     fn get_consequtive_pieces_score(&mut self, player: Piece) -> i32 {
         let mut score = 0;
+        let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         for x in 2..16 {
             for y in 2..16 {
                 if self.map[x][y] == player {
-                    let directions = self.is_part_of_line(x, y, player);
+                    // let directions = self.is_part_of_line(x, y, player);
                     for &(dx, dy) in &directions {
                         let mut consequtive_pieces = 0;
                         let mut open_line = 2; // Assume line is open at both ends
@@ -167,13 +160,13 @@ impl IA for Game {
     // should be reviewed but it's working.
     fn get_heuristic(&mut self) -> i32 {
         match self.check_win() {
-            (true,Piece::Player1) => return WINNING_BONUS,
-            (true,Piece::Player2) => return LOSING_PENALTY,
+            (true,Piece::Player1) => return i32::MAX,
+            (true,Piece::Player2) => return i32::MIN,
             _ => (),
         }
         let mut score = 0;
         score += self.get_consequtive_pieces_score(Piece::Player1);
-        score -= (self.get_consequtive_pieces_score(Piece::Player2));
+        score -= self.get_consequtive_pieces_score(Piece::Player2);
         if self.captured1 > 0 {
             score += self.captured1 as i32 * 100;
         }
@@ -183,7 +176,6 @@ impl IA for Game {
         if self.captured1 > self.captured2 + 2 {
             score += 1_000;
         }
-        // score -= ((self.get_consequtive_pieces_score(Piece::Player2) as f32) * 1.2) as i32;
         score
     }
 

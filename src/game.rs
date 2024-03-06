@@ -55,8 +55,7 @@ pub struct Game {
     pub heat_map: [[i32; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
-    pub last_move_p1: (i8, i8),
-    pub last_move_p2: (i8, i8),
+    pub movements: i16,
     pub transposition_table: HashMap<String, Move>,
 }
 
@@ -67,8 +66,7 @@ impl Game {
             heat_map: [[0; 19]; 19],
             captured1: 0,
             captured2: 0,
-            last_move_p1: (-1, -1),
-            last_move_p2: (-1, -1),
+            movements: 0,
             transposition_table: HashMap::new(),
         }
     }
@@ -144,11 +142,9 @@ impl Game {
         match piece {
             Piece::Player1 => {
                 self.capture(x, y, piece, Piece::Player2);
-                self.last_move_p1 = (x as i8, y as i8);
             },
             Piece::Player2 => {
                 self.capture(x, y, piece, Piece::Player1);
-                self.last_move_p2 = (x as i8, y as i8);
         },
             _ => (),
         }
@@ -156,6 +152,7 @@ impl Game {
     }
 
     pub fn place_ia(&mut self) -> (usize, usize) {
+        self.movements += 1;
         let start = Instant::now();
         let (x, y) = self.best_move();
         let duration = start.elapsed();
@@ -165,6 +162,7 @@ impl Game {
 
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         println!("IA placed at x: {} y: {}", x, y);
+        println!("movements: {:?}", self.movements);
         (x as usize, y as usize)
     }
 
@@ -235,18 +233,17 @@ impl Game {
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
         let directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
-        // let prev_capture1 = self.captured1;
-        // let prev_capture2 = self.captured2;
         for &(dx, dy) in &directions {
             self.capture_direction(x as isize, y as isize, dx, dy, piece, o_piece);
             self.capture_direction(x as isize, y as isize, -dx, -dy, piece, o_piece);
         }
-        // (self.captured1 - prev_capture1, self.captured2 - prev_capture2)
     }
 
     pub fn start_ia(&mut self)
     {
         self.place(9, 9, Piece::Player1);
+        self.update_heat_map((9, 9));
+
     }
 
     pub fn find_free_threes(&mut self, last_move: (i8, i8), quantity: i8) -> bool {
