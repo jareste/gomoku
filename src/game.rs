@@ -52,6 +52,7 @@ impl Piece {
 #[derive(Resource, Debug, Component, PartialEq, Clone, Eq)]
 pub struct Game {
     pub map: [[Piece; 19]; 19],
+    pub heat_map: [[i32; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
     pub last_move_p1: (i8, i8),
@@ -63,6 +64,7 @@ impl Game {
     pub fn new() -> Self {
         Self {
             map: [[Piece::Empty; 19]; 19],
+            heat_map: [[0; 19]; 19],
             captured1: 0,
             captured2: 0,
             last_move_p1: (-1, -1),
@@ -84,16 +86,26 @@ impl Game {
             .join("\n")
     }
 
-    //removed from place to not waste that much time
-    // will have to evaluate it for the player as the ia is supposed to not do free-threes
-    // if self.find_free_threes( (x as i8, y as i8), 1) {
-    //     self.map[x][y] = Piece::Empty;
-    //     return false;
-    // }
+    pub fn update_heat_map(&mut self, last_move: (i8, i8)) {
+        let (x, y) = last_move;
+        for dx in -2..=2 {
+            for dy in -2..=2 {
+                let nx = x + dx;
+                let ny = y + dy;
+                if nx >= 0 && nx < 19 && ny >= 0 && ny < 19 {
+                    let distance = dx.abs().max(dy.abs());
+                    let heat = 3 - distance;
+                    self.heat_map[nx as usize][ny as usize] += heat as i32;
+                }
+            }
+        }
+    }
+
     pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
         if !self.place(x, y, Piece::Player2) {
             return false;
         }
+        self.update_heat_map((x as i8, y as i8));
         if self.check_win() == (true, Piece::Player2) {
             return true;
         }
@@ -149,6 +161,7 @@ impl Game {
         let duration = start.elapsed();
         self.map[x as usize][y as usize] = Piece::Player1;
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
+        self.update_heat_map((x, y));
 
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         println!("IA placed at x: {} y: {}", x, y);

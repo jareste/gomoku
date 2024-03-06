@@ -76,13 +76,9 @@ impl IA for Game {
         }
         let mut vec_moves: Vec<_> = moves.into_iter().collect();
         vec_moves.sort_by(|a, b| {
-            let da1 = self.distance(*a, self.last_move_p1);
-            let da2 = self.distance(*a, self.last_move_p2);
-            let db1 = self.distance(*b, self.last_move_p1);
-            let db2 = self.distance(*b, self.last_move_p2);
-            let da = da1.min(da2);
-            let db = db1.min(db2);
-            da.cmp(&db)
+            let ha = self.heat_map[a.0 as usize][a.1 as usize];
+            let hb = self.heat_map[b.0 as usize][b.1 as usize];
+            hb.cmp(&ha) // sort in descending order of heat
         });
     
 
