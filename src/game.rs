@@ -15,6 +15,23 @@ pub enum Piece {
     Player2,
 }
 
+pub fn string_to_map(input: &str) -> [[Piece; 19]; 19] {
+    let lines = input.lines().collect::<Vec<_>>();
+    let mut map = [[Piece::Empty; 19]; 19];
+
+    for (i, line) in lines.iter().enumerate() {
+        for (j, character) in line.split_whitespace().enumerate() {
+            map[i][j] = match character {
+                "X" => Piece::Player1,
+                "O" => Piece::Player2,
+                _ => Piece::Empty,
+            };
+        }
+    }
+
+    map
+}
+
 pub const POSSIBILITIES: [[Piece; 6]; 10] = [
     [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty], // - X X X -
     [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1], // - X X X -
@@ -142,6 +159,10 @@ impl Game {
 
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         self.map[x][y] = piece;
+        if self.find_free_threes((x as i8, y as i8), 1) {
+            self.map[x][y] = Piece::Empty;
+            return false;
+        }
         match piece {
             Piece::Player1 => {
                 self.capture(x, y, piece, Piece::Player2);

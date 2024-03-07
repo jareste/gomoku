@@ -23,7 +23,7 @@ pub struct Move {
 pub trait IA{
     fn get_possible_moves(&mut self, is_maximizing_player: bool) -> Vec<(i8, i8)>;
     fn get_consequtive_pieces_score(&mut self, player: Piece) -> f64;
-    fn get_heuristic(&mut self) -> i128;
+    // fn get_heuristic(&mut self) -> i128;
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move;
     fn best_move(&mut self) -> (i8, i8);
     // fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)>;
@@ -111,10 +111,9 @@ impl IA for Game {
         vec_moves
     }
 
-    fn get_heuristic(&mut self) -> i128 {
-        let score = generate_patterns(self.map.clone());
-        score
-    }
+    // fn get_heuristic(&mut self) -> i128 {
+    //     score = generate_patterns(self.map.clone())
+    // }
 
 
     // rarete
@@ -186,7 +185,7 @@ impl IA for Game {
 
     fn minimax(&mut self, depth: i8, mut alpha: i128, mut beta: i128, is_maximizing_player: bool) -> Move {
         if depth == 0 {
-            return Move { index: (0, 0), score: self.get_heuristic() };
+            return Move { index: (0, 0), score: generate_patterns(self.map.clone()) };
         }
         let winner = self.check_win();
         if winner == (true, Piece::Player1) || winner == (true, Piece::Player2) {
@@ -201,7 +200,9 @@ impl IA for Game {
         let (best_move, best_score) = possible_moves.par_iter()
         .map(|&moves| {
             let mut new_game = self.clone();
-            new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
+            if !new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 }) {
+                return (moves, if is_maximizing_player { i128::MIN } else { i128::MAX }); // or some other default value
+            }
             let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
             (moves, score)
         })
@@ -212,9 +213,8 @@ impl IA for Game {
                 (best_move2, best_score2)
             }
         }).unwrap();
-        let best_move = Move { index: best_move, score: best_score };
         // self.get_transposition_table().insert(state_string, best_move);
-        best_move
+        Move { index: best_move, score: best_score }
     }
 
     fn best_move(&mut self) -> (i8, i8) {
