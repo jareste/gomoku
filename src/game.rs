@@ -49,25 +49,25 @@ impl Piece {
     }
 }
 
-#[derive(Resource, Debug, Component, PartialEq, Clone, Eq)]
+#[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
 pub struct Game {
     pub map: [[Piece; 19]; 19],
-    pub heat_map: [[i32; 19]; 19],
+    pub heat_map: [[f32; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
     pub movements: i16,
-    pub transposition_table: HashMap<String, Move>,
+    // pub transposition_table: HashMap<String, Move>,
 }
 
 impl Game {
     pub fn new() -> Self {
         Self {
             map: [[Piece::Empty; 19]; 19],
-            heat_map: [[0; 19]; 19],
+            heat_map: [[0.0; 19]; 19],
             captured1: 0,
             captured2: 0,
             movements: 0,
-            transposition_table: HashMap::new(),
+            // transposition_table: HashMap::new(),
         }
     }
     
@@ -93,7 +93,9 @@ impl Game {
                 if nx >= 0 && nx < 19 && ny >= 0 && ny < 19 {
                     let distance = dx.abs().max(dy.abs());
                     let heat = 3 - distance;
-                    self.heat_map[nx as usize][ny as usize] += heat as i32;
+                    // Multiply the heat by a factor that increases with the number of moves
+                    let heat = heat as f32 * (1.0 + self.movements as f32 / 100.0);
+                    self.heat_map[nx as usize][ny as usize] += heat;
                 }
             }
         }
