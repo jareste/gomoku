@@ -225,4 +225,3 @@ impl IA for Game {
     }
 
 }
-
