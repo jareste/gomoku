@@ -18,7 +18,7 @@ const THREATENING_BONUS: f64 = 100_000.0;
 
 pub trait IA{
     fn get_possible_moves(&mut self, is_maximizing_player: bool) -> Vec<(i8, i8)>;
-    fn get_consequtive_pieces_score(&mut self, player: Piece) -> f64;
+    fn get_consequtive_pieces_score(&mut self, player: Piece) -> i128;
     fn get_heuristic(&mut self) -> i128;
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move;
     fn best_move(&mut self) -> (i8, i8);
@@ -54,7 +54,7 @@ impl IA for Game {
             (0..19).into_par_iter().filter_map(move |y| {
                 if new_self.map[x][y] != Piece::Empty {
                     for &(dx, dy) in &directions {
-                        for i in 1..=1 {
+                        for i in -1..=1 {
                             let nx = x as isize + i * dx;
                             let ny = y as isize + i * dy;
                             if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && new_self.map[nx as usize][ny as usize] == Piece::Empty  {
@@ -76,20 +76,20 @@ impl IA for Game {
             let hb = self.heat_map[b.0 as usize][b.1 as usize];
             hb.partial_cmp(&ha).unwrap_or(std::cmp::Ordering::Equal) // sort in descending order of heat
         });
-        if self.movements > 7 {
-            return vec_moves;
-        }
-        let second_half_start = vec_moves.len() / 2;
-        let mut second_half: Vec<_> = vec_moves.split_off(second_half_start);
+        // if self.movements > 7 {
+        //     return vec_moves;
+        // }
+        // let second_half_start = vec_moves.len() / 2;
+        // let mut second_half: Vec<_> = vec_moves.split_off(second_half_start);
 
-        // Calculate the percentage of pieces to remove based on the number of movements
-        let percentage_to_remove = 0.10 + (self.movements as f64 / 100.0);
-        let num_to_remove = (second_half.len() as f64 * percentage_to_remove).round() as usize;
+        // // Calculate the percentage of pieces to remove based on the number of movements
+        // let percentage_to_remove = 0.10 + (self.movements as f64 / 100.0);
+        // let num_to_remove = (second_half.len() as f64 * percentage_to_remove).round() as usize;
 
-        let rng = &mut rand::thread_rng();
-        let indices_to_remove: Vec<_> = (0..second_half.len()).choose_multiple(rng, num_to_remove);
-        second_half = second_half.into_iter().enumerate().filter(|(i, _)| !indices_to_remove.contains(i)).map(|(_, item)| item).collect();
-        vec_moves.extend(second_half);
+        // let rng = &mut rand::thread_rng();
+        // let indices_to_remove: Vec<_> = (0..second_half.len()).choose_multiple(rng, num_to_remove);
+        // second_half = second_half.into_iter().enumerate().filter(|(i, _)| !indices_to_remove.contains(i)).map(|(_, item)| item).collect();
+        // vec_moves.extend(second_half);
         // println!("{:?}", vec_moves);
         vec_moves
     }
@@ -115,15 +115,12 @@ impl IA for Game {
    
 
     // rarete
-    fn get_consequtive_pieces_score(&mut self, player: Piece) -> f64 {
-        let mut score = 0.0;
+    fn get_consequtive_pieces_score(&mut self, player: Piece) -> i128 {
+        let mut score = 0;
         let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         for x in 2..16 {
             for y in 2..16 {
                 if self.map[x][y] == player {
-                    if self.movements < 2 {
-                        println!("x: {}, y: {}", x, y);
-                    }
                     // let directions = self.is_part_of_line(x, y, player);
                     for &(dx, dy) in &directions {
                         let mut consequtive_pieces = 0;
@@ -146,20 +143,17 @@ impl IA for Game {
                             }
                         }
                         if consequtive_pieces == 5 {
-                            score += f32::MAX as f64;
+                            score += i64::MAX as i128;
                         }
                         if open_line > 0 {
                             score += match consequtive_pieces {
-                                4 => if open_line == 2 { 10_000_000.0 } else { 100_000.0 } ,
-                                3 => if open_line == 2 { 100_000.0 } else { 1_000.0 },
-                                2 => 100.0,
-                                1 => 1.0,
-                                _ => 0.0,
-                            } * open_line as f64;
+                                4 => 100_000,
+                                3 => 10_000,
+                                2 => 1_000,
+                                1 => 100,
+                                _ => 0,
+                            } * open_line;
                         }
-                    }
-                    if self.movements < 2 {
-                        println!("score: {}", score);
                     }
                 }
             }
@@ -169,19 +163,19 @@ impl IA for Game {
 
     // should be reviewed but it's working.
     fn get_heuristic(&mut self) -> i128 {
-        // match self.check_win() {
-        //     (true,Piece::Player1) => return i32::MAX,
-        //     (true,Piece::Player2) => return i32::MIN,
-        //     _ => (),
-        // }
-        let mut score = 0.0;
+        match self.check_win() {
+            (true,Piece::Player1) => return i64::MAX as i128,
+            (true,Piece::Player2) => return i64::MIN as i128,
+            _ => (),
+        }
+        let mut score: i128 = 0;
         score += self.get_consequtive_pieces_score(Piece::Player1);
         score -= self.get_consequtive_pieces_score(Piece::Player2);
         if self.captured1 > 0 {
-            score += self.captured1 as f64 * 20.0;
+            score += self.captured1 as i128 * 20;
         }
         if self.captured2 > 0 {
-            score -= self.captured2 as f64 * 20.0;
+            score -= self.captured2 as i128 * 20;
         }
         score as i128
     }
@@ -227,51 +221,8 @@ impl IA for Game {
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        println!("heat map: {:?}", self.heat_map[9][9]);
-        self.minimax(4, i128::MIN, i128::MAX, true).index
+        self.minimax(3, i128::MIN, i128::MAX, true).index
     }
 
 }
 
-// fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
-//     let mut possible_moves = self.get_possible_moves(is_maximizing_player);
-//     if depth == 0 {
-//         return Move { index: (0, 0), score: self.get_heuristic() };
-//     }
-
-//     let mut best_move = (0, 0);
-//     let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
-
-//     let results: Vec<(i32, (i8, i8))> = possible_moves.par_iter().map(|&moves| {
-//         let mut new_game = self.clone();
-//         if !new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 }) {
-//             return (i32::MIN, moves); // or some other default value
-//         }
-//         let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
-//         (score, moves)
-//     }).collect();
-
-//     for (score, moves) in results {
-//         match is_maximizing_player {
-//             true => {
-//                 if score > best_score { 
-//                 best_score = score;
-//                 best_move = moves;
-//                 }
-//                 alpha = std::cmp::max(alpha, score);
-//             },
-//             false => {
-//                 if score < best_score {
-//                     best_score = score;
-//                     best_move = moves;
-
-//                 }
-//                 beta = std::cmp::min(beta, score);
-//             },
-//         }
-//         if beta <= alpha {
-//             break;
-//         }
-//     }
-//     Move { index: best_move, score: best_score }
-// }
