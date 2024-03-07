@@ -102,6 +102,7 @@ impl Game {
     }
 
     pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
+        println!("place:::x: {}, y: {}", x, y);
         if !self.place(x, y, Piece::Player2) {
             return false;
         }

@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use crate::game::{Game, Piece};
 use rand::seq::SliceRandom;
 use rand::prelude::IteratorRandom;
-use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DIRECTIONS, DEVELOPING_TWO, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
-use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
+// use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DIRECTIONS, DEVELOPING_TWO, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
+// use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
 use crate::heuristic::{generate_patterns};
 
 
@@ -62,14 +62,20 @@ impl IA for Game {
         let moves: Vec<(i8, i8)> = (0..19).into_par_iter().flat_map(|x| {
             (0..19).into_par_iter().filter_map(move |y| {
                 if new_self.map[x][y] != Piece::Empty {
+                    // if x == 6 && y == 8 {
+                    //     println!("x: {}, y: {}", x, y);
+                    // }
                     for &(dx, dy) in &directions {
-                        for i in 1..=1 {
+                        for i in -1..=1 {
                             let nx = x as isize + i * dx;
                             let ny = y as isize + i * dy;
                             if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && new_self.map[nx as usize][ny as usize] == Piece::Empty  {
                                 let mut map_clone = new_self.clone();
                                 map_clone.map[nx as usize][ny as usize] = new_self.map[x][y];
                                 if !map_clone.find_free_threes((nx as i8, ny as i8), 1) {
+                                    // if nx == 6 && ny == 8 {
+                                    //     println!("nx: {}, ny: {}", nx, ny);
+                                    // }
                                     return Some((nx as i8, ny as i8));
                                 }
                             }
@@ -85,97 +91,31 @@ impl IA for Game {
             let hb = self.heat_map[b.0 as usize][b.1 as usize];
             hb.partial_cmp(&ha).unwrap_or(std::cmp::Ordering::Equal) // sort in descending order of heat
         });
-        if self.movements > 7 {
-            return vec_moves;
-        }
-        let second_half_start = vec_moves.len() / 2;
-        let mut second_half: Vec<_> = vec_moves.split_off(second_half_start);
+        // if self.movements > 7 {
+        //     return vec_moves;
+        // }
+        // let second_half_start = vec_moves.len() / 2;
+        // let mut second_half: Vec<_> = vec_moves.split_off(second_half_start);
 
-        // Calculate the percentage of pieces to remove based on the number of movements
-        let percentage_to_remove = 0.10 + (self.movements as f64 / 100.0);
-        let num_to_remove = (second_half.len() as f64 * percentage_to_remove).round() as usize;
+        // // Calculate the percentage of pieces to remove based on the number of movements
+        // let percentage_to_remove = 0.10 + (self.movements as f64 / 100.0);
+        // let num_to_remove = (second_half.len() as f64 * percentage_to_remove).round() as usize;
 
-        let rng = &mut rand::thread_rng();
-        let indices_to_remove: Vec<_> = (0..second_half.len()).choose_multiple(rng, num_to_remove);
-        second_half = second_half.into_iter().enumerate().filter(|(i, _)| !indices_to_remove.contains(i)).map(|(_, item)| item).collect();
-        vec_moves.extend(second_half);
+        // let rng = &mut rand::thread_rng();
+        // let indices_to_remove: Vec<_> = (0..second_half.len()).choose_multiple(rng, num_to_remove);
+        // second_half = second_half.into_iter().enumerate().filter(|(i, _)| !indices_to_remove.contains(i)).map(|(_, item)| item).collect();
+        // vec_moves.extend(second_half);
         // println!("{:?}", vec_moves);
+        // if vec_moves.contains(&(6,8)) {
+        //     println!("vec_moves: {:?}", vec_moves);
+        // }
         vec_moves
     }
 
-    // fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)> {
-    //     let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
-    //     let mut valid_directions = Vec::new();
-    //     for &(dx, dy) in &directions {
-    //         let mut consecutive_pieces = 0;
-    //         for i in -1..=1 {
-    //             let nx = x as isize + i * dx;
-    //             let ny = y as isize + i * dy;
-    //             if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && self.map[nx as usize][ny as usize] == player {
-    //                 consecutive_pieces += 1;
-    //             }
-    //         }
-    //         if consecutive_pieces > 1 {
-    //             valid_directions.push((dx, dy));
-    //         }
-    //     }
-    //     valid_directions
-    // }
-   
     fn get_heuristic(&mut self) -> i128 {
-        // let mut score = 0;
         let score = generate_patterns(self.map.clone());
-        // score += count_sequences_4(self.map.clone(), &CAPTURE);
-        // score += count_sequences_4(self.map.clone(), &POSSIBLE_CAPTURE);
-        // score += count_sequences_5(self.map.clone(), &DEVELOPING_TWO);
-        // score += count_sequences_5(self.map.clone(), &DEVELOPING_THREE);
-        // score += count_sequences_5(self.map.clone(), &FREE_THREE_FIVE);
-        // score += count_sequences_5(self.map.clone(), &DEVELOPING_FOUR);
-        // score += count_sequences_5(self.map.clone(), &FIVE_IN_A_ROW);
-        // score += count_sequences_6(self.map.clone(), &FREE_FOUR);
-        // score += count_sequences_6(self.map.clone(), &FREE_THREE_SIX);
         score
     }
-
-    // fn get_sequence_score(sequence: &[Piece]) -> i128 {
-    //     match sequence {
-    //         FIVE_IN_A_ROW => i64::MAX as i128,
-    //         DEVELOPING_FOUR => 10_000,
-    //         DEVELOPING_THREE => 100,
-    //         DEVELOPING_TWO => 10,
-    //         FREE_THREE_FIVE => 100_000,
-    //         POSSIBLE_CAPTURE => 1,
-    //         CAPTURE => 2_000,
-    //         FREE_FOUR => 1_000_000,
-    //         FREE_THREE_SIX => 100_000,
-    //         _ => 0,
-    //     }
-    // }
-
-    // fn count_sequences(map: [[Piece; 19]; 19], sequence: &[Piece]) -> i128 {
-    //     let mut total_score = 0;
-    //     let directions: [(isize, isize); 4] = [(0, 1), (1, 0), (1, 1), (1, -1)];
-
-    //     for (i, row) in map.iter().enumerate() {
-    //         for (j, _) in row.iter().enumerate() {
-    //             for (dx, dy) in &directions {
-    //                 if self.sequence_starts_at(map, sequence, (i, j), (*dx, *dy)) {
-    //                     total_score += self.get_sequence_score(sequence);
-    //                     // Skip cells to avoid counting the same sequence twice
-    //                     let skip_i = i + (*dx as usize) * (sequence.len() - 1);
-    //                     let skip_j = j + (*dy as usize) * (sequence.len() - 1);
-    //                     if skip_i < 19 && skip_j < 19 && skip_j >= 0 {
-    //                         j = skip_j;
-    //                         i = skip_i;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     total_score
-    // }
-
 
 
     // rarete
@@ -185,9 +125,6 @@ impl IA for Game {
         for x in 2..16 {
             for y in 2..16 {
                 if self.map[x][y] == player {
-                    if self.movements < 2 {
-                        println!("x: {}, y: {}", x, y);
-                    }
                     // let directions = self.is_part_of_line(x, y, player);
                     for &(dx, dy) in &directions {
                         let mut consequtive_pieces = 0;
@@ -222,9 +159,6 @@ impl IA for Game {
                             } * open_line as f64;
                         }
                     }
-                    if self.movements < 2 {
-                        println!("score: {}", score);
-                    }
                 }
             }
         }
@@ -252,7 +186,6 @@ impl IA for Game {
 
 
     fn minimax(&mut self, depth: i8, mut alpha: i128, mut beta: i128, is_maximizing_player: bool) -> Move {
-        let mut possible_moves = self.get_possible_moves(is_maximizing_player);
         if depth == 0 {
             return Move { index: (0, 0), score: self.get_heuristic() };
         }
@@ -265,6 +198,7 @@ impl IA for Game {
         // if let Some(cached_move) = self.get_transposition_table().get(&state_string) {
         //     return *cached_move;
         // }
+        let mut possible_moves = self.get_possible_moves(is_maximizing_player);
         let (best_move, best_score) = possible_moves.par_iter()
         .map(|&moves| {
             let mut new_game = self.clone();
@@ -279,10 +213,10 @@ impl IA for Game {
                 (best_move2, best_score2)
             }
         }).unwrap();
-        if best_move == (7,10) {
+        if best_move == (6,8) && is_maximizing_player {
             println!("depth: {}, best_move: {:?}, best_score: {}", depth, best_move, best_score);
         }
-        if best_move == (9, 10){ 
+        if best_move == (9,8) && is_maximizing_player {
             println!("depth: {}, best_move: {:?}, best_score: {}", depth, best_move, best_score);
         }
         let best_move = Move { index: best_move, score: best_score };
