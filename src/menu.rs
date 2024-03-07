@@ -89,7 +89,7 @@ struct SelectedOption;
 
 // All actions that can be triggered from a button click
 #[derive(Component)]
-enum MenuButtonAction {
+pub enum MenuButtonAction {
     Play,
     PlayIA,
     Settings,

@@ -5,9 +5,11 @@ use game::Piece;
 
 use super::{despawn_screen,Mode, game, GameState, Player, TEXT_COLOR};
 use bevy::prelude::Sprite;
+use crate::menu::MenuButtonAction;
 
 use std::process::exit;
 
+const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 
 // This plugin will contain the game. In this case, it's just be a screen that will
 // display the current settings for 5 seconds before returning to the menu
@@ -75,6 +77,7 @@ fn gameUI_setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mode: Res<Mode>,
     mut game: ResMut<Game>,
+    asset_server: Res<AssetServer>,
 ) {
     let board = 500.0 + (20.0 * 10.0);
     let tile_size = 500.0 /19.0;
@@ -88,6 +91,73 @@ fn gameUI_setup(
                 ..default()
             },
             ..Default::default()
+        });
+
+    commands
+        .spawn( TextBundle::from_section(
+                "PLAYER ONE",
+                TextStyle {
+                    font: asset_server.load("fonts/MontserratExtrabold-VGO60.ttf"),
+                    font_size: 40.0,
+                    color: Color::rgb(0.1, 0.1, 0.9),
+                    ..default()
+                },
+            )
+            .with_style(Style {
+                margin: UiRect {
+                    top: Val::Px(710.0),
+                    left: Val::Px(10.0),
+                    bottom: Val::Px(10.0),
+                    right: Val::Px(10.0),},
+                ..default()
+            }),
+        );
+    commands
+        .spawn( TextBundle::from_section(
+                "PLAYERTWO",
+                TextStyle {
+                    font: asset_server.load("fonts/MontserratExtrabold-VGO60.ttf"),
+                    font_size: 40.0,
+                    color: Color::rgb(0.9, 0.1, 0.1),
+                    ..default()
+                },
+            )
+            .with_style(Style {
+                margin: UiRect {
+                    top: Val::Px(50.0),
+                    left: Val::Px(960.0),
+                    bottom: Val::Px(10.0),
+                    right: Val::Px(0.0),},
+                position_type: PositionType::Relative,
+                ..default()
+            }),
+        );
+        
+    let button_style = Style {
+        width: Val::Px(250.0),
+        height: Val::Px(65.0),
+        margin: UiRect::all(Val::Px(20.0)),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    };
+    let button_text_style = TextStyle {
+        font_size: 40.0,
+        color: TEXT_COLOR,
+        ..default()
+    };
+    
+    commands
+        .spawn((
+            ButtonBundle {
+                style: button_style,
+                background_color: NORMAL_BUTTON.into(),
+                ..default()
+            },
+            MenuButtonAction::BackToSettings,
+        ))
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section("Back", button_text_style));
         });
 
     // Creating a grid of empty tiles.
@@ -140,7 +210,15 @@ fn print_ui_map(game: &Game, commands: &mut Commands, tile_size: f32) {
     }
 }
 
-fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInput<MouseButton>>,  windows: Query<&Window>, mut player: ResMut<Player>, mut game : ResMut<Game> , mode : Res<Mode>) {
+fn mouse_click_system(
+    mut commands: Commands, 
+    mouse_button_input: Res<ButtonInput<MouseButton>>,  
+    windows: Query<&Window>, 
+    mut player: ResMut<Player>, 
+    mut game : ResMut<Game> , 
+    mode : Res<Mode>,
+    mut game_state: ResMut<NextState<GameState>>,
+    ) {
 
     let center = Vec2::new(600.0, 400.0);
     let board = 500.0 + (20.0 * 10.0);
@@ -150,6 +228,10 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
     if mouse_button_input.just_pressed(MouseButton::Left) {
         let mouse: Vec2 = windows.single().cursor_position().unwrap() - Vec2::new(260.0, 60.0);
         if mouse.x < 0.0 || mouse.x > 680.0 || mouse.y < 0.0 || mouse.y > 680.0 {
+            let abs = windows.single().cursor_position().unwrap();
+            if (abs.x > 1100.0 && abs.y > 700.0) {
+                game_state.set(GameState::Menu);
+            }
             return;
         }
         let row = (19.0 - mouse.y / (tile_size + 10.0)) as usize;
