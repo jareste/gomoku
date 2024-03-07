@@ -45,6 +45,7 @@ fn evaluate_pattern(pattern: &[Piece]) -> i128 {
         }
         for &free_three_five in constants::FREE_THREE_FIVE_X.iter() {
             if free_three_five == pattern {
+                // println!("free5X");
                 score += 100_000;
             }
         }
@@ -70,6 +71,7 @@ fn evaluate_pattern(pattern: &[Piece]) -> i128 {
         }
         for &free_three_five in constants::FREE_THREE_FIVE_O.iter() {
             if free_three_five == pattern {
+                // println!("free5O");
                 score -= 100_000;
             }
         }
@@ -81,6 +83,7 @@ fn evaluate_pattern(pattern: &[Piece]) -> i128 {
         }
         for &free_four in constants::FREE_FOUR_X.iter() {
             if free_four == pattern {
+                // println!("free3X");
                 score += 1_000_000;
             }
         }
@@ -91,6 +94,7 @@ fn evaluate_pattern(pattern: &[Piece]) -> i128 {
         }
         for &free_four in constants::FREE_FOUR_O.iter() {
             if free_four == pattern {
+                // println!("free4O");
                 score -= 1_000_000;
             }
         }
@@ -106,6 +110,9 @@ pub fn generate_patterns(map: [[Piece; 19]; 19]) -> i128 {
 
     for i in 0..19 {
         for j in 0..19 {
+            if map[i][j] == Piece::Empty {
+                continue;
+            }
             for &direction in &directions {
                 for length in 4..=6 {
                     if let Some(pattern) = get_pattern(&map, (i, j), direction, length) {
@@ -119,9 +126,9 @@ pub fn generate_patterns(map: [[Piece; 19]; 19]) -> i128 {
     for pattern in patterns {
         score += evaluate_pattern(&pattern);
     }
-    if map[6][8] == Piece::Player1 {
-        println!("score: {}", score);
-    }
+    // if map[6][8] == Piece::Player1 {
+    //     println!("score: {}", score);
+    // }
     // patterns
     score
 }
@@ -129,7 +136,7 @@ pub fn generate_patterns(map: [[Piece; 19]; 19]) -> i128 {
 fn get_pattern(map: &[[Piece; 19]; 19], start: (usize, usize), direction: (isize, isize), length: usize) -> Option<Vec<Piece>> {
     let mut pattern = Vec::new();
 
-    for i in 0..length {
+    for i in -1..length as isize {
         let x = start.0 as isize + direction.0 * i as isize;
         let y = start.1 as isize + direction.1 * i as isize;
 

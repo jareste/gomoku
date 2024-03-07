@@ -62,30 +62,29 @@ impl IA for Game {
         let moves: Vec<(i8, i8)> = (0..19).into_par_iter().flat_map(|x| {
             (0..19).into_par_iter().filter_map(move |y| {
                 if new_self.map[x][y] != Piece::Empty {
-                    // if x == 6 && y == 8 {
-                    //     println!("x: {}, y: {}", x, y);
-                    // }
+                    let mut cell_moves = Vec::new();
                     for &(dx, dy) in &directions {
-                        for i in -1..=1 {
+                        for i in 1..=1 {
                             let nx = x as isize + i * dx;
                             let ny = y as isize + i * dy;
                             if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && new_self.map[nx as usize][ny as usize] == Piece::Empty  {
                                 let mut map_clone = new_self.clone();
                                 map_clone.map[nx as usize][ny as usize] = new_self.map[x][y];
                                 if !map_clone.find_free_threes((nx as i8, ny as i8), 1) {
-                                    // if nx == 6 && ny == 8 {
-                                    //     println!("nx: {}, ny: {}", nx, ny);
-                                    // }
-                                    return Some((nx as i8, ny as i8));
+                                    cell_moves.push((nx as i8, ny as i8));
                                 }
+                                map_clone.map[nx as usize][ny as usize] = Piece::Empty;
                             }
                         }
                     }
+                    Some(cell_moves)
+                } else {
+                    None
                 }
-                None
-            })
+            }).flatten()
         }).collect();
         let mut vec_moves: Vec<_> = moves.into_iter().collect();
+        // println!("moves: {:?}", vec_moves);
         vec_moves.sort_by(|a, b| {
             let ha = self.heat_map[a.0 as usize][a.1 as usize];
             let hb = self.heat_map[b.0 as usize][b.1 as usize];
@@ -213,12 +212,6 @@ impl IA for Game {
                 (best_move2, best_score2)
             }
         }).unwrap();
-        if best_move == (6,8) && is_maximizing_player {
-            println!("depth: {}, best_move: {:?}, best_score: {}", depth, best_move, best_score);
-        }
-        if best_move == (9,8) && is_maximizing_player {
-            println!("depth: {}, best_move: {:?}, best_score: {}", depth, best_move, best_score);
-        }
         let best_move = Move { index: best_move, score: best_score };
         // self.get_transposition_table().insert(state_string, best_move);
         best_move
@@ -226,7 +219,7 @@ impl IA for Game {
 
     fn best_move(&mut self) -> (i8, i8) {
         println!("heat map: {:?}", self.heat_map[9][9]);
-        self.minimax(4, i128::MIN, i128::MAX, true).index
+        self.minimax(3, i128::MIN, i128::MAX, true).index
     }
 
 }
