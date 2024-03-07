@@ -4,6 +4,10 @@ use std::collections::HashMap;
 use crate::game::{Game, Piece};
 use rand::seq::SliceRandom;
 use rand::prelude::IteratorRandom;
+use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DIRECTIONS, DEVELOPING_TWO, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
+use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
+use crate::heuristic::{count_sequences_4, count_sequences_5, count_sequences_6};
+
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Move {
@@ -11,10 +15,10 @@ pub struct Move {
     score: i128,
 }
 
-const DEPTH: i8 = 10;
-const WINNING_BONUS: f64 = 10_000_000.0;
-const LOSING_PENALTY: f64 = -11_000_000.0;
-const THREATENING_BONUS: f64 = 100_000.0;
+// const DEPTH: i8 = 10;
+// const WINNING_BONUS: f64 = 10_000_000.0;
+// const LOSING_PENALTY: f64 = -11_000_000.0;
+// const THREATENING_BONUS: f64 = 100_000.0;
 
 pub trait IA{
     fn get_possible_moves(&mut self, is_maximizing_player: bool) -> Vec<(i8, i8)>;
@@ -22,8 +26,13 @@ pub trait IA{
     fn get_heuristic(&mut self) -> i128;
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move;
     fn best_move(&mut self) -> (i8, i8);
-    fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)>;
+    // fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)>;
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
+
+
+    // fn sequence_starts_at(map: [[Piece; 19]; 19], sequence: &[Piece], (i, j): (usize, usize), (dx, dy): (usize, usize)) -> bool;
+    // fn count_sequences(map: [[Piece; 19]; 19], sequence: &[Piece]) -> i128;
+    // fn get_sequence_score(sequence: &[Piece]) -> i128;
 
 
     // fn get_transposition_table(&mut self) -> &mut HashMap<String, Move>;
@@ -94,25 +103,79 @@ impl IA for Game {
         vec_moves
     }
 
-    fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)> {
-        let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
-        let mut valid_directions = Vec::new();
-        for &(dx, dy) in &directions {
-            let mut consecutive_pieces = 0;
-            for i in -1..=1 {
-                let nx = x as isize + i * dx;
-                let ny = y as isize + i * dy;
-                if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && self.map[nx as usize][ny as usize] == player {
-                    consecutive_pieces += 1;
-                }
-            }
-            if consecutive_pieces > 1 {
-                valid_directions.push((dx, dy));
-            }
-        }
-        valid_directions
-    }
+    // fn is_part_of_line(&mut self, x: usize, y: usize, player: Piece) -> Vec<(isize, isize)> {
+    //     let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
+    //     let mut valid_directions = Vec::new();
+    //     for &(dx, dy) in &directions {
+    //         let mut consecutive_pieces = 0;
+    //         for i in -1..=1 {
+    //             let nx = x as isize + i * dx;
+    //             let ny = y as isize + i * dy;
+    //             if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && self.map[nx as usize][ny as usize] == player {
+    //                 consecutive_pieces += 1;
+    //             }
+    //         }
+    //         if consecutive_pieces > 1 {
+    //             valid_directions.push((dx, dy));
+    //         }
+    //     }
+    //     valid_directions
+    // }
    
+    fn get_heuristic(&mut self) -> i128 {
+        let mut score = 0;
+        score += count_sequences_4(self.map.clone(), &CAPTURE);
+        score += count_sequences_4(self.map.clone(), &POSSIBLE_CAPTURE);
+        score += count_sequences_5(self.map.clone(), &DEVELOPING_TWO);
+        score += count_sequences_5(self.map.clone(), &DEVELOPING_THREE);
+        score += count_sequences_5(self.map.clone(), &FREE_THREE_FIVE);
+        score += count_sequences_5(self.map.clone(), &DEVELOPING_FOUR);
+        score += count_sequences_5(self.map.clone(), &FIVE_IN_A_ROW);
+        score += count_sequences_6(self.map.clone(), &FREE_FOUR);
+        score += count_sequences_6(self.map.clone(), &FREE_THREE_SIX);
+        score
+    }
+
+    // fn get_sequence_score(sequence: &[Piece]) -> i128 {
+    //     match sequence {
+    //         FIVE_IN_A_ROW => i64::MAX as i128,
+    //         DEVELOPING_FOUR => 10_000,
+    //         DEVELOPING_THREE => 100,
+    //         DEVELOPING_TWO => 10,
+    //         FREE_THREE_FIVE => 100_000,
+    //         POSSIBLE_CAPTURE => 1,
+    //         CAPTURE => 2_000,
+    //         FREE_FOUR => 1_000_000,
+    //         FREE_THREE_SIX => 100_000,
+    //         _ => 0,
+    //     }
+    // }
+
+    // fn count_sequences(map: [[Piece; 19]; 19], sequence: &[Piece]) -> i128 {
+    //     let mut total_score = 0;
+    //     let directions: [(isize, isize); 4] = [(0, 1), (1, 0), (1, 1), (1, -1)];
+
+    //     for (i, row) in map.iter().enumerate() {
+    //         for (j, _) in row.iter().enumerate() {
+    //             for (dx, dy) in &directions {
+    //                 if self.sequence_starts_at(map, sequence, (i, j), (*dx, *dy)) {
+    //                     total_score += self.get_sequence_score(sequence);
+    //                     // Skip cells to avoid counting the same sequence twice
+    //                     let skip_i = i + (*dx as usize) * (sequence.len() - 1);
+    //                     let skip_j = j + (*dy as usize) * (sequence.len() - 1);
+    //                     if skip_i < 19 && skip_j < 19 && skip_j >= 0 {
+    //                         j = skip_j;
+    //                         i = skip_i;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     total_score
+    // }
+
+
 
     // rarete
     fn get_consequtive_pieces_score(&mut self, player: Piece) -> f64 {
@@ -167,24 +230,24 @@ impl IA for Game {
         score
     }
 
-    // should be reviewed but it's working.
-    fn get_heuristic(&mut self) -> i128 {
-        // match self.check_win() {
-        //     (true,Piece::Player1) => return i32::MAX,
-        //     (true,Piece::Player2) => return i32::MIN,
-        //     _ => (),
-        // }
-        let mut score = 0.0;
-        score += self.get_consequtive_pieces_score(Piece::Player1);
-        score -= self.get_consequtive_pieces_score(Piece::Player2);
-        if self.captured1 > 0 {
-            score += self.captured1 as f64 * 20.0;
-        }
-        if self.captured2 > 0 {
-            score -= self.captured2 as f64 * 20.0;
-        }
-        score as i128
-    }
+    // // should be reviewed but it's working.
+    // fn get_heuristic(&mut self) -> i128 {
+    //     // match self.check_win() {
+    //     //     (true,Piece::Player1) => return i32::MAX,
+    //     //     (true,Piece::Player2) => return i32::MIN,
+    //     //     _ => (),
+    //     // }
+    //     let mut score = 0.0;
+    //     score += self.get_consequtive_pieces_score(Piece::Player1);
+    //     score -= self.get_consequtive_pieces_score(Piece::Player2);
+    //     if self.captured1 > 0 {
+    //         score += self.captured1 as f64 * 20.0;
+    //     }
+    //     if self.captured2 > 0 {
+    //         score -= self.captured2 as f64 * 20.0;
+    //     }
+    //     score as i128
+    // }
 
 
     fn minimax(&mut self, depth: i8, mut alpha: i128, mut beta: i128, is_maximizing_player: bool) -> Move {
