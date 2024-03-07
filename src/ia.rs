@@ -76,17 +76,21 @@ impl IA for Game {
             let hb = self.heat_map[b.0 as usize][b.1 as usize];
             hb.partial_cmp(&ha).unwrap_or(std::cmp::Ordering::Equal) // sort in descending order of heat
         });
+        if self.movements > 7 {
+            return vec_moves;
+        }
         let second_half_start = vec_moves.len() / 2;
         let mut second_half: Vec<_> = vec_moves.split_off(second_half_start);
 
         // Calculate the percentage of pieces to remove based on the number of movements
-        let percentage_to_remove = 0.20 + (self.movements as f64 / 100.0);
+        let percentage_to_remove = 0.10 + (self.movements as f64 / 100.0);
         let num_to_remove = (second_half.len() as f64 * percentage_to_remove).round() as usize;
 
         let rng = &mut rand::thread_rng();
         let indices_to_remove: Vec<_> = (0..second_half.len()).choose_multiple(rng, num_to_remove);
         second_half = second_half.into_iter().enumerate().filter(|(i, _)| !indices_to_remove.contains(i)).map(|(_, item)| item).collect();
         vec_moves.extend(second_half);
+        // println!("{:?}", vec_moves);
         vec_moves
     }
 
@@ -117,6 +121,9 @@ impl IA for Game {
         for x in 2..16 {
             for y in 2..16 {
                 if self.map[x][y] == player {
+                    if self.movements < 2 {
+                        println!("x: {}, y: {}", x, y);
+                    }
                     // let directions = self.is_part_of_line(x, y, player);
                     for &(dx, dy) in &directions {
                         let mut consequtive_pieces = 0;
@@ -143,13 +150,16 @@ impl IA for Game {
                         }
                         if open_line > 0 {
                             score += match consequtive_pieces {
-                                4 => 10_000.0,
-                                3 => 1_000.0,
+                                4 => if open_line == 2 { 10_000_000.0 } else { 100_000.0 } ,
+                                3 => if open_line == 2 { 100_000.0 } else { 1_000.0 },
                                 2 => 100.0,
                                 1 => 1.0,
                                 _ => 0.0,
                             } * open_line as f64;
                         }
+                    }
+                    if self.movements < 2 {
+                        println!("score: {}", score);
                     }
                 }
             }
@@ -205,14 +215,20 @@ impl IA for Game {
                 (best_move2, best_score2)
             }
         }).unwrap();
-
+        if best_move == (7,10) {
+            println!("depth: {}, best_move: {:?}, best_score: {}", depth, best_move, best_score);
+        }
+        if best_move == (9, 10){ 
+            println!("depth: {}, best_move: {:?}, best_score: {}", depth, best_move, best_score);
+        }
         let best_move = Move { index: best_move, score: best_score };
         // self.get_transposition_table().insert(state_string, best_move);
         best_move
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        self.minimax(3, i128::MIN, i128::MAX, true).index
+        println!("heat map: {:?}", self.heat_map[9][9]);
+        self.minimax(4, i128::MIN, i128::MAX, true).index
     }
 
 }
