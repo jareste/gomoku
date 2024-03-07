@@ -6,7 +6,7 @@ use rand::seq::SliceRandom;
 use rand::prelude::IteratorRandom;
 use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DIRECTIONS, DEVELOPING_TWO, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
 use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
-use crate::heuristic::{count_sequences_4, count_sequences_5, count_sequences_6};
+use crate::heuristic::{generate_patterns};
 
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -123,16 +123,17 @@ impl IA for Game {
     // }
    
     fn get_heuristic(&mut self) -> i128 {
-        let mut score = 0;
-        score += count_sequences_4(self.map.clone(), &CAPTURE);
-        score += count_sequences_4(self.map.clone(), &POSSIBLE_CAPTURE);
-        score += count_sequences_5(self.map.clone(), &DEVELOPING_TWO);
-        score += count_sequences_5(self.map.clone(), &DEVELOPING_THREE);
-        score += count_sequences_5(self.map.clone(), &FREE_THREE_FIVE);
-        score += count_sequences_5(self.map.clone(), &DEVELOPING_FOUR);
-        score += count_sequences_5(self.map.clone(), &FIVE_IN_A_ROW);
-        score += count_sequences_6(self.map.clone(), &FREE_FOUR);
-        score += count_sequences_6(self.map.clone(), &FREE_THREE_SIX);
+        // let mut score = 0;
+        let score = generate_patterns(self.map.clone());
+        // score += count_sequences_4(self.map.clone(), &CAPTURE);
+        // score += count_sequences_4(self.map.clone(), &POSSIBLE_CAPTURE);
+        // score += count_sequences_5(self.map.clone(), &DEVELOPING_TWO);
+        // score += count_sequences_5(self.map.clone(), &DEVELOPING_THREE);
+        // score += count_sequences_5(self.map.clone(), &FREE_THREE_FIVE);
+        // score += count_sequences_5(self.map.clone(), &DEVELOPING_FOUR);
+        // score += count_sequences_5(self.map.clone(), &FIVE_IN_A_ROW);
+        // score += count_sequences_6(self.map.clone(), &FREE_FOUR);
+        // score += count_sequences_6(self.map.clone(), &FREE_THREE_SIX);
         score
     }
 

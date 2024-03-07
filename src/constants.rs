@@ -7,7 +7,7 @@ pub const THREATENING_BONUS: i32 = 100_000;
 pub const DIRECTIONS: [(i8,i8); 8] = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
 
 
-pub const DEVELOPING_TWO: [[Piece; 5]; 20] = [
+pub const DEVELOPING_TWO_X: [[Piece; 5]; 10] = [
     [Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty, Piece::Empty], // X X - - -
     [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty], // - X X - -
     [Piece::Empty, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty], // - - X X - NC
@@ -18,7 +18,9 @@ pub const DEVELOPING_TWO: [[Piece; 5]; 20] = [
     [Piece::Empty, Piece::Player1, Piece::Empty, Piece::Empty, Piece::Player1], // - X - - X
     [Piece::Empty, Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1], // - - X - X NC
     [Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty], // - X - X -
-    
+];
+
+pub const DEVELOPING_TWO_O: [[Piece; 5]; 10] = [
     [Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty, Piece::Empty], // O O - - -
     [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty], // - O O - -
     [Piece::Empty, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty], // - - O O - NC

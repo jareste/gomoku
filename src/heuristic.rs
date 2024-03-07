@@ -5,7 +5,7 @@ use crate::game::{Game, Piece};
 
 use crate::constants;
 
-pub fn evaluate_pattern(pattern: &[Piece]) -> i32 {
+fn evaluate_pattern(pattern: &[Piece]) -> i128 {
     let mut score = 0;
 
     if pattern.len() == 4 {
@@ -58,7 +58,7 @@ pub fn evaluate_pattern(pattern: &[Piece]) -> i32 {
     score
 }
 
-pub fn generate_patterns(map: [[Piece; 19]; 19]) ->  {
+pub fn generate_patterns(map: [[Piece; 19]; 19]) -> i128 {
     let mut patterns = Vec::new();
     let directions: [(isize, isize); 4] = [(0, 1), (1, 0), (1, 1), (1, -1)];
 
@@ -73,7 +73,12 @@ pub fn generate_patterns(map: [[Piece; 19]; 19]) ->  {
             }
         }
     }
-    patterns
+    let mut score = 0;
+    for pattern in patterns {
+        score += evaluate_pattern(&pattern);
+    } 
+    // patterns
+    score
 }
 
 fn get_pattern(map: &[[Piece; 19]; 19], start: (usize, usize), direction: (isize, isize), length: usize) -> Option<Vec<Piece>> {
