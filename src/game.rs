@@ -73,6 +73,8 @@ pub struct Game {
     pub captured1: i8,
     pub captured2: i8,
     pub movements: i16,
+    pub last_move1: (i8, i8),
+    pub last_move2: (i8, i8),
     // pub transposition_table: HashMap<String, Move>,
 }
 
@@ -84,6 +86,8 @@ impl Game {
             captured1: 0,
             captured2: 0,
             movements: 0,
+            last_move1: (0, 0),
+            last_move2: (0, 0),
             // transposition_table: HashMap::new(),
         }
     }
@@ -120,6 +124,9 @@ impl Game {
 
     pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
         println!("place:::x: {}, y: {}", x, y);
+        if !self.validate_movement(x, y, Piece::Player2) {
+            return false;
+        }
         if !self.place(x, y, Piece::Player2) {
             return false;
         }
@@ -157,17 +164,20 @@ impl Game {
         true
     }
 
+    // if self.find_free_threes((x as i8, y as i8), 1) {
+    //     self.map[x][y] = Piece::Empty;
+    //     return false;
+    // }
+
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         self.map[x][y] = piece;
-        if self.find_free_threes((x as i8, y as i8), 1) {
-            self.map[x][y] = Piece::Empty;
-            return false;
-        }
         match piece {
             Piece::Player1 => {
+                self.last_move1 = (x as i8, y as i8);
                 self.capture(x, y, piece, Piece::Player2);
             },
             Piece::Player2 => {
+                self.last_move2 = (x as i8, y as i8);
                 self.capture(x, y, piece, Piece::Player1);
         },
             _ => (),
