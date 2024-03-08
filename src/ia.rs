@@ -8,9 +8,6 @@ use rand::prelude::IteratorRandom;
 // use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
 use crate::heuristic::{generate_patterns, generate_patterns_single_move};
 
-use atomic::Atomic;
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Move {
@@ -33,14 +30,6 @@ pub trait IA{
 
 
 impl IA for Game {
-
-    // fn get_transposition_table(&mut self) -> &mut HashMap<String, Move> {
-    //     &mut self.transposition_table
-    // }
-
-    // fn set_transposition_table(&mut self, transposition_table: HashMap<String, Move>) {
-    //     self.transposition_table = transposition_table;
-    // }
 
 
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8 {
@@ -77,23 +66,19 @@ impl IA for Game {
         let mut vec_moves: Vec<_> = moves.into_iter().collect();
         let last_move1 = self.last_move1;
         let last_move2 = self.last_move2;
-        // vec_moves.retain(|&(x, y)| !self.find_free_threes((x, y), 1));
 
         vec_moves.sort_by(|a, b| {
             let ha = self.heat_map[a.0 as usize][a.1 as usize];
             let hb = self.heat_map[b.0 as usize][b.1 as usize];
 
-            // Calculate the distance to both players' last moves for each move
             let da1 = ((a.0 as i32 - last_move1.0 as i32).pow(2) + (a.1 as i32 - last_move1.1 as i32).pow(2)) as f64;
             let da2 = ((a.0 as i32 - last_move2.0 as i32).pow(2) + (a.1 as i32 - last_move2.1 as i32).pow(2)) as f64;
             let db1 = ((b.0 as i32 - last_move1.0 as i32).pow(2) + (b.1 as i32 - last_move1.1 as i32).pow(2)) as f64;
             let db2 = ((b.0 as i32 - last_move2.0 as i32).pow(2) + (b.1 as i32 - last_move2.1 as i32).pow(2)) as f64;
 
-            // Calculate the minimum distance to either player's last move for each move
             let da = da1.min(da2);
             let db = db1.min(db2);
 
-            // First compare by heat, then by distance to the last move
             hb.partial_cmp(&ha)
                 .unwrap_or(std::cmp::Ordering::Equal)
                 .then_with(|| da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal))
