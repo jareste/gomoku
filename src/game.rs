@@ -184,7 +184,7 @@ impl Game {
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
         self.update_heat_map((x, y));
 
-        println!("score: {}", self.get_heuristic());
+        // println!("score: {}", self.);
 
         println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
         println!("IA placed at x: {} y: {}", x, y);

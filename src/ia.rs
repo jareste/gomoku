@@ -219,7 +219,7 @@ impl IA for Game {
 
     fn best_move(&mut self) -> (i8, i8) {
         println!("heat map: {:?}", self.heat_map[9][9]);
-        self.minimax(3, i128::MIN, i128::MAX, true).index
+        self.minimax(4, i128::MIN, i128::MAX, true).index
     }
 
 }

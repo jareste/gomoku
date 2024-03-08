@@ -4,103 +4,70 @@
 use crate::game::{Game, Piece};
 
 use crate::constants;
+use std::collections::HashMap;
+use once_cell::sync::Lazy;
 
-fn evaluate_pattern(pattern: &[Piece]) -> i128 {
-    let mut score = 0;
-
-    if pattern.len() == 4 {
-        for &possible_capture in constants::POSSIBLE_CAPTURE_X.iter() {
-            score += 1;
-        }
-        for &capture in constants::CAPTURE_X.iter() {
-            score += 2_000;
-        }
-        for &possible_capture in constants::POSSIBLE_CAPTURE_O.iter() {
-            score -= 1;
-        }
-        for &capture in constants::CAPTURE_O.iter() {
-            score -= 2_000;
-        }
+static PATTERNS: Lazy<HashMap<Vec<Piece>, i128>> = Lazy::new(|| {
+    let mut patterns = HashMap::new();
+    for possible_capture in constants::DEVELOPING_TWO_X.iter() {
+        patterns.insert(possible_capture.to_vec(), 10);
     }
-    if pattern.len() == 5 {
-        for &developing_two in constants::DEVELOPING_TWO_X.iter() {
-            if developing_two == pattern {
-                score += 10;
-            }
-        }
-        for &five_in_a_row in constants::FIVE_IN_A_ROW_X.iter() {
-            if five_in_a_row == pattern {
-                i64::MAX;
-            }
-        }
-        for &developing_four in constants::DEVELOPING_FOUR_X.iter() {
-            if developing_four == pattern {
-                score += 10_000;
-            }
-        }
-        for &developing_three in constants::DEVELOPING_THREE_X.iter() {
-            if developing_three == pattern{
-                score += 100;
-            }
-        }
-        for &free_three_five in constants::FREE_THREE_FIVE_X.iter() {
-            if free_three_five == pattern {
-                // println!("free5X");
-                score += 100_000;
-            }
-        }
-        for &developing_two in constants::DEVELOPING_TWO_O.iter() {
-            if developing_two == pattern {
-                score -= 10;
-            }
-        }
-        for &five_in_a_row in constants::FIVE_IN_A_ROW_O.iter() {
-            if five_in_a_row == pattern {
-                i64::MIN;
-            }
-        }
-        for &developing_four in constants::DEVELOPING_FOUR_O.iter() {
-            if developing_four == pattern {
-                score -= 10_000;
-            }
-        }
-        for &developing_three in constants::DEVELOPING_THREE_O.iter() {
-            if developing_three == pattern{
-                score -= 100;
-            }
-        }
-        for &free_three_five in constants::FREE_THREE_FIVE_O.iter() {
-            if free_three_five == pattern {
-                // println!("free5O");
-                score -= 100_000;
-            }
-        }
-    } else if pattern.len() == 6 {
-        for &free_three_six in constants::FREE_THREE_SIX_X.iter() {
-            if free_three_six == pattern {
-                score += 100_000;
-            }
-        }
-        for &free_four in constants::FREE_FOUR_X.iter() {
-            if free_four == pattern {
-                // println!("free3X");
-                score += 1_000_000;
-            }
-        }
-        for &free_three_six in constants::FREE_THREE_SIX_O.iter() {
-            if free_three_six == pattern {
-                score -= 100_000;
-            }
-        }
-        for &free_four in constants::FREE_FOUR_O.iter() {
-            if free_four == pattern {
-                // println!("free4O");
-                score -= 1_000_000;
-            }
-        }
+    for capture in constants::CAPTURE_X.iter() {
+        patterns.insert(capture.to_vec(), 2_000);
     }
+    for possible_capture in constants::POSSIBLE_CAPTURE_O.iter() {
+        patterns.insert(possible_capture.to_vec(), -10);
+    }
+    for capture in constants::CAPTURE_O.iter() {
+        patterns.insert(capture.to_vec(), -2_000);
+    }
+    for developing_two in constants::DEVELOPING_TWO_X.iter() {
+        patterns.insert(developing_two.to_vec(), 10);
+    }
+    for five_in_a_row in constants::FIVE_IN_A_ROW_X.iter() {
+        patterns.insert(five_in_a_row.to_vec(), i64::MAX as i128);
+    }
+    for developing_four in constants::DEVELOPING_FOUR_X.iter() {
+        patterns.insert(developing_four.to_vec(), 10_000);
+    }
+    for developing_three in constants::DEVELOPING_THREE_X.iter() {
+        patterns.insert(developing_three.to_vec(), 100);
+    }
+    for free_three_five in constants::FREE_THREE_FIVE_X.iter() {
+        patterns.insert(free_three_five.to_vec(), 100_000);
+    }
+    for developing_two in constants::DEVELOPING_TWO_O.iter() {
+        patterns.insert(developing_two.to_vec(), -10);
+    }
+    for five_in_a_row in constants::FIVE_IN_A_ROW_O.iter() {
+        patterns.insert(five_in_a_row.to_vec(), i64::MIN as i128);
+    }
+    for developing_four in constants::DEVELOPING_FOUR_O.iter() {
+        patterns.insert(developing_four.to_vec(), -10_000);
+    }
+    for developing_three in constants::DEVELOPING_THREE_O.iter() {
+        patterns.insert(developing_three.to_vec(), -100);
+    }
+    for free_three_five in constants::FREE_THREE_FIVE_O.iter() {
+        patterns.insert(free_three_five.to_vec(), -100_000);
+    }
+    for free_three_six in constants::FREE_THREE_SIX_X.iter() {
+        patterns.insert(free_three_six.to_vec(), 100_000);
+    }
+    for free_four in constants::FREE_FOUR_X.iter() {
+        patterns.insert(free_four.to_vec(), 1_000_000);
+    }
+    for free_three_six in constants::FREE_THREE_SIX_O.iter() {
+        patterns.insert(free_three_six.to_vec(), -100_000);
+    }
+    for free_four in constants::FREE_FOUR_O.iter() {
+        patterns.insert(free_four.to_vec(), -1_000_000);
+    }
+    patterns
+});
 
-    score
+fn evaluate_pattern(pattern: &Vec<Piece>) -> i128 {
+    PATTERNS.get(pattern).copied().unwrap_or(0)
 }
 
 pub fn generate_patterns(map: [[Piece; 19]; 19]) -> i128 {

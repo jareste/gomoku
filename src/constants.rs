@@ -6,7 +6,6 @@ pub const LOSING_PENALTY: i32 = -10_000_000;
 pub const THREATENING_BONUS: i32 = 100_000;
 pub const DIRECTIONS: [(i8,i8); 8] = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
 
-
 pub const DEVELOPING_TWO_X: [[Piece; 5]; 10] = [
     [Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty, Piece::Empty], // X X - - -
     [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty], // - X X - -
