@@ -8,6 +8,14 @@ use bevy::prelude::*;
 use std::fmt;
 use crate::ia::Move;
 
+use std::sync::Mutex;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref TIMES: Mutex<Vec<f64>> = Mutex::new(Vec::new());
+}
+
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Piece {
     Empty,
@@ -189,9 +197,20 @@ impl Game {
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
         self.update_heat_map((x, y));
 
-        // println!("score: {}", self.);
+        let time = duration.as_secs_f64();
+        let mut times = TIMES.lock().unwrap();
+        times.push(time);
 
-        println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
+        times.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+
+        let median = if times.len() % 2 == 0 {
+            (times[times.len() / 2 - 1] + times[times.len() / 2]) / 2.0
+        } else {
+            times[times.len() / 2]
+        };
+
+        println!("Time elapsed in placing the piece: {:?}", time);
+        println!("Median time: {:?}", median);
         println!("IA placed at x: {} y: {}", x, y);
         println!("movements: {:?}", self.movements);
         (x as usize, y as usize)
