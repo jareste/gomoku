@@ -75,7 +75,6 @@ pub struct Game {
     pub movements: i16,
     pub last_move1: (i8, i8),
     pub last_move2: (i8, i8),
-    // pub transposition_table: HashMap<String, Move>,
 }
 
 impl Game {
@@ -88,7 +87,6 @@ impl Game {
             movements: 0,
             last_move1: (0, 0),
             last_move2: (0, 0),
-            // transposition_table: HashMap::new(),
         }
     }
     
@@ -145,12 +143,9 @@ impl Game {
         if self.map[x][y] != Piece::Empty {
             return false;
         }
-        self.map[x][y] = piece;
-        if self.find_free_threes((x as i8, y as i8), 1) {
-            self.map[x][y] = Piece::Empty;
+        if self.find_free_threes((x as i8, y as i8), 1, piece) {
             return false;
         }
-        self.map[x][y] = Piece::Empty;
         true
     }
 
@@ -282,8 +277,8 @@ impl Game {
 
     }
 
-    pub fn find_free_threes(&mut self, last_move: (i8, i8), quantity: i8) -> bool {
-        let piece = self.map[last_move.0 as usize][last_move.1 as usize];
+    pub fn find_free_threes(&self, last_move: (i8, i8), quantity: i8, piece: Piece) -> bool {
+        // self.map[last_move.0 as usize][last_move.1 as usize] = piece;
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
         let x_range = 
@@ -294,7 +289,7 @@ impl Game {
                     // checking X vertical up
                     if let [a, b, c, d, e, f] = [
                         self.map[x - 1][y],
-                        self.map[x][y],
+                        piece,
                         self.map[x + 1][y],
                         self.map[x + 2][y],
                         self.map[x + 3][y],
@@ -322,7 +317,7 @@ impl Game {
                     }
                     if let [a, b, c, d, e, f] = [
                         self.map[x][y - 1],
-                        self.map[x][y],
+                        piece,
                         self.map[x][y + 1],
                         self.map[x][y + 2],
                         self.map[x][y + 3],
@@ -350,7 +345,7 @@ impl Game {
                     // checking diagonal up right /
                     if let [a, b, c, d, e, f] = [
                         self.map[x - 1][y - 1],
-                        self.map[x][y],
+                        piece,
                         self.map[x + 1][y + 1],
                         self.map[x + 2][y + 2],
                         self.map[x + 3][y + 3],
@@ -380,7 +375,7 @@ impl Game {
                     }
                     if let [a, b, c, d, e, f] = [
                         self.map[x + 1][y - 1],
-                        self.map[x][y],
+                        piece,
                         self.map[x - 1][y + 1],
                         self.map[x - 2][y + 2],
                         self.map[x - 3][y + 3],
