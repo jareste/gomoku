@@ -9,7 +9,7 @@ mod constants;
 mod heuristic;
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_prototype_lyon::prelude::*;
-
+use crate::game::Piece;
 
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
@@ -61,23 +61,31 @@ fn main() {
     // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
     // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
     // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  O  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  X  -  O  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  X  O  O  O  O  X  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  X  X  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  X  X  X  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  X  -  -  -  -  -  -  -  -  -  
+    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
+    // -  -  -  -  -  -  -  -  -  -  O  -  -  -  -  -  -  -  -  
+    // -  -  -  -  -  -  -  -  O  O  O  X  -  -  -  -  -  -  -  
+    // -  -  -  -  -  -  -  -  O  X  O  -  -  -  -  -  -  -  -  
+    // -  -  -  -  -  -  -  -  -  X  X  -  -  -  -  -  -  -  -  
+    // -  -  -  -  -  -  X  -  X  X  -  -  -  -  -  -  -  -  -  
+    // -  -  -  -  -  -  -  X  -  -  -  -  -  -  -  -  -  -  -  
+    // -  -  -  -  -  -  O  -  -  -  -  -  -  -  -  -  -  -  -  
+    // -  -  -  -  -  X  -  -  -  -  -  -  -  -  -  -  -  -  -  
     // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
     // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
     // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
+    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  ");
 
     // let mut game = game::Game::new();
     // game.map = map;
-    // if game.find_free_threes((9, 8), 1) {
+    // // game.place(7,8, Piece::Player2);
+
+    // let piece = game.map[9][8];
+    // // game.map[8][8] = Piece::Player1;
+    // game.map[7][8] = Piece::Player2;
+    //                         game.print_map();
+    // // game.map[9][8] = piece;
+
+    // if game.find_free_threes((7, 8), 1, Piece::Player2) {
     //     println!("holaaaaa");
     // } else {
     //     println!("adeeeeu");

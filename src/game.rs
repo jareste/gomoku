@@ -151,9 +151,12 @@ impl Game {
         if self.map[x][y] != Piece::Empty {
             return false;
         }
+        self.map[x][y] = piece;
         if self.find_free_threes((x as i8, y as i8), 1, piece) {
-            return false;
+        self.map[x][y] = Piece::Empty;
+        return false;
         }
+        self.map[x][y] = Piece::Empty;
         true
     }
 
@@ -300,6 +303,7 @@ impl Game {
         // self.map[last_move.0 as usize][last_move.1 as usize] = piece;
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
+        // self.print_map();
         let x_range = 
         for x in 1..16 {
             for y in 1..16 {
@@ -315,7 +319,6 @@ impl Game {
                         if x + 4 < 19 { self.map[x + 4][y] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        // println!("sequence: {:?}", sequence);
                         if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
@@ -401,7 +404,6 @@ impl Game {
                         if x > 3 && y + 4 < 19 { self.map[x - 4][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        // println!("sequence: {:?}", sequence);
                         if POSSIBILITIES.contains(&sequence) {
                             match self.map[x][y] {
                                 Piece::Player1 => {

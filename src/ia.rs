@@ -7,6 +7,7 @@ use rand::prelude::IteratorRandom;
 // use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DIRECTIONS, DEVELOPING_TWO, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
 // use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
 use crate::heuristic::{generate_patterns, generate_patterns_single_move};
+use crate::constants::DEPTH;
 
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -98,6 +99,9 @@ impl IA for Game {
             .map(|&moves| {
                 let mut new_game = self.clone();
                 new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
+                if depth == DEPTH && new_game.check_win() == (true, Piece::Player1) {
+                    return (moves, i128::MAX);
+                }
                 let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
                 (moves, score)
             })
@@ -114,7 +118,7 @@ impl IA for Game {
 
     fn best_move(&mut self) -> (i8, i8) {
         println!("heat map: {:?}", self.heat_map[9][9]);
-        self.minimax(3, i128::MIN, i128::MIN, true).index
+        self.minimax(DEPTH, i128::MIN, i128::MIN, true).index
     }
 
 }
