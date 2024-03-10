@@ -91,6 +91,7 @@ fn main() {
     //     println!("adeeeeu");
     // }
 
+    // ia::load_transposition_table();
 
     let mut geme = game::Game::new();
     // geme.map[8][8] = game::Piece::Player1;

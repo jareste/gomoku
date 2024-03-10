@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use game::Game;
 use game::Piece;
-
+use crate::ia;
 use super::{despawn_screen,Mode, game, GameState, Player, TEXT_COLOR};
 use bevy::prelude::Sprite;
 
@@ -184,6 +184,7 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
         game.print_map();
         if (game.check_win() == (true, Piece::Player1)) || (game.check_win() == (true, Piece::Player2)) {
             println!("Segmentation Fault (core dumped)");
+            // ia::store_transposition_table();
             exit(0);
         }
             

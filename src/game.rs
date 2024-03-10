@@ -102,9 +102,9 @@ impl Game {
         self.map.iter()
             .map(|row| row.iter()
                 .map(|&cell| match cell {
-                    Piece::Player1 => 'X',
-                    Piece::Player2 => 'O',
-                    Piece::Empty => ' ',
+                    Piece::Player1 => "X ",
+                    Piece::Player2 => "O ",
+                    Piece::Empty => "- ",
                 })
                 .collect::<String>())
             .collect::<Vec<String>>()
