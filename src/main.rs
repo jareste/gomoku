@@ -10,7 +10,8 @@ mod heuristic;
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_prototype_lyon::prelude::*;
 use crate::game::Piece;
-
+use crate::ia::IA;
+use rand::prelude::SliceRandom;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -91,9 +92,47 @@ fn main() {
     //     println!("adeeeeu");
     // }
 
-    // ia::load_transposition_table();
+    ia::load_transposition_table();
 
-    let mut geme = game::Game::new();
+
+    // geme.place(9,9, Piece::Player1);
+
+    for i in 0..1000 {
+        let mut geme = game::Game::new();
+        geme.start_ia();            
+        'test: loop {
+            let moves = geme.get_possible_moves(false, 1);
+            let mut rng = rand::thread_rng();
+            if let Some(random_move) = moves.choose(&mut rng) {
+                geme.place(random_move.0 as usize, random_move.1 as usize, Piece::Player1);
+                
+                if geme.check_win() == (true, Piece::Player1) {
+                    println!("Player 1 wins game {}", i);
+                    break 'test;
+                }
+                if geme.check_win() == (true, Piece::Player2) {
+                    println!("Player 2 wins game {}", i);
+                    break 'test;
+                }
+
+                geme.update_heat_map((random_move.0, random_move.1));
+                
+                geme.place_ia();
+                if geme.check_win() == (true, Piece::Player1) {
+                    println!("Player 1 wins game {}", i);
+                    break 'test;
+                }
+                if geme.check_win() == (true, Piece::Player2) {
+                    println!("Player 2 wins game {}", i);
+                    break 'test;
+                }
+            }
+
+        }
+    }
+    ia::store_transposition_table();
+
+
     // geme.map[8][8] = game::Piece::Player1;
     // geme.map[9][8] = game::Piece::Player1;
     // geme.map[9][9] = game::Piece::Player1;
@@ -105,57 +144,59 @@ fn main() {
     // geme.map[11][8] = game::Piece::Player1;
     // println!("test: {}", geme.find_free_threes((9, 10), 1));
     // geme.print_map(); 
-    let game = 0;
-    if game == 1 {
-        App::new()
 
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                resolution: WindowResolution::new(1200., 800.).with_scale_factor_override(1.0),
-                ..default()
-            }),
-            ..default()
-        }))
-        .add_plugins(ShapePlugin)
-        // Insert as resource the initial value for the settings resources
-        .insert_resource(IAQuality::Medium)
-        .insert_resource(MinMaxProf(7))
-        .insert_resource(Player::P1)
-        .insert_resource(game::Game::new())
-        .insert_resource(Mode::Normal)
-        //.insert_resource(bevyGame(Game::new()))
-        // Declare the game state, whose starting value is determined by the `Default` trait
-        .init_state::<GameState>()
-        .add_systems(Startup, setup)
-        // Adds the plugins for each state
-        .add_plugins((menu::menu_plugin, gameUI::gameUI_plugin))
-        .run();
-    }
-    else if game == 0 {
-        App::new()
 
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                resolution: WindowResolution::new(1200., 800.).with_scale_factor_override(1.0),
-                ..default()
-            }),
-            ..default()
-        }))
-        .add_plugins(ShapePlugin)
-        // Insert as resource the initial value for the settings resources
-        .insert_resource(IAQuality::Medium)
-        .insert_resource(MinMaxProf(7))
-        .insert_resource(Player::P2)
-        .insert_resource(game::Game::new())
-        .insert_resource(Mode::IA)
-        //.insert_resource(bevyGame(Game::new()))
-        // Declare the game state, whose starting value is determined by the `Default` trait
-        .init_state::<GameState>()
-        .add_systems(Startup, setup)
-        // Adds the plugins for each state
-        .add_plugins((menu::menu_plugin, gameUI::gameUI_plugin))
-        .run();
-    }
+    // let game = 0;
+    // if game == 1 {
+    //     App::new()
+
+    //     .add_plugins(DefaultPlugins.set(WindowPlugin {
+    //         primary_window: Some(Window {
+    //             resolution: WindowResolution::new(1200., 800.).with_scale_factor_override(1.0),
+    //             ..default()
+    //         }),
+    //         ..default()
+    //     }))
+    //     .add_plugins(ShapePlugin)
+    //     // Insert as resource the initial value for the settings resources
+    //     .insert_resource(IAQuality::Medium)
+    //     .insert_resource(MinMaxProf(7))
+    //     .insert_resource(Player::P1)
+    //     .insert_resource(game::Game::new())
+    //     .insert_resource(Mode::Normal)
+    //     //.insert_resource(bevyGame(Game::new()))
+    //     // Declare the game state, whose starting value is determined by the `Default` trait
+    //     .init_state::<GameState>()
+    //     .add_systems(Startup, setup)
+    //     // Adds the plugins for each state
+    //     .add_plugins((menu::menu_plugin, gameUI::gameUI_plugin))
+    //     .run();
+    // }
+    // else if game == 0 {
+    //     App::new()
+
+    //     .add_plugins(DefaultPlugins.set(WindowPlugin {
+    //         primary_window: Some(Window {
+    //             resolution: WindowResolution::new(1200., 800.).with_scale_factor_override(1.0),
+    //             ..default()
+    //         }),
+    //         ..default()
+    //     }))
+    //     .add_plugins(ShapePlugin)
+    //     // Insert as resource the initial value for the settings resources
+    //     .insert_resource(IAQuality::Medium)
+    //     .insert_resource(MinMaxProf(7))
+    //     .insert_resource(Player::P2)
+    //     .insert_resource(game::Game::new())
+    //     .insert_resource(Mode::IA)
+    //     //.insert_resource(bevyGame(Game::new()))
+    //     // Declare the game state, whose starting value is determined by the `Default` trait
+    //     .init_state::<GameState>()
+    //     .add_systems(Startup, setup)
+    //     // Adds the plugins for each state
+    //     .add_plugins((menu::menu_plugin, gameUI::gameUI_plugin))
+    //     .run();
+    // }
 
 }
 

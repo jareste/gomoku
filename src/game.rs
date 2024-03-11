@@ -11,6 +11,10 @@ use crate::ia::Move;
 use std::sync::Mutex;
 use lazy_static::lazy_static;
 
+
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
 lazy_static! {
     static ref TIMES: Mutex<Vec<f64>> = Mutex::new(Vec::new());
 }
@@ -98,8 +102,8 @@ impl Game {
         }
     }
     
-    pub fn state_to_string(&self) -> String {
-        self.map.iter()
+    pub fn state_to_string(&self, depth: i8) -> String {
+        let mut state = self.map.iter()
             .map(|row| row.iter()
                 .map(|&cell| match cell {
                     Piece::Player1 => "X ",
@@ -108,7 +112,30 @@ impl Game {
                 })
                 .collect::<String>())
             .collect::<Vec<String>>()
-            .join("\n")
+            .join("\n");
+        state.push_str(&format!("\nDepth: {}", depth));
+        state
+    }
+
+    pub fn state_to_int(&self, depth: i8) -> u64 {
+        let mut state = String::new();
+
+        for row in &self.map {
+            for &cell in row {
+                state.push_str(&match cell {
+                    Piece::Empty => "0",
+                    Piece::Player1 => "1",
+                    Piece::Player2 => "2",
+                });
+            }
+        }
+
+        // Add depth to the state
+        state.push_str(&depth.to_string());
+
+        let mut hasher = DefaultHasher::new();
+        state.hash(&mut hasher);
+        hasher.finish()
     }
 
     pub fn update_heat_map(&mut self, last_move: (i8, i8)) {
@@ -212,10 +239,10 @@ impl Game {
             times[times.len() / 2]
         };
 
-        println!("Time elapsed in placing the piece: {:?}", time);
-        println!("Median time: {:?}", median);
-        println!("IA placed at x: {} y: {}", x, y);
-        println!("movements: {:?}", self.movements);
+        // println!("Time elapsed in placing the piece: {:?}", time);
+        // println!("Median time: {:?}", median);
+        // println!("IA placed at x: {} y: {}", x, y);
+        // println!("movements: {:?}", self.movements);
         (x as usize, y as usize)
     }
 
