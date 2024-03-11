@@ -9,6 +9,7 @@ use rand::prelude::IteratorRandom;
 use crate::heuristic::{generate_patterns, generate_patterns_single_move};
 use crate::constants::DEPTH;
 use std::sync::Mutex;
+use std::cmp::{max, min};
 // use lazy_static::lazy_static;
 // use std::error::Error;
 // use csv::Writer;
@@ -127,7 +128,6 @@ impl IA for Game {
 
 
 
-
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
         if depth == 0 {
             return Move { index: (0, 0), score: generate_patterns(self.map.clone()) };
@@ -135,13 +135,22 @@ impl IA for Game {
 
         let mut possible_moves = self.get_possible_moves(is_maximizing_player);
         let (best_move, best_score) = possible_moves.par_iter()
-            .map(|&moves| {
+            .map_init(|| (alpha, beta), |(alpha, beta), &moves| {
                 let mut new_game = self.clone();
                 new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
                 if depth == DEPTH && new_game.check_win() == (true, Piece::Player1) {
                     return (moves, i128::MAX);
                 }
-                let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+                let score = new_game.minimax(depth - 1, *alpha, *beta, !is_maximizing_player).score;
+                if is_maximizing_player {
+                    *alpha = max(*alpha, score);
+                } else {
+                    *beta = min(*beta, score);
+                }
+                if beta <= alpha {
+                    // Prune the remaining branches
+                    return (moves, score);
+                }
                 (moves, score)
             })
             .reduce_with(|(best_move1, best_score1), (best_move2, best_score2)| {
