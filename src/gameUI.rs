@@ -393,7 +393,6 @@ fn mouse_click_system(
                 let p_back = position.clone().to_backend();
                 info!("click on coordinates: {} {}", p_back.0, p_back.1);
                 if !game.update_game(p_back.0, p_back.1, if *player == Player::P1 {Piece::Player1} else {Piece::Player2}) {
-                if !game.update_game(p_back.0, p_back.1, if *player == Player::P1 {Piece::Player1} else {Piece::Player2}) {
                     info!("Invalid move");
                     return;
                 }
@@ -494,7 +493,6 @@ fn countdown(
             Player::P1 => player_times.0 += 1,
             Player::P2 => player_times.1 += 1,
         }
-        println!("Time: {} {}", player_times.0, player_times.1);
         let mut i = 0;
         for mut entity in query.iter_mut() {
             match i {  

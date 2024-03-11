@@ -141,10 +141,6 @@ impl Game {
             return true;
         }
         self.place_ia();
-        // self.score = self.evaluate_map(Piece::Player1);
-        // println!("scoremap before1 : {}", self.score);
-        // self.score = self.evaluate_map(Piece::Player2);
-        // println!("scoremap after2 : {}", self.score);
         true
     }
 
@@ -278,9 +274,7 @@ impl Game {
             && self.map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&piece) {
 
             self.map[(x + 1 * dx) as usize][(y + 1 * dy) as usize] = Piece::Empty;
-            self.values[(x + 1 * dx) as usize][(y + 1 * dy) as usize] = 0;
             self.map[(x + 2 * dx) as usize][(y + 2 * dy) as usize] = Piece::Empty;
-            self.values[(x + 2 * dx) as usize][(y + 2 * dy) as usize] = 0;
             if piece == Piece::Player1 {
                 self.captured1 += 2;
             } else {
@@ -352,7 +346,7 @@ impl Game {
                         if y + 4 < 19 { self.map[x][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        if FREE_THREE.contains(&sequence) {
+                        if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
@@ -380,7 +374,7 @@ impl Game {
                         if x + 4 < 19 && y + 4 < 19 { self.map[x + 4][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        if FREE_THREE.contains(&sequence) {
+                        if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
