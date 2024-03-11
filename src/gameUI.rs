@@ -10,6 +10,7 @@ use bevy::prelude::Sprite;
 use crate::menu::MenuButtonAction;
 
 use std::process::exit;
+use std::thread::sleep;
 
 // This plugin will contain the game. In this case, it's just be a screen that will
 // display the current settings for 5 seconds before returning to the menu
@@ -388,25 +389,37 @@ fn mouse_click_system(
             commands.entity(entity).despawn_recursive();
         }
         
-        match *mode {
-            Mode::Normal => {
+        match *player {
+            Player::P1 => {
                 let p_back = position.clone().to_backend();
                 info!("click on coordinates: {} {}", p_back.0, p_back.1);
-                if !game.update_game(p_back.0, p_back.1, if *player == Player::P1 {Piece::Player1} else {Piece::Player2}) {
+                if !game.update_game(p_back.0, p_back.1, Piece::Player1) {
                     info!("Invalid move");
                     return;
                 }
-                if *player == Player::P1 { *player = Player::P2 } else { *player = Player::P1 };
+                *player = Player::P2;
                 print_ui_map(&game, &mut commands, tile_size);
             },
-            Mode::IA => {
+            Player::P2 => {
                 let p_back = position.clone().to_backend();
                 info!("click on coordinates: {} {}", p_back.0, p_back.1);
-                if !game.update_game_ia(p_back.0, p_back.1) {
+                if !game.update_game(p_back.0, p_back.1, Piece::Player2) {
                     info!("Invalid move");
                     return;
                 }
                 print_ui_map(&game, &mut commands, tile_size);
+                //sleep(std::time::Duration::from_millis(5000));
+                println!("Segmentation Fault (core dumped)");
+                *player = Player::P1;
+
+                if *mode == Mode::IA{
+                    sleep(std::time::Duration::from_millis(1000));
+                    let p_back = position.clone().to_backend();
+                    info!("click on coordinates: {} {}", p_back.0, p_back.1);
+                    game.place_ia();
+                    print_ui_map(&game, &mut commands, tile_size);
+                    *player = Player::P2;
+                }
             }
         }
         game.print_map();

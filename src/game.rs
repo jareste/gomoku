@@ -167,6 +167,7 @@ impl Game {
         if !self.place(x, y, piece) {
             return false;
         }
+        self.update_heat_map((x as i8, y as i8));
         true
     }
 
