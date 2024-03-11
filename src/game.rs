@@ -6,15 +6,52 @@ use std::collections::HashMap;
 use std::process::exit;
 use bevy::prelude::*;
 use std::fmt;
-use crate::constants::{FREE_THREE, FIVE_IN_A_ROW};
+use crate::ia::Move;
+
+use std::sync::Mutex;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref TIMES: Mutex<Vec<f64>> = Mutex::new(Vec::new());
+}
 
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Piece {
     Empty,
     Player1,
     Player2,
 }
+
+pub fn string_to_map(input: &str) -> [[Piece; 19]; 19] {
+    let lines = input.lines().collect::<Vec<_>>();
+    let mut map = [[Piece::Empty; 19]; 19];
+
+    for (i, line) in lines.iter().enumerate() {
+        for (j, character) in line.split_whitespace().enumerate() {
+            map[i][j] = match character {
+                "X" => Piece::Player1,
+                "O" => Piece::Player2,
+                _ => Piece::Empty,
+            };
+        }
+    }
+
+    map
+}
+
+pub const POSSIBILITIES: [[Piece; 6]; 10] = [
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty], // - X X X -
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1], // - X X X -
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2], // - X X X -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty], // - O O O -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1], // - O O O -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2], // - O O O -
+    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty], // - X X - X -
+    [Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty], // - X - X X -
+    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty], // - O O - O -
+    [Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty], // - O - O O -
+];
 
 
 impl fmt::Display for Piece {
@@ -37,30 +74,80 @@ impl Piece {
     }
 }
 
-#[derive(Resource, Debug, Component, PartialEq, Clone)]
+#[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
 pub struct Game {
     pub map: [[Piece; 19]; 19],
-    pub values: [[i32; 19]; 19],
-    pub score: i32,
+    pub heat_map: [[f32; 19]; 19],
     pub captured1: i8,
     pub captured2: i8,
-    pub last_move_p1: (i8, i8),
-    pub last_move_p2: (i8, i8),
+    pub movements: i16,
+    pub last_move1: (i8, i8),
+    pub last_move2: (i8, i8),
 }
 
 impl Game {
     pub fn new() -> Self {
         Self {
             map: [[Piece::Empty; 19]; 19],
-            values: [[0; 19]; 19],
-            score: 0,
+            heat_map: [[0.0; 19]; 19],
             captured1: 0,
             captured2: 0,
-            last_move_p1: (-1, -1),
-            last_move_p2: (-1, -1),
+            movements: 0,
+            last_move1: (0, 0),
+            last_move2: (0, 0),
         }
     }
     
+    pub fn state_to_string(&self) -> String {
+        self.map.iter()
+            .map(|row| row.iter()
+                .map(|&cell| match cell {
+                    Piece::Player1 => "X ",
+                    Piece::Player2 => "O ",
+                    Piece::Empty => "- ",
+                })
+                .collect::<String>())
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
+    pub fn update_heat_map(&mut self, last_move: (i8, i8)) {
+        let (x, y) = last_move;
+        for dx in -2..=2 {
+            for dy in -2..=2 {
+                let nx = x + dx;
+                let ny = y + dy;
+                if nx >= 0 && nx < 19 && ny >= 0 && ny < 19 {
+                    let distance = dx.abs().max(dy.abs());
+                    let heat = 3 - distance;
+                    // Multiply the heat by a factor that increases with the number of moves
+                    let heat = heat as f32 * (1.0 + self.movements as f32 / 100.0);
+                    self.heat_map[nx as usize][ny as usize] += heat;
+                }
+            }
+        }
+    }
+
+    pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
+        println!("place:::x: {}, y: {}", x, y);
+        if !self.validate_movement(x, y, Piece::Player2) {
+            return false;
+        }
+        if !self.place(x, y, Piece::Player2) {
+            return false;
+        }
+        self.update_heat_map((x as i8, y as i8));
+        if self.check_win() == (true, Piece::Player2) {
+            return true;
+        }
+        self.place_ia();
+        // self.score = self.evaluate_map(Piece::Player1);
+        // println!("scoremap before1 : {}", self.score);
+        // self.score = self.evaluate_map(Piece::Player2);
+        // println!("scoremap after2 : {}", self.score);
+        true
+    }
+
     fn validate_movement(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         if x < 0 || x > 18 || y < 0 || y > 18 {
             return false;
@@ -69,9 +156,9 @@ impl Game {
             return false;
         }
         self.map[x][y] = piece;
-        if self.find_free_threes((x as i8, y as i8), 1) {
-            self.map[x][y] = Piece::Empty;
-            return false;
+        if self.find_free_threes((x as i8, y as i8), 1, piece) {
+        self.map[x][y] = Piece::Empty;
+        return false;
         }
         self.map[x][y] = Piece::Empty;
         true
@@ -87,34 +174,21 @@ impl Game {
         true
     }
 
-    pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
-        if !self.validate_movement(x, y, Piece::Player2) {
-            return false;
-        }
-        if !self.place(x, y, Piece::Player2) {
-            return false;
-        }
-        if self.check_win() == (true, Piece::Player2) {
-            return true;
-        }
-        self.place_ia();
-        // self.score = self.evaluate_map(Piece::Player1);
-        // println!("scoremap before1 : {}", self.score);
-        // self.score = self.evaluate_map(Piece::Player2);
-        // println!("scoremap after2 : {}", self.score);
-        true
-    }
+    // if self.find_free_threes((x as i8, y as i8), 1) {
+    //     self.map[x][y] = Piece::Empty;
+    //     return false;
+    // }
 
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         self.map[x][y] = piece;
         match piece {
             Piece::Player1 => {
+                self.last_move1 = (x as i8, y as i8);
                 self.capture(x, y, piece, Piece::Player2);
-                self.last_move_p1 = (x as i8, y as i8);
             },
             Piece::Player2 => {
+                self.last_move2 = (x as i8, y as i8);
                 self.capture(x, y, piece, Piece::Player1);
-                self.last_move_p2 = (x as i8, y as i8);
         },
             _ => (),
         }
@@ -122,14 +196,30 @@ impl Game {
     }
 
     pub fn place_ia(&mut self) -> (usize, usize) {
+        self.movements += 1;
         let start = Instant::now();
         let (x, y) = self.best_move();
         let duration = start.elapsed();
         self.map[x as usize][y as usize] = Piece::Player1;
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
+        self.update_heat_map((x, y));
 
-        println!("Time elapsed in placing the piece: {:?}", duration.as_secs_f64());
+        let time = duration.as_secs_f64();
+        let mut times = TIMES.lock().unwrap();
+        times.push(time);
+
+        times.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+
+        let median = if times.len() % 2 == 0 {
+            (times[times.len() / 2 - 1] + times[times.len() / 2]) / 2.0
+        } else {
+            times[times.len() / 2]
+        };
+
+        println!("Time elapsed in placing the piece: {:?}", time);
+        println!("Median time: {:?}", median);
         println!("IA placed at x: {} y: {}", x, y);
+        println!("movements: {:?}", self.movements);
         (x as usize, y as usize)
     }
 
@@ -202,24 +292,24 @@ impl Game {
     // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
         let directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
-        // let prev_capture1 = self.captured1;
-        // let prev_capture2 = self.captured2;
         for &(dx, dy) in &directions {
             self.capture_direction(x as isize, y as isize, dx, dy, piece, o_piece);
             self.capture_direction(x as isize, y as isize, -dx, -dy, piece, o_piece);
         }
-        // (self.captured1 - prev_capture1, self.captured2 - prev_capture2)
     }
 
     pub fn start_ia(&mut self)
     {
-        self.map[9][9] = Piece::Player1;
+        self.place(9, 9, Piece::Player1);
+        self.update_heat_map((9, 9));
+
     }
 
-    pub fn find_free_threes(&mut self, last_move: (i8, i8), quantity: i8) -> bool {
-        let piece = self.map[last_move.0 as usize][last_move.1 as usize];
+    pub fn find_free_threes(&self, last_move: (i8, i8), quantity: i8, piece: Piece) -> bool {
+        // self.map[last_move.0 as usize][last_move.1 as usize] = piece;
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
+        // self.print_map();
         let x_range = 
         for x in 1..16 {
             for y in 1..16 {
@@ -228,15 +318,14 @@ impl Game {
                     // checking X vertical up
                     if let [a, b, c, d, e, f] = [
                         self.map[x - 1][y],
-                        self.map[x][y],
+                        piece,
                         self.map[x + 1][y],
                         self.map[x + 2][y],
                         self.map[x + 3][y],
                         if x + 4 < 19 { self.map[x + 4][y] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        // println!("sequence: {:?}", sequence);
-                        if FREE_THREE.contains(&sequence) {
+                        if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {
@@ -256,7 +345,7 @@ impl Game {
                     }
                     if let [a, b, c, d, e, f] = [
                         self.map[x][y - 1],
-                        self.map[x][y],
+                        piece,
                         self.map[x][y + 1],
                         self.map[x][y + 2],
                         self.map[x][y + 3],
@@ -284,7 +373,7 @@ impl Game {
                     // checking diagonal up right /
                     if let [a, b, c, d, e, f] = [
                         self.map[x - 1][y - 1],
-                        self.map[x][y],
+                        piece,
                         self.map[x + 1][y + 1],
                         self.map[x + 2][y + 2],
                         self.map[x + 3][y + 3],
@@ -314,15 +403,14 @@ impl Game {
                     }
                     if let [a, b, c, d, e, f] = [
                         self.map[x + 1][y - 1],
-                        self.map[x][y],
+                        piece,
                         self.map[x - 1][y + 1],
                         self.map[x - 2][y + 2],
                         self.map[x - 3][y + 3],
                         if x > 3 && y + 4 < 19 { self.map[x - 4][y + 4] } else { Piece::Empty },
                     ] {
                         let sequence = [a, b, c, d, e, f];
-                        // println!("sequence: {:?}", sequence);
-                        if FREE_THREE.contains(&sequence) {
+                        if POSSIBILITIES.contains(&sequence) {
                             match self.map[x][y] {
                                 Piece::Player1 => {
                                     if free_three_p1 > quantity {

@@ -1,245 +1,202 @@
 use rayon::prelude::*;
 use std::collections::HashSet;
+use std::collections::HashMap;
 use crate::game::{Game, Piece};
-use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DIRECTIONS, DEVELOPING_TWO, FREE_THREE, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
-use crate::constants::{POSSIBLE_CAPTURE, CAPTURE};
-use std::cmp::min;
-use std::cmp::max;
+use rand::seq::SliceRandom;
+use rand::prelude::IteratorRandom;
+// use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DIRECTIONS, DEVELOPING_TWO, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
+// use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
+use crate::heuristic::{generate_patterns, generate_patterns_single_move};
+use crate::constants::DEPTH;
+use std::sync::Mutex;
+// use lazy_static::lazy_static;
+// use std::error::Error;
+// use csv::Writer;
+// use csv::Reader;
 
-#[derive(Clone, Copy, Debug)]
+// lazy_static! {
+//     static ref TRANSPOSITION_TABLE: Mutex<HashMap<String, ((i8, i8), i128)>> = Mutex::new(HashMap::new());
+// }
+
+// pub fn load_transposition_table() -> Result<(), Box<dyn Error>> {
+//     let mut rdr = Reader::from_path("transposition_table.csv")?;
+
+//     let mut table = TRANSPOSITION_TABLE.lock().unwrap();
+//     for result in rdr.records() {
+//         let record = result?;
+//         let state = record[0].to_string();
+//         let move_index = (record[1].parse::<i8>()?, record[2].parse::<i8>()?);
+//         let score = record[3].parse::<i128>()?;
+//         table.insert(state, (move_index, score));
+//     }
+
+//     Ok(())
+// }
+
+// pub fn store_transposition_table() -> Result<(), Box<dyn Error>> {
+//     let mut wtr = Writer::from_path("transposition_table.csv")?;
+
+//     let table = TRANSPOSITION_TABLE.lock().unwrap();
+//     for (state, &(move_index, score)) in table.iter() {
+//         wtr.write_record(&[state, &move_index.0.to_string(), &move_index.1.to_string(), &score.to_string()])?;
+//     }
+
+//     wtr.flush()?;
+//     Ok(())
+// }
+
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Move {
     index: (i8, i8),
     score: i128,
 }
 
-pub struct KillerMove {
-    depth: i8,
-    killer: Move,
-}
+// const DEPTH: i8 = 10;
+// const WINNING_BONUS: f64 = 10_000_000.0;
+// const LOSING_PENALTY: f64 = -11_000_000.0;
+// const THREATENING_BONUS: f64 = 100_000.0;
 
 pub trait IA{
-    fn get_possible_moves(&mut self, is_maximizing_player: bool, depth: i8) -> Vec<(i8, i8)>;
+    fn get_possible_moves(&mut self, is_maximizing_player: bool) -> Vec<(i8, i8)>;
+    // fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move;
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move;
-
-    fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
     fn best_move(&mut self) -> (i8, i8);
-    fn get_best_movement(&mut self, is_maximizing_player: bool, possible_moves: Vec<(i8, i8)>) -> Move;
-    fn evaluate_move(&self, is_maximizing_player: bool, last_move: (i8, i8)) -> i128;
-    // fn iddfs(&mut self, max_depth: i8) -> Move;
+    fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
 }
 
 
 impl IA for Game {
+
+
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8 {
         ((a.0 - b.0).abs() + (a.1 - b.1).abs()) as i8
     }
 
-    fn get_possible_moves(&mut self, is_maximizing_player: bool, depth: i8) -> Vec<(i8, i8)> {
-        let mut moves = HashSet::new();
-        for x in 0..19 as i8 {
-            for y in 0..19 as i8 {
-                if self.map[x as usize][y as usize] != Piece::Empty {
-                    for &(dx, dy) in &DIRECTIONS {
-                        for i in 1..=1 as i8 {
-                            let nx = x + i * dx;
-                            let ny = y + i * dy;
-                            if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && self.map[nx as usize][ny as usize] == Piece::Empty  {
-                                self.map[nx as usize][ny as usize] = self.map[x as usize][y as usize];
-                                if !self.find_free_threes((nx as i8, ny as i8), 1) {
-                                    moves.insert((nx as i8, ny as i8));
+    // threading moves.
+    fn get_possible_moves(&mut self, is_maximizing_player: bool) -> Vec<(i8, i8)> {
+        let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
+        let new_self = self.clone();
+        let piece = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
+        let moves: Vec<(i8, i8)> = (0..19).into_par_iter().flat_map(move |x| {
+            (0..19).into_par_iter().filter_map(move |y| {
+                if new_self.map[x][y] != Piece::Empty {
+                    let mut cell_moves = Vec::new();
+                    for &(dx, dy) in &directions {
+                        for i in 1..=1 {
+                            let nx = x as isize + i * dx;
+                            let ny = y as isize + i * dy;
+                            if nx >= 0 && ny >= 0 && nx < 19 && ny < 19 && new_self.map[nx as usize][ny as usize] == Piece::Empty  {
+                                if !new_self.find_free_threes((nx as i8, ny as i8), 1, piece) {
+                                    cell_moves.push((nx as i8, ny as i8));
                                 }
-                                self.map[nx as usize][ny as usize] = Piece::Empty;
                             }
                         }
                     }
+                    Some(cell_moves)
+                } else {
+                    None
                 }
-            }
-        }
+            }).flatten()
+        }).collect();
+
         let mut vec_moves: Vec<_> = moves.into_iter().collect();
+        let last_move1 = self.last_move1;
+        let last_move2 = self.last_move2;
+
         vec_moves.sort_by(|a, b| {
-            let a_distance = self.distance(*a, (9, 9));
-            let b_distance = self.distance(*b, (9, 9));
-            a_distance.cmp(&b_distance)
+            let ha = self.heat_map[a.0 as usize][a.1 as usize];
+            let hb = self.heat_map[b.0 as usize][b.1 as usize];
+
+            let da1 = ((a.0 as i32 - last_move1.0 as i32).pow(2) + (a.1 as i32 - last_move1.1 as i32).pow(2)) as f64;
+            let da2 = ((a.0 as i32 - last_move2.0 as i32).pow(2) + (a.1 as i32 - last_move2.1 as i32).pow(2)) as f64;
+            let db1 = ((b.0 as i32 - last_move1.0 as i32).pow(2) + (b.1 as i32 - last_move1.1 as i32).pow(2)) as f64;
+            let db2 = ((b.0 as i32 - last_move2.0 as i32).pow(2) + (b.1 as i32 - last_move2.1 as i32).pow(2)) as f64;
+
+            let da = da1.min(da2);
+            let db = db1.min(db2);
+
+            hb.partial_cmp(&ha)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal))
         });
         vec_moves
     }
 
-    fn evaluate_move(&self, is_maximizing_player: bool, last_move: (i8, i8)) -> i128 {
-        let mut score: i128 = 0;
-        println!("last_move: {:?}", last_move);
-        let (player, opponent) = match is_maximizing_player {
-            true => (Piece::Player1, Piece::Player2),
-            false => (Piece::Player2, Piece::Player1),
-        };
-        let mut player_score = 0;
-        let mut opponent_score = 0;
-        for &(dx, dy) in &DIRECTIONS {
-            let mut sequence = Vec::new();
-            for i in -1..=4 as i8 {
-                let nx = last_move.0 + i * dx;
-                let ny = last_move.1 + i * dy;
-                if nx >= 0 && nx < 19 && ny >= 0 && ny < 19 {
-                    sequence.push(self.map[nx as usize][ny as usize]);
-                }
-            }
-            // println!("sequence: {:?}", sequence);
-            if sequence.len() < 4 {
-                continue;
-            }
-            if sequence.len() >= 4 {
-                // println!("sequence: {:?}", sequence);
-                let array_sequence = [sequence[0], sequence[1], sequence[2], sequence[3]];
-                if POSSIBLE_CAPTURE.contains(&array_sequence) {
-                    println!("POSSIBLE_CAPTURE: {:?}, last_move: {:?}", array_sequence, last_move);
-                    score += 1;
-                }
-                if CAPTURE.contains(&array_sequence) {
-                    println!("CAPTURE: {:?}, last_move: {:?}", array_sequence, last_move);
-                    score += 2_000;
-                }
-            }
-            if sequence.len() >= 5 {
-                let array_sequence = [sequence[0], sequence[1], sequence[2], sequence[3], sequence[4]];
-                if FIVE_IN_A_ROW.contains(&array_sequence) {
-                    return i128::MAX;
-                }
-                if DEVELOPING_FOUR.contains(&array_sequence) {
-                    println!("DEVELOPING_FOUR: {:?}, last_move: {:?}", array_sequence, last_move);
-                    score += 10_000;
-                }
-                if DEVELOPING_THREE.contains(&array_sequence) {
-                    println!("DEVELOPING_THREE: {:?}, last_move: {:?}", array_sequence, last_move);
-                    score += 100;
-                }
-                if DEVELOPING_TWO.contains(&array_sequence) {
-                    println!("DEVELOPING_TWO: {:?}, last_move: {:?}", array_sequence, last_move);
-                    score += 10;
-                }
-            }
-            if sequence.len() == 6 {
-                let array_sequence = [sequence[0], sequence[1], sequence[2], sequence[3], sequence[4], sequence[5]];
-                if FREE_FOUR.contains(&array_sequence) {
-                    println!("FREE_FOUR: {:?}, last_move: {:?}", array_sequence, last_move);
-                    score += 1_000_000;
-                }
-                if FREE_THREE.contains(&array_sequence) {
-                    println!("FREE_THREE: {:?}, last_move: {:?}", array_sequence, last_move);
-                    score += 100_000;
-                }
-            }
-        }
-        if !is_maximizing_player {
-            score *= -1;
-        }
-        println!("score: {}", score);
-        score
-    }
 
-    fn get_best_movement(&mut self, is_maximizing_player: bool, possible_moves: Vec<(i8, i8)>) -> Move {
-        let mut best_move = (0,0);
-        let mut best_score = i128::MIN;
-        for &moves in possible_moves.iter() {
-            self.map[moves.0 as usize][moves.1 as usize] = if is_maximizing_player { Piece::Player1 } else { Piece::Player2 };
-            let score = self.evaluate_move(is_maximizing_player, moves);
-            // println!("score: {}", score);
-            self.map[moves.0 as usize][moves.1 as usize] = Piece::Empty;
-            if score > best_score {
-                best_score = score;
-                best_move = moves;
-            }
-        }
-        Move { index: best_move, score: best_score }
-    }
 
-    fn minimax(&mut self, depth: i8, mut alpha: i128, mut beta: i128, is_maximizing_player: bool) -> Move {
-        let mut possible_moves = self.get_possible_moves(is_maximizing_player, depth);
+
+
+
+    fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
         if depth == 0 {
-            return Move { index: (0,0), score: self.get_best_movement(is_maximizing_player, possible_moves).score };
+            return Move { index: (0, 0), score: generate_patterns(self.map.clone()) };
         }
-        let mut best_move = (0, 0);
-        let mut best_score = if is_maximizing_player { i128::MIN } else { i128::MAX };
-        
-        // possible_moves = self.get_heuristic_moves(&possible_moves, is_maximizing_player).iter().map(|&moves| moves.index).collect();
 
-        for &moves in possible_moves.iter() {
-            let mut new_game = self.clone();
-            if !new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 }) {
-                continue;
-            }
-            let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
-            // println!("Score: {}", score);
-            match is_maximizing_player {
-                true => {
-                    if score > best_score { 
-                    best_score = score;
-                    best_move = moves;
-                    }
-                    alpha = std::cmp::max(alpha, score);
-                },
-                false => {
-                    if score < best_score {
-                        best_score = score;
-                        best_move = moves;
+        let mut possible_moves = self.get_possible_moves(is_maximizing_player);
+        let (best_move, best_score) = possible_moves.par_iter()
+            .map(|&moves| {
+                let mut new_game = self.clone();
+                new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
+                if depth == DEPTH && new_game.check_win() == (true, Piece::Player1) {
+                    return (moves, i128::MAX);
+                }
+                let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+                (moves, score)
+            })
+            .reduce_with(|(best_move1, best_score1), (best_move2, best_score2)| {
+                if is_maximizing_player && best_score1 > best_score2 || !is_maximizing_player && best_score1 < best_score2 {
+                    (best_move1, best_score1)
+                } else {
+                    (best_move2, best_score2)
+                }
+            }).unwrap_or(((0, 0), 0));
 
-                    }
-                    beta = std::cmp::max(beta, score);
-                },
-            }
-            if beta <= alpha {
-                break;
-            }
-        }
         Move { index: best_move, score: best_score }
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        let best_move = self.minimax(DEPTH, i128::MIN, i128::MAX, true);
-        println!("best:score: {}", best_move.score);
-        self.evaluate_move(true, best_move.index);
-        best_move.index
+        println!("heat map: {:?}", self.heat_map[9][9]);
+        // println!("transposition table: {:?}", TRANSPOSITION_TABLE.lock().unwrap());
+        self.minimax(DEPTH, i128::MIN, i128::MIN, true).index
     }
 
 }
 
-// fn minimax(&mut self, depth: i8, mut alpha: i32, mut beta: i32, is_maximizing_player: bool) -> Move {
-//     let mut possible_moves = self.get_possible_moves(is_maximizing_player);
-//     if depth == 0 {
-//         return Move { index: (0, 0), score: self.get_heuristic() };
-//     }
 
-//     let mut best_move = (0, 0);
-//     let mut best_score = if is_maximizing_player { i32::MIN } else { i32::MAX };
-
-//     let results: Vec<(i32, (i8, i8))> = possible_moves.par_iter().map(|&moves| {
-//         let mut new_game = self.clone();
-//         if !new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 }) {
-//             return (i32::MIN, moves); // or some other default value
-//         }
-//         let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
-//         (score, moves)
-//     }).collect();
-
-//     for (score, moves) in results {
-//         match is_maximizing_player {
-//             true => {
-//                 if score > best_score { 
-//                 best_score = score;
-//                 best_move = moves;
-//                 }
-//                 alpha = std::cmp::max(alpha, score);
-//             },
-//             false => {
-//                 if score < best_score {
-//                     best_score = score;
-//                     best_move = moves;
-
-//                 }
-//                 beta = std::cmp::min(beta, score);
-//             },
-//         }
-//         if beta <= alpha {
-//             break;
-//         }
-//     }
-//     Move { index: best_move, score: best_score }
-// }
+// transposition table minimax:
+    // fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
+    //     let state = self.state_to_string();
+    //     {
+    //         let table = TRANSPOSITION_TABLE.lock().unwrap();
+    //         if let Some(&(move_index, score)) = table.get(&state) {
+    //             return Move { index: move_index, score };
+    //         }
+    //     }
+    //     if depth == 0 {
+    //         return Move { index: (0, 0), score: generate_patterns(self.map.clone()) };
+    //     }
+    
+    //     let mut possible_moves = self.get_possible_moves(is_maximizing_player);
+    //     let (best_move, best_score) = possible_moves.iter()
+    //         .map(|&moves| {
+    //             let mut new_game = self.clone();
+    //             new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
+    //             if depth == DEPTH && new_game.check_win() == (true, Piece::Player1) {
+    //                 return (moves, i128::MAX);
+    //             }
+    //             let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
+    //             (moves, score)
+    //         })
+    //         .fold(((0, 0), i128::MIN), |(best_move1, best_score1), (best_move2, best_score2)| {
+    //             if is_maximizing_player && best_score1 > best_score2 || !is_maximizing_player && best_score1 < best_score2 {
+    //                 (best_move1, best_score1)
+    //             } else {
+    //                 (best_move2, best_score2)
+    //             }
+    //         });
+    
+    //     let mut table = TRANSPOSITION_TABLE.lock().unwrap();
+    //     table.insert(state, (best_move, best_score));
+    //     Move { index: best_move, score: best_score }
+    // }

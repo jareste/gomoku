@@ -393,6 +393,7 @@ fn mouse_click_system(
                 let p_back = position.clone().to_backend();
                 info!("click on coordinates: {} {}", p_back.0, p_back.1);
                 if !game.update_game(p_back.0, p_back.1, if *player == Player::P1 {Piece::Player1} else {Piece::Player2}) {
+                if !game.update_game(p_back.0, p_back.1, if *player == Player::P1 {Piece::Player1} else {Piece::Player2}) {
                     info!("Invalid move");
                     return;
                 }
@@ -412,6 +413,7 @@ fn mouse_click_system(
         game.print_map();
         if (game.check_win() == (true, Piece::Player1)) || (game.check_win() == (true, Piece::Player2)) {
             println!("Segmentation Fault (core dumped)");
+            // ia::store_transposition_table();
             exit(0);
         }
             
