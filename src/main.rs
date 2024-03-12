@@ -107,47 +107,47 @@ fn main() {
 
     // geme.place(9,9, Piece::Player1);
 
-    for i in 0..60000 {
-        let mut geme = game::Game::new();
-        geme.start_ia();            
-        'test: loop {
-            // println!("game {}", i);
-            let moves = geme.get_possible_moves(false, 1);
-            let mut rng = rand::thread_rng();
-            if let Some(random_move) = moves.choose(&mut rng) {
-                geme.place(random_move.0 as usize, random_move.1 as usize, Piece::Player2);
-                // println!("game321 {}", i);
+    // for i in 0..60000 {
+    //     let mut geme = game::Game::new();
+    //     geme.start_ia();            
+    //     'test: loop {
+    //         // println!("game {}", i);
+    //         let moves = geme.get_possible_moves(false, 1);
+    //         let mut rng = rand::thread_rng();
+    //         if let Some(random_move) = moves.choose(&mut rng) {
+    //             geme.place(random_move.0 as usize, random_move.1 as usize, Piece::Player2);
+    //             // println!("game321 {}", i);
                 
-                if geme.check_win() == (true, Piece::Player1) {
-                    println!("Player 1 wins game {}", i);
-                    break 'test;
-                }
-                if geme.check_win() == (true, Piece::Player2) {
-                    println!("Player 2 wins game {}", i);
-                    break 'test;
-                }
+    //             if geme.check_win() == (true, Piece::Player1) {
+    //                 println!("Player 1 wins game {}", i);
+    //                 break 'test;
+    //             }
+    //             if geme.check_win() == (true, Piece::Player2) {
+    //                 println!("Player 2 wins game {}", i);
+    //                 break 'test;
+    //             }
 
-                geme.update_heat_map((random_move.0, random_move.1));
+    //             geme.update_heat_map((random_move.0, random_move.1));
                 
-                geme.place_ia();
-                if geme.check_win() == (true, Piece::Player1) {
-                    println!("Player 1 wins game {}", i);
-                    break 'test;
-                }
-                if geme.check_win() == (true, Piece::Player2) {
-                    println!("Player 2 wins game {}", i);
-                    break 'test;
-                }
-            }
-            else {
-                println!("No more moves");
-                break 'test;
-            }
+    //             geme.place_ia();
+    //             if geme.check_win() == (true, Piece::Player1) {
+    //                 println!("Player 1 wins game {}", i);
+    //                 break 'test;
+    //             }
+    //             if geme.check_win() == (true, Piece::Player2) {
+    //                 println!("Player 2 wins game {}", i);
+    //                 break 'test;
+    //             }
+    //         }
+    //         else {
+    //             println!("No more moves");
+    //             break 'test;
+    //         }
 
-        }
-        geme.print_map();
-    }
-    ia::store_transposition_table();
+    //     }
+    //     geme.print_map();
+    // }
+    // ia::store_transposition_table();
 
 
     // let mut geme = game::Game::new();

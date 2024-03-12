@@ -8,6 +8,7 @@ use rand::Rng;
 use super::{despawn_screen,Mode, game, GameState, Player, TEXT_COLOR};
 use bevy::prelude::Sprite;
 use crate::menu::MenuButtonAction;
+use crate::ia;
 
 use std::process::exit;
 use std::thread::sleep;
