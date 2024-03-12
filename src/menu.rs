@@ -89,7 +89,7 @@ struct SelectedOption;
 
 // All actions that can be triggered from a button click
 #[derive(Component)]
-enum MenuButtonAction {
+pub enum MenuButtonAction {
     Play,
     PlayIA,
     Settings,
@@ -555,7 +555,7 @@ fn menu_action(
                 MenuButtonAction::PlayIA => {
                     game_state.set(GameState::Game);
                     menu_state.set(MenuState::Disabled);
-                    *mode = Mode::IA;
+                    *mode = Mode::IAP1;
                 }
                 MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
                 MenuButtonAction::SettingsDisplay => {
