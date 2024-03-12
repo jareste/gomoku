@@ -20,9 +20,12 @@ pub fn gameUI_plugin(app: &mut App) {
         .add_systems(Update, mouse_click_system.run_if(in_state(GameState::Game)))
         .add_systems(Update, countdown.run_if(in_state(GameState::Game)))
         .add_systems(Update, button_system.run_if(in_state(GameState::Game)))
+        .add_systems(Update, captures.run_if(in_state(GameState::Game)))
+        .add_systems(Update, IA_move.run_if(in_state(GameState::Game)))
         .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
         .add_systems(OnExit(GameState::Game), despawn_screen::<OnHintScreen>)
-        .add_systems(OnExit(GameState::Game), despawn_screen::<TimeText>);
+        .add_systems(OnExit(GameState::Game), despawn_screen::<TimeText>)
+        .add_systems(OnExit(GameState::Game), despawn_screen::<CaptureText>);
 }
 
 // Tag component used to tag entities added on the game screen
@@ -34,6 +37,10 @@ struct OnHintScreen;
 
 #[derive(Component)]
 struct TimeText;
+
+#[derive(Component)]
+struct CaptureText;
+
 
 #[derive(Resource, Deref, DerefMut)]
     struct GameTimer(Timer);
@@ -259,7 +266,7 @@ fn gameUI_setup(
             ) 
             .with_style(Style {
                 position_type: PositionType::Absolute,
-                top: Val::Px(660.0),
+                top: Val::Px(650.0),
                 left: Val::Px(75.0),
                 ..default()
             }),
@@ -278,14 +285,50 @@ fn gameUI_setup(
             .with_style(Style {
                 position_type: PositionType::Absolute,
                 left: Val::Px(1035.0),
-                top: Val::Px(120.0),
+                top: Val::Px(105.0),
                 ..default()
             }),
             TimeText,
         ));
 
+        commands.spawn((
+            TextBundle::from_section(
+                "Captures: 0",
+                TextStyle {
+                    font: asset_server.load("fonts/MontserratExtrabold-VGO60.ttf"),
+                    font_size: 20.0,
+                    ..default()
+                },
+            ) 
+            .with_style(Style {
+                position_type: PositionType::Absolute,
+                left: Val::Px(65.0),
+                top: Val::Px(670.0),
+                ..default()
+            }),
+            CaptureText,
+        ));
+
+        commands.spawn((
+            TextBundle::from_section(
+                "Captures: 0",
+                TextStyle {
+                    font: asset_server.load("fonts/MontserratExtrabold-VGO60.ttf"),
+                    font_size: 20.0,
+                    ..default()
+                },
+            ) 
+            .with_style(Style {
+                position_type: PositionType::Absolute,
+                left: Val::Px(1025.0),
+                top: Val::Px(125.0),
+                ..default()
+            }),
+            CaptureText,
+        ));
+
     // Creating a grid of empty tiles.
-    if *mode == Mode::IA {
+    if *mode != Mode::Normal {
         game.start_ia();
     }
     print_ui_map(&game, &mut commands, tile_size);
@@ -408,18 +451,9 @@ fn mouse_click_system(
                     return;
                 }
                 print_ui_map(&game, &mut commands, tile_size);
-                //sleep(std::time::Duration::from_millis(5000));
-                println!("Segmentation Fault (core dumped)");
                 *player = Player::P1;
 
-                if *mode == Mode::IA{
-                    sleep(std::time::Duration::from_millis(1000));
-                    let p_back = position.clone().to_backend();
-                    info!("click on coordinates: {} {}", p_back.0, p_back.1);
-                    game.place_ia();
-                    print_ui_map(&game, &mut commands, tile_size);
-                    *player = Player::P2;
-                }
+                
             }
         }
         game.print_map();
@@ -516,5 +550,58 @@ fn countdown(
             }
             i += 1;
         }
+    }
+}
+
+
+fn captures(
+    mut game_state: ResMut<NextState<GameState>>,
+    game: Res<Game>,
+    mut query: Query<&mut Text, With<CaptureText>>,
+) {
+    let mut i = 0;
+    for mut entity in query.iter_mut() {
+        match i {  
+            0 => entity.sections[0].value = format!("Captures: {}", game.captured2),
+            1 => entity.sections[0].value = format!("Captures: {}", game.captured1),
+            _ => {}
+        
+        }
+        i += 1;
+    }
+}
+
+
+fn IA_move(
+    mut game: ResMut<Game>,
+    mut player: ResMut<Player>,
+    mut commands: Commands,
+    mode: Res<Mode>,
+) {
+    let tile_size = 500.0 /19.0;
+    match *mode {
+        Mode::IAP1 => {
+            if *player == Player::P1 {
+                game.place_ia();
+                print_ui_map(&game, &mut commands, tile_size);
+                *player = Player::P2;
+            }
+        },
+        Mode::IAP2 => {
+            if *player == Player::P2 {
+                game.place_ia();
+                print_ui_map(&game, &mut commands, tile_size);
+                *player = Player::P1;
+            }
+        },
+        Mode::IAP1P2 => {
+            game.place_ia();
+            print_ui_map(&game, &mut commands, tile_size);
+            *player = match *player {
+                Player::P1 => Player::P2,
+                Player::P2 => Player::P1,
+            };
+        },
+        _ => {}
     }
 }

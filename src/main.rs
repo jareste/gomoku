@@ -40,59 +40,13 @@ enum Player {
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
 enum Mode {
     Normal,
-    IA,
+    IAP1,
+    IAP2,
+    IAP1P2,
 }
 
 //struct bevyGame(Game);
 fn main() {
-//     let game = 0;
-//     if game == 1 {
-//         terminal_game();
-//         return;
-//     }
-//     else if game == 0 {
-//         terminal_game_ia();
-//         return;
-//     }
-// }
-    // let map = game::string_to_map("-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  O  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  O  O  O  X  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  O  X  O  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  X  X  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  X  -  X  X  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  X  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  O  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  X  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
-    // -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  ");
-
-    // let mut game = game::Game::new();
-    // game.map = map;
-    // // game.place(7,8, Piece::Player2);
-
-    // let piece = game.map[9][8];
-    // // game.map[8][8] = Piece::Player1;
-    // game.map[7][8] = Piece::Player2;
-    //                         game.print_map();
-    // // game.map[9][8] = piece;
-
-    // if game.find_free_threes((7, 8), 1, Piece::Player2) {
-    //     println!("holaaaaa");
-    // } else {
-    //     println!("adeeeeu");
-    // }
-
-    // ia::load_transposition_table();
-
     let mut geme = game::Game::new();
     App::new()
 
@@ -116,7 +70,7 @@ fn main() {
     .insert_resource(MinMaxProf(7))
     .insert_resource(Player::P2)
     .insert_resource(game::Game::new())
-    .insert_resource(Mode::IA)
+    .insert_resource(Mode::IAP1)
     .init_state::<GameState>()
     .add_systems(Startup, setup)
     .add_plugins((menu::menu_plugin, gameUI::gameUI_plugin))
