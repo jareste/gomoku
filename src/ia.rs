@@ -209,9 +209,11 @@ impl IA for Game {
                     (best_move2, best_score2)
                 }
             }).unwrap_or(((0, 0), 0));
-        let state = self.state_to_int(depth);
-        let mut table = TRANSPOSITION_TABLE.lock().unwrap();
-        table.insert(state, (best_move, best_score));
+        if depth == DEPTH {
+            let state = self.state_to_int(depth);
+            let mut table = TRANSPOSITION_TABLE.lock().unwrap();
+            table.insert(state, (best_move, best_score));
+        }
         Move { index: best_move, score: best_score }
     }
 

@@ -239,8 +239,8 @@ impl Game {
             times[times.len() / 2]
         };
 
-        // println!("Time elapsed in placing the piece: {:?}", time);
-        // println!("Median time: {:?}", median);
+        println!("Time elapsed in placing the piece: {:?}", time);
+        println!("Median time: {:?}", median);
         // println!("IA placed at x: {} y: {}", x, y);
         // println!("movements: {:?}", self.movements);
         (x as usize, y as usize)

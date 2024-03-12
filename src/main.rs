@@ -97,14 +97,14 @@ fn main() {
 
     // geme.place(9,9, Piece::Player1);
 
-    for i in 0..1000 {
+    for i in 0..60 {
         let mut geme = game::Game::new();
         geme.start_ia();            
         'test: loop {
             let moves = geme.get_possible_moves(false, 1);
             let mut rng = rand::thread_rng();
             if let Some(random_move) = moves.choose(&mut rng) {
-                geme.place(random_move.0 as usize, random_move.1 as usize, Piece::Player1);
+                geme.place(random_move.0 as usize, random_move.1 as usize, Piece::Player2);
                 
                 if geme.check_win() == (true, Piece::Player1) {
                     println!("Player 1 wins game {}", i);
@@ -129,6 +129,7 @@ fn main() {
             }
 
         }
+        geme.print_map();
     }
     ia::store_transposition_table();
 
