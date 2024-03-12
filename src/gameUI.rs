@@ -11,6 +11,7 @@ use crate::menu::MenuButtonAction;
 
 use std::process::exit;
 use std::thread::sleep;
+use std::time::Instant;
 
 // This plugin will contain the game. In this case, it's just be a screen that will
 // display the current settings for 5 seconds before returning to the menu
@@ -452,8 +453,6 @@ fn mouse_click_system(
                 }
                 print_ui_map(&game, &mut commands, tile_size);
                 *player = Player::P1;
-
-                
             }
         }
         game.print_map();
@@ -577,19 +576,26 @@ fn IA_move(
     mut player: ResMut<Player>,
     mut commands: Commands,
     mode: Res<Mode>,
+    mut player_times: ResMut<PlayerTimes>,
 ) {
     let tile_size = 500.0 /19.0;
     match *mode {
         Mode::IAP1 => {
             if *player == Player::P1 {
+                let start = Instant::now();
                 game.place_ia();
+                let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
+                player_times.0 += time;
                 print_ui_map(&game, &mut commands, tile_size);
                 *player = Player::P2;
             }
         },
         Mode::IAP2 => {
             if *player == Player::P2 {
+                let start = Instant::now();
                 game.place_ia();
+                let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
+                player_times.1 += time;
                 print_ui_map(&game, &mut commands, tile_size);
                 *player = Player::P1;
             }
