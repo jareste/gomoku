@@ -20,7 +20,7 @@ lazy_static! {
 }
 
 pub fn load_transposition_table() -> Result<(), Box<dyn Error>> {
-    let mut rdr = Reader::from_path("transposition_table_4.csv")?;
+    let mut rdr = Reader::from_path("transposition_table_2.csv")?;
 
     let mut table = TRANSPOSITION_TABLE.lock().unwrap();
     for result in rdr.records() {
@@ -35,7 +35,7 @@ pub fn load_transposition_table() -> Result<(), Box<dyn Error>> {
 }
 
 pub fn store_transposition_table() -> Result<(), Box<dyn Error>> {
-    let mut wtr = Writer::from_path("transposition_table_4.csv")?;
+    let mut wtr = Writer::from_path("transposition_table_2.csv")?;
 
     let table = TRANSPOSITION_TABLE.lock().unwrap();
     for (&state, &(move_index, score)) in table.iter() {

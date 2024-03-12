@@ -12,6 +12,8 @@ use bevy_prototype_lyon::prelude::*;
 use crate::game::Piece;
 use crate::ia::IA;
 use rand::prelude::SliceRandom;
+use std::process;
+use ctrlc::set_handler;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -46,6 +48,12 @@ enum Mode {
 
 //struct bevyGame(Game);
 fn main() {
+    set_handler(move || {
+        println!("Detected Ctrl+C signal. Saving data...");
+        ia::store_transposition_table();
+        println!("Data saved. Exiting...");
+        process::exit(0);
+    }).expect("Error setting Ctrl-C handler");
 //     let game = 0;
 //     if game == 1 {
 //         terminal_game();
@@ -97,14 +105,16 @@ fn main() {
 
     // geme.place(9,9, Piece::Player1);
 
-    for i in 0..60 {
+    for i in 0..60000 {
         let mut geme = game::Game::new();
         geme.start_ia();            
         'test: loop {
+            // println!("game {}", i);
             let moves = geme.get_possible_moves(false, 1);
             let mut rng = rand::thread_rng();
             if let Some(random_move) = moves.choose(&mut rng) {
                 geme.place(random_move.0 as usize, random_move.1 as usize, Piece::Player2);
+                // println!("game321 {}", i);
                 
                 if geme.check_win() == (true, Piece::Player1) {
                     println!("Player 1 wins game {}", i);
@@ -126,6 +136,10 @@ fn main() {
                     println!("Player 2 wins game {}", i);
                     break 'test;
                 }
+            }
+            else {
+                println!("No more moves");
+                break 'test;
             }
 
         }

@@ -183,6 +183,7 @@ fn mouse_click_system(mut commands: Commands, mouse_button_input: Res<ButtonInpu
         }
         game.print_map();
         if (game.check_win() == (true, Piece::Player1)) || (game.check_win() == (true, Piece::Player2)) {
+            println!("Player {:?} wins", game.check_win().1);
             println!("Segmentation Fault (core dumped)");
             ia::store_transposition_table();
             exit(0);

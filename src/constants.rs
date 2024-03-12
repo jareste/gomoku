@@ -1,6 +1,6 @@
 use crate::game::Piece;
 
-pub const DEPTH: i8 = 4;
+pub const DEPTH: i8 = 2;
 pub const WINNING_BONUS: i32 = 10_000_000;
 pub const LOSING_PENALTY: i32 = -10_000_000;
 pub const THREATENING_BONUS: i32 = 100_000;
