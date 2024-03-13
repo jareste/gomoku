@@ -1,6 +1,6 @@
 use bevy::{app::AppExit, prelude::*};
 
-use super::{despawn_screen, Mode,IAQuality, GameState, MinMaxProf, TEXT_COLOR};
+use super::{despawn_screen, Mode,IAQuality, GameState, IAPosition,MinMaxProf, TEXT_COLOR};
 
 // This plugin manages the menu, with 5 different screens:
 // - a settings menu with two submenus and a back button
@@ -35,10 +35,10 @@ pub fn menu_plugin(app: &mut App) {
             despawn_screen::<OnDisplaySettingsMenuScreen>,
         )
         // Systems to handle the sound settings screen
-        .add_systems(OnEnter(MenuState::SettingsSound), sound_settings_menu_setup)
+        .add_systems(OnEnter(MenuState::SettingsSound), startingPositionIA_menu_setup)
         .add_systems(
             Update,
-            setting_button::<MinMaxProf>.run_if(in_state(MenuState::SettingsSound)),
+            setting_button::<IAPosition>.run_if(in_state(MenuState::SettingsSound)),
         )
         .add_systems(
             OnExit(MenuState::SettingsSound),
@@ -92,6 +92,7 @@ struct SelectedOption;
 pub enum MenuButtonAction {
     Play,
     PlayIA,
+    PlayIAvsIA,
     Settings,
     SettingsDisplay,
     SettingsSound,
@@ -225,7 +226,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 button_text_style.clone(),
                             ));
                         });
-                        parent
+                    parent
                         .spawn((
                             ButtonBundle {
                                 style: button_style.clone(),
@@ -240,6 +241,23 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 button_text_style.clone(),
                             ));
                         });
+                    
+                    parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            MenuButtonAction::PlayIAvsIA,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "IA VS IA",
+                                button_text_style.clone(),
+                            ));
+                        });
+
                     parent
                         .spawn((
                             ButtonBundle {
@@ -315,7 +333,7 @@ fn settings_menu_setup(mut commands: Commands) {
                 .with_children(|parent| {
                     for (action, text) in [
                         (MenuButtonAction::SettingsDisplay, "IA LEVEL"),
-                        (MenuButtonAction::SettingsSound, "MINMAX PROFUNDITY"),
+                        (MenuButtonAction::SettingsSound, "IA START"),
                         (MenuButtonAction::BackToMainMenu, "Back"),
                     ] {
                         parent
@@ -442,7 +460,7 @@ fn display_settings_menu_setup(mut commands: Commands, display_quality: Res<IAQu
         });
 }
 
-fn sound_settings_menu_setup(mut commands: Commands, volume: Res<MinMaxProf>) {
+fn startingPositionIA_menu_setup(mut commands: Commands, iaPos: Res<IAPosition>) {
     let button_style = Style {
         width: Val::Px(200.0),
         height: Val::Px(65.0),
@@ -483,6 +501,8 @@ fn sound_settings_menu_setup(mut commands: Commands, volume: Res<MinMaxProf>) {
                     ..default()
                 })
                 .with_children(|parent| {
+                    // Create a new `NodeBundle`, this time not setting its `flex_direction`. It will
+                    // use the default value, `FlexDirection::Row`, from left to right.
                     parent
                         .spawn(NodeBundle {
                             style: Style {
@@ -493,28 +513,40 @@ fn sound_settings_menu_setup(mut commands: Commands, volume: Res<MinMaxProf>) {
                             ..default()
                         })
                         .with_children(|parent| {
+                            // Display a label for the current setting
                             parent.spawn(TextBundle::from_section(
-                                "PROF:",
+                                "IA PLAYER",
                                 button_text_style.clone(),
                             ));
-                            for volume_setting in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] {
+                            // Display a button for each possible value
+                            for position in [
+                                IAPosition::P1,
+                                IAPosition::P2,
+                            ] {
                                 let mut entity = parent.spawn((
                                     ButtonBundle {
                                         style: Style {
-                                            width: Val::Px(30.0),
+                                            width: Val::Px(150.0),
                                             height: Val::Px(65.0),
                                             ..button_style.clone()
                                         },
                                         background_color: NORMAL_BUTTON.into(),
                                         ..default()
                                     },
-                                    MinMaxProf(volume_setting),
+                                    position,
                                 ));
-                                if *volume == MinMaxProf(volume_setting) {
+                                entity.with_children(|parent| {
+                                    parent.spawn(TextBundle::from_section(
+                                        format!("{position:?}"),
+                                        button_text_style.clone(),
+                                    ));
+                                });
+                                if *iaPos == position {
                                     entity.insert(SelectedOption);
                                 }
                             }
                         });
+                    // Display the back button to return to the settings screen
                     parent
                         .spawn((
                             ButtonBundle {
@@ -556,6 +588,11 @@ fn menu_action(
                     game_state.set(GameState::Game);
                     menu_state.set(MenuState::Disabled);
                     *mode = Mode::IAP1;
+                }
+                MenuButtonAction::PlayIAvsIA => {
+                    game_state.set(GameState::Game);
+                    menu_state.set(MenuState::Disabled);
+                    *mode = Mode::IAP1P2;
                 }
                 MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
                 MenuButtonAction::SettingsDisplay => {

@@ -7,7 +7,9 @@ use rand::Rng;
 
 use super::{despawn_screen,Mode, game, GameState, Player, TEXT_COLOR};
 use bevy::prelude::Sprite;
+use crate::ia;
 use crate::menu::MenuButtonAction;
+use crate::IAPosition;
 
 use std::process::exit;
 use std::thread::sleep;
@@ -99,7 +101,8 @@ fn gameUI_setup(
     mode: Res<Mode>,
     mut game: ResMut<Game>,
     asset_server: Res<AssetServer>,
-) {
+    iapos: Res<IAPosition>,
+ ) {
     let board = 500.0 + (20.0 * 10.0);
     let tile_size = 500.0 /19.0;
     let tile_spacing = 10.0;
@@ -201,60 +204,63 @@ fn gameUI_setup(
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section("Quit", button_text_style.clone()));
         });
-    
-        commands
-        .spawn((ButtonBundle {
-            style: Style {
-                width: Val::Px(110.0),
-                height: Val::Px(45.0),
-                border: UiRect::all(Val::Px(0.0)),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
-                margin: UiRect {
-                    top: Val::Px(160.0),
-                    left: Val::Px(1020.0),
-                    bottom: Val::Px(10.0),
-                    right: Val::Px(0.0),},
+        
+        if (*mode != Mode::IAP1 && *mode != Mode::IAP1P2) {
+            commands
+            .spawn((ButtonBundle {
+                style: Style {
+                    width: Val::Px(110.0),
+                    height: Val::Px(45.0),
+                    border: UiRect::all(Val::Px(0.0)),
+                    // horizontally center child text
+                    justify_content: JustifyContent::Center,
+                    // vertically center child text
+                    align_items: AlignItems::Center,
+                    margin: UiRect {
+                        top: Val::Px(160.0),
+                        left: Val::Px(1020.0),
+                        bottom: Val::Px(10.0),
+                        right: Val::Px(0.0),},
+                    ..default()
+                },
+                border_color: BorderColor(Color::BLACK),
+                background_color: NORMAL_BUTTON.into(),
                 ..default()
             },
-            border_color: BorderColor(Color::BLACK),
-            background_color: NORMAL_BUTTON.into(),
-            ..default()
-        },
-        OnGameScreen,),
-        )           
-        .with_children(|parent| {
-            parent.spawn(TextBundle::from_section("Hint P2", button_text_style.clone()));
-        });
-
-        commands
-        .spawn((ButtonBundle {
-            style: Style {
-                width: Val::Px(110.0),
-                height: Val::Px(45.0),
-                border: UiRect::all(Val::Px(0.0)),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
-                margin: UiRect {
-                    top: Val::Px(705.0),
-                    left: Val::Px(60.0),
-                    bottom: Val::Px(10.0),
-                    right: Val::Px(0.0),},
+            OnGameScreen,),
+            )           
+            .with_children(|parent| {
+                parent.spawn(TextBundle::from_section("Hint P2", button_text_style.clone()));
+            });
+        }
+        if (*mode != Mode::IAP2 && *mode != Mode::IAP1P2) {
+            commands
+            .spawn((ButtonBundle {
+                style: Style {
+                    width: Val::Px(110.0),
+                    height: Val::Px(45.0),
+                    border: UiRect::all(Val::Px(0.0)),
+                    // horizontally center child text
+                    justify_content: JustifyContent::Center,
+                    // vertically center child text
+                    align_items: AlignItems::Center,
+                    margin: UiRect {
+                        top: Val::Px(705.0),
+                        left: Val::Px(60.0),
+                        bottom: Val::Px(10.0),
+                        right: Val::Px(0.0),},
+                    ..default()
+                },
+                border_color: BorderColor(Color::BLACK),
+                background_color: NORMAL_BUTTON.into(),
                 ..default()
             },
-            border_color: BorderColor(Color::BLACK),
-            background_color: NORMAL_BUTTON.into(),
-            ..default()
-        },
-        OnGameScreen,),
-        )           
-        .with_children(|parent| {
-            parent.spawn(TextBundle::from_section("Hint P1", button_text_style));
-        });
+            OnGameScreen,),
+            )           
+            .with_children(|parent| {
+                parent.spawn(TextBundle::from_section("Hint P1", button_text_style));
+            });
+        }
 
         commands.spawn((
             TextBundle::from_section(
@@ -329,7 +335,7 @@ fn gameUI_setup(
         ));
 
     // Creating a grid of empty tiles.
-    if *mode != Mode::Normal {
+    if *mode != Mode::Normal && *iapos == IAPosition::P1 {
         game.start_ia();
     }
     print_ui_map(&game, &mut commands, tile_size);
@@ -490,6 +496,7 @@ fn button_system(
     mut game: ResMut<Game>,
     mut commands: Commands,
     mut player: ResMut<Player>, 
+    mut playerTimes: ResMut<PlayerTimes>,
 ) {
     for (interaction, mut color, mut border_color, children) in &mut interaction_query {
         let text = text_query.get_mut(children[0]).unwrap().sections[0].value.clone();
@@ -498,21 +505,25 @@ fn button_system(
             Interaction::Pressed => {
                 *color = HOVERED_BUTTON.into();
                 match (text.as_str(), *player){
-                    ("Quit", _) => game_state.set(GameState::Menu),
+                    ("Quit", _) => {
+                        game_state.set(GameState::Menu);
+                        *game = Game::new();
+                        *playerTimes = PlayerTimes(0, 0);
+                    },
                     ("Hint P1", Player::P2) => {
-                        let mut rng = rand::thread_rng();
+                        let hint = game.hint(1);
                         let position = Position { 
-                            row: rng.gen_range(0..19), 
-                            col: rng.gen_range(0..19)
+                            row: 18 - hint.0 as usize, 
+                            col: hint.1 as usize
                         };
                         println!("Hint P1 {:?}", position);
                         print_ui_hint(position, tile_size, &mut commands)
                     },
                     ("Hint P2", Player::P1) => {
-                        let mut rng = rand::thread_rng();
+                        let hint = game.hint(2);
                         let position = Position { 
-                            row: rng.gen_range(0..19), 
-                            col: rng.gen_range(0..19)
+                            row: 18 - hint.0 as usize, 
+                            col: hint.1 as usize
                         };
                         println!("Hint P1 {:?}", position);
                         print_ui_hint(position, tile_size, &mut commands)
@@ -578,13 +589,14 @@ fn IA_move(
     mut commands: Commands,
     mode: Res<Mode>,
     mut player_times: ResMut<PlayerTimes>,
+    pl: Res<IAPosition>,
 ) {
     let tile_size = 500.0 /19.0;
     match *mode {
         Mode::IAP1 => {
             if *player == Player::P1 {
                 let start = Instant::now();
-                game.place_ia();
+                game.place_ia(1);
                 let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
                 player_times.0 += time;
                 print_ui_map(&game, &mut commands, tile_size);
@@ -594,7 +606,7 @@ fn IA_move(
         Mode::IAP2 => {
             if *player == Player::P2 {
                 let start = Instant::now();
-                game.place_ia();
+                game.place_ia(2);
                 let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
                 player_times.1 += time;
                 print_ui_map(&game, &mut commands, tile_size);
@@ -602,7 +614,10 @@ fn IA_move(
             }
         },
         Mode::IAP1P2 => {
-            game.place_ia();
+            match *player {
+                Player::P1 => game.place_ia(1),
+                Player::P2 => game.place_ia(2),
+            };
             print_ui_map(&game, &mut commands, tile_size);
             *player = match *player {
                 Player::P1 => Player::P2,
