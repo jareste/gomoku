@@ -170,15 +170,15 @@ impl IA for Game {
 
 
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
-        let state = self.state_to_int(depth);
-        {
-            let table = TRANSPOSITION_TABLE.lock().unwrap();
-            if let Some(&(move_index, score)) = table.get(&state) {
-                return Move { index: move_index, score };
-            }
-        }
+        // let state = self.state_to_int(depth);
+        // {
+        //     let table = TRANSPOSITION_TABLE.lock().unwrap();
+        //     if let Some(&(move_index, score)) = table.get(&state) {
+        //         return Move { index: move_index, score };
+        //     }
+        // }
         if depth == 0 {
-            return Move { index: (0, 0), score: generate_patterns(self.map.clone()) };
+            return Move { index: (0, 0), score: generate_patterns(self.map.clone(), self.captured1, self.captured2) };
         }
 
         let mut possible_moves = self.get_possible_moves(is_maximizing_player, depth);
@@ -208,11 +208,11 @@ impl IA for Game {
                     (best_move2, best_score2)
                 }
             }).unwrap_or(((0, 0), 0));
-        if depth == DEPTH {
-            let state = self.state_to_int(depth);
-            let mut table = TRANSPOSITION_TABLE.lock().unwrap();
-            table.insert(state, (best_move, best_score));
-        }
+        // if depth == DEPTH {
+        //     let state = self.state_to_int(depth);
+        //     let mut table = TRANSPOSITION_TABLE.lock().unwrap();
+        //     table.insert(state, (best_move, best_score));
+        // }
         Move { index: best_move, score: best_score }
     }
 
@@ -225,7 +225,7 @@ impl IA for Game {
             }
         }
         if depth == 0 {
-            return Move { index: (0, 0), score: generate_patterns(self.map.clone()) };
+            return Move { index: (0, 0), score: generate_patterns(self.map.clone(), self.captured1, self.captured2) };
         }
 
         let mut possible_moves = self.get_possible_moves(is_maximizing_player, depth);

@@ -112,10 +112,10 @@ fn evaluate_pattern(pattern_int:u32) -> i128 {
     *PATTERN_SCORES.get(&pattern_int).unwrap_or(&0)
 }
 
-pub fn generate_patterns(map: [[Piece; 19]; 19]) -> i128 {
+pub fn generate_patterns(map: [[Piece; 19]; 19], captured1: i8, captured2: i8) -> i128 {
     let directions: [(isize, isize); 4] = [(0, 1), (1, 0), (1, 1), (1, -1)];
 
-    map.par_iter()
+    let mut score = map.par_iter()
         .enumerate()
         .map(|(i, row)| {
             row.iter()
@@ -136,7 +136,11 @@ pub fn generate_patterns(map: [[Piece; 19]; 19]) -> i128 {
                 .collect::<Vec<_>>()
         })
         .flatten()
-        .sum()
+        .sum();
+
+    score += captured1 as i128 * 1000;
+    score -= captured2 as i128 * 1000;
+    score
 }
 
 pub fn generate_patterns_single_move(map: [[Piece; 19]; 19], x: usize, y: usize) -> i128 {
