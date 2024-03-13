@@ -57,7 +57,6 @@ pub struct Move {
 
 pub trait IA{
     fn get_possible_moves(&mut self, is_maximizing_player: bool, depth: i8) -> Vec<(i8, i8)>;
-    // fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move;
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move;
     fn best_move(&mut self) -> (i8, i8);
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8;
@@ -120,54 +119,12 @@ impl IA for Game {
                 .unwrap_or(std::cmp::Ordering::Equal)
                 .then_with(|| da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal))
         });
-        // for moves in &vec_moves {
-        //     let mut heuristic = self.clone();
-        //     heuristic.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
-        //     let score = generate_patterns(heuristic.map.clone());
-        //     let state = heuristic.state_to_string(depth);
-        //     let mut table = TRANSPOSITION_TABLE.lock().unwrap();
-        //     table.insert(state, (*moves, score));
-        // }
+        if depth > DEPTH {
+            vec_moves.reverse();
+            vec_moves = vec_moves.into_iter().take(1).collect();
+        }
         vec_moves
     }
-
-    // fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
-    //     let state = self.state_to_string(depth);
-    //     {
-    //         let table = TRANSPOSITION_TABLE.lock().unwrap();
-    //         if let Some(&(move_index, score)) = table.get(&state) {
-    //             return Move { index: move_index, score };
-    //         }
-    //     }
-    //     if depth == 0 {
-    //         return Move { index: (0, 0), score: generate_patterns(self.map.clone()) };
-    //     }
-    
-    //     let mut possible_moves = self.get_possible_moves(is_maximizing_player, depth);
-    //     let (best_move, best_score) = possible_moves.iter()
-    //         .map(|&moves| {
-    //             let mut new_game = self.clone();
-    //             new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
-    //             if depth == DEPTH && new_game.check_win() == (true, Piece::Player1) {
-    //                 return (moves, i128::MAX);
-    //             }
-    //             let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
-    //             (moves, score)
-    //         })
-    //         .fold(((0, 0), i128::MIN), |(best_move1, best_score1), (best_move2, best_score2)| {
-    //             if is_maximizing_player && best_score1 > best_score2 || !is_maximizing_player && best_score1 < best_score2 {
-    //                 (best_move1, best_score1)
-    //             } else {
-    //                 (best_move2, best_score2)
-    //             }
-    //         });
-    
-    //     let mut table = TRANSPOSITION_TABLE.lock().unwrap();
-    //     table.insert(state, (best_move, best_score));
-    //     Move { index: best_move, score: best_score }
-    // }
-
-
 
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
         // let state = self.state_to_int(depth);
@@ -196,7 +153,6 @@ impl IA for Game {
                     *beta = min(*beta, score);
                 }
                 if beta <= alpha {
-                    // Prune the remaining branches
                     return (moves, score);
                 }
                 (moves, score)
@@ -217,14 +173,7 @@ impl IA for Game {
     }
 
     fn minimax_worst(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
-        let state = self.state_to_int(depth);
-        {
-            let table = TRANSPOSITION_TABLE.lock().unwrap();
-            if let Some(&(move_index, score)) = table.get(&state) {
-                return Move { index: move_index, score };
-            }
-        }
-        if depth == 0 {
+        if depth == DEPTH {
             return Move { index: (0, 0), score: generate_patterns(self.map.clone(), self.captured1, self.captured2) };
         }
 
@@ -255,18 +204,11 @@ impl IA for Game {
                     (worst_move2, worst_score2)
                 }
             }).unwrap_or(((0, 0), 0));
-        if depth == DEPTH {
-            let state = self.state_to_int(depth);
-            let mut table = TRANSPOSITION_TABLE.lock().unwrap();
-            table.insert(state, (worst_move, worst_score));
-        }
         Move { index: worst_move, score: worst_score }
     }
 
     fn best_move(&mut self) -> (i8, i8) {
-        // println!("heat map: {:?}", self.heat_map[9][9]);
-        // println!("transposition table: {:?}", TRANSPOSITION_TABLE.lock().unwrap());
-        self.minimax(DEPTH, i128::MIN, i128::MIN, true).index
+       self.minimax(DEPTH, i128::MIN, i128::MIN, true.index
     }
     
     fn worst_move(&mut self) -> (i8, i8) {
@@ -274,41 +216,3 @@ impl IA for Game {
     }
 
 }
-
-
-// transposition table minimax:
-    // fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
-    //     let state = self.state_to_string();
-    //     {
-    //         let table = TRANSPOSITION_TABLE.lock().unwrap();
-    //         if let Some(&(move_index, score)) = table.get(&state) {
-    //             return Move { index: move_index, score };
-    //         }
-    //     }
-    //     if depth == 0 {
-    //         return Move { index: (0, 0), score: generate_patterns(self.map.clone()) };
-    //     }
-    
-    //     let mut possible_moves = self.get_possible_moves(is_maximizing_player);
-    //     let (best_move, best_score) = possible_moves.iter()
-    //         .map(|&moves| {
-    //             let mut new_game = self.clone();
-    //             new_game.place(moves.0 as usize, moves.1 as usize, if is_maximizing_player { Piece::Player1 } else { Piece::Player2 });
-    //             if depth == DEPTH && new_game.check_win() == (true, Piece::Player1) {
-    //                 return (moves, i128::MAX);
-    //             }
-    //             let score = new_game.minimax(depth - 1, alpha, beta, !is_maximizing_player).score;
-    //             (moves, score)
-    //         })
-    //         .fold(((0, 0), i128::MIN), |(best_move1, best_score1), (best_move2, best_score2)| {
-    //             if is_maximizing_player && best_score1 > best_score2 || !is_maximizing_player && best_score1 < best_score2 {
-    //                 (best_move1, best_score1)
-    //             } else {
-    //                 (best_move2, best_score2)
-    //             }
-    //         });
-    
-    //     let mut table = TRANSPOSITION_TABLE.lock().unwrap();
-    //     table.insert(state, (best_move, best_score));
-    //     Move { index: best_move, score: best_score }
-    // }
