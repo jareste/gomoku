@@ -241,7 +241,7 @@ impl Game {
 
         println!("Time elapsed in placing the piece: {:?}", time);
         println!("Median time: {:?}", median);
-        // println!("IA placed at x: {} y: {}", x, y);
+        println!("IA placed at x: {} y: {}", x, y);
         println!("movements: {:?}", self.movements);
         (x as usize, y as usize)
     }
@@ -330,8 +330,9 @@ impl Game {
         // self.map[last_move.0 as usize][last_move.1 as usize] = piece;
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
+        let mut free_three_p1_positions: Vec<(i8, i8)> = Vec::new();
+        let mut free_three_p2_positions: Vec<(i8, i8)> = Vec::new();
         // self.print_map();
-        let x_range = 
         for x in 1..16 {
             for y in 1..16 {
                 if self.map[x][y] == piece {
@@ -349,15 +350,19 @@ impl Game {
                         if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
-                                    if free_three_p1 > quantity {
-                                        return true;
-                                    }
+                                    free_three_p1_positions.push(((x - 1) as i8, y as i8));
+                                    free_three_p1_positions.push((x as i8, y as i8));
+                                    free_three_p1_positions.push(((x + 1) as i8, y as i8));
+                                    free_three_p1_positions.push(((x + 2) as i8, y as i8));
+                                    free_three_p1_positions.push(((x + 3) as i8, y as i8));
                                     free_three_p1 += 1
                                 },
                                 Piece::Player2 => {
-                                    if free_three_p2 > quantity {
-                                        return true;
-                                    }
+                                    free_three_p2_positions.push(((x - 1) as i8, y as i8));
+                                    free_three_p2_positions.push((x as i8, y as i8));
+                                    free_three_p2_positions.push(((x + 1) as i8, y as i8));
+                                    free_three_p2_positions.push(((x + 2) as i8, y as i8));
+                                    free_three_p2_positions.push(((x + 3) as i8, y as i8));
                                     free_three_p2 += 1
                                 },
                                 _ => (),
@@ -376,15 +381,19 @@ impl Game {
                         if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
-                                    if free_three_p1 > quantity {
-                                        return true;
-                                    }
+                                    free_three_p1_positions.push((x as i8, (y - 1) as i8));
+                                    free_three_p1_positions.push((x as i8, y as i8));
+                                    free_three_p1_positions.push((x as i8, (y + 1) as i8));
+                                    free_three_p1_positions.push((x as i8, (y + 2) as i8));
+                                    free_three_p1_positions.push((x as i8, (y + 3) as i8));
                                     free_three_p1 += 1
                                 },
                                 Piece::Player2 => {
-                                    if free_three_p2 > quantity {
-                                        return true;
-                                    }
+                                    free_three_p2_positions.push((x as i8, (y - 1) as i8));
+                                    free_three_p2_positions.push((x as i8, y as i8));
+                                    free_three_p2_positions.push((x as i8, (y + 1) as i8));
+                                    free_three_p2_positions.push((x as i8, (y + 2) as i8));
+                                    free_three_p2_positions.push((x as i8, (y + 3) as i8));
                                     free_three_p2 += 1
                                 },
                                 _ => (),
@@ -404,15 +413,19 @@ impl Game {
                         if POSSIBILITIES.contains(&sequence) {
                             match piece {
                                 Piece::Player1 => {
-                                    if free_three_p1 > quantity {
-                                        return true;
-                                    }
+                                    free_three_p1_positions.push(((x - 1) as i8, (y - 1) as i8));
+                                    free_three_p1_positions.push((x as i8, y as i8));
+                                    free_three_p1_positions.push(((x + 1) as i8, (y + 1) as i8));
+                                    free_three_p1_positions.push(((x + 2) as i8, (y + 2) as i8));
+                                    free_three_p1_positions.push(((x + 3) as i8, (y + 3) as i8));
                                     free_three_p1 += 1
                                 },
                                 Piece::Player2 => {
-                                    if free_three_p2 > quantity {
-                                        return true;
-                                    }
+                                    free_three_p2_positions.push(((x - 1) as i8, (y - 1) as i8));
+                                    free_three_p2_positions.push((x as i8, y as i8));
+                                    free_three_p2_positions.push(((x + 1) as i8, (y + 1) as i8));
+                                    free_three_p2_positions.push(((x + 2) as i8, (y + 2) as i8));
+                                    free_three_p2_positions.push(((x + 3) as i8, (y + 3) as i8));
                                     free_three_p2 += 1
                                 },
                                 _ => (),
@@ -434,15 +447,19 @@ impl Game {
                         if POSSIBILITIES.contains(&sequence) {
                             match self.map[x][y] {
                                 Piece::Player1 => {
-                                    if free_three_p1 > quantity {
-                                        return true;
-                                    }
+                                    free_three_p1_positions.push(((x + 1) as i8, (y - 1) as i8));
+                                    free_three_p1_positions.push((x as i8, y as i8));
+                                    free_three_p1_positions.push(((x - 1) as i8, (y + 1) as i8));
+                                    free_three_p1_positions.push(((x - 2) as i8, (y + 2) as i8));
+                                    free_three_p1_positions.push(((x - 3) as i8, (y + 3) as i8));
                                     free_three_p1 += 1
                                 },
                                 Piece::Player2 => {
-                                    if free_three_p2 > quantity {
-                                        return true;
-                                    }
+                                    free_three_p2_positions.push(((x + 1) as i8, (y - 1) as i8));
+                                    free_three_p2_positions.push((x as i8, y as i8));
+                                    free_three_p2_positions.push(((x - 1) as i8, (y + 1) as i8));
+                                    free_three_p2_positions.push(((x - 2) as i8, (y + 2) as i8));
+                                    free_three_p2_positions.push(((x - 3) as i8, (y + 3) as i8));
                                     free_three_p2 += 1
                                 },
                                 _ => (),
@@ -454,9 +471,18 @@ impl Game {
         };
 
         // println!("free three p1: {:?} | free three p2: {:?}", free_three_p1, free_three_p2);
-        if free_three_p1 > quantity || free_three_p2 > quantity {
-            return true;
-        }
+        // if free_three_p1 > quantity || free_three_p2 > quantity {
+        //     if piece == Piece::Player1 {
+        //         if free_three_p1_positions.contains(&last_move) {
+        //             return true;
+        //         }
+        //     }
+        //     else {
+        //         if free_three_p2_positions.contains(&last_move) {
+        //             return true;
+        //         }
+        //     }
+        // }
         false
     }
 }

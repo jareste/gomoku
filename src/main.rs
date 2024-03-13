@@ -100,7 +100,7 @@ fn main() {
     //     println!("adeeeeu");
     // }
 
-    ia::load_transposition_table();
+    // ia::load_transposition_table();
 
 
     // geme.place(9,9, Piece::Player1);
@@ -137,10 +137,10 @@ fn main() {
     //                 break 'test;
     //             }
     //         }
-    //         else {
-    //             println!("No more moves");
-    //             break 'test;
-    //         }
+    //         // else {
+    //         //     println!("No more moves");
+    //         //     break 'test;
+    //         // }
 
     //     }
     //     geme.print_map();

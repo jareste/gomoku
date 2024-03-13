@@ -102,8 +102,8 @@ impl IA for Game {
                 }
             }).flatten()
         }).collect();
-
         let mut vec_moves: Vec<_> = moves.into_iter().collect();
+        // println!("vec_moves: {:?}", vec_moves);
         let last_move1 = self.last_move1;
         let last_move2 = self.last_move2;
 
