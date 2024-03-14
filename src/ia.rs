@@ -173,7 +173,7 @@ impl IA for Game {
     }
 
     fn minimax_worst(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
-        if depth == DEPTH {
+        if depth == 0 {
             return Move { index: (0, 0), score: generate_patterns(self.map.clone(), self.captured1, self.captured2) };
         }
 
@@ -212,7 +212,7 @@ impl IA for Game {
     }
     
     fn worst_move(&mut self) -> (i8, i8) {
-        self.minimax_worst(DEPTH, i128::MAX, i128::MAX, true).index
+        self.minimax_worst(DEPTH, i128::MAX, i128::MAX, false).index
     }
 
 }
