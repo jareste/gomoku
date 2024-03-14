@@ -13,7 +13,6 @@ use crate::game::Piece;
 use crate::ia::IA;
 use rand::prelude::SliceRandom;
 use std::process;
-use ctrlc::set_handler;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -64,10 +63,10 @@ fn main() {
             resolution: WindowResolution::new(1200., 800.).with_scale_factor_override(1.0),
             title: "Gomoku".to_string(),
             resize_constraints: WindowResizeConstraints {
-                min_width: 1200.,
-                min_height: 800.,
-                max_width: 1200.,
-                max_height: 800.,
+                min_width: 600.,
+                min_height: 400.,
+                max_width: 600.,
+                max_height: 400.,
                 ..default()
             },
             ..default()
