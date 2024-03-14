@@ -167,7 +167,7 @@ impl Game {
         if self.check_win() == (true, Piece::Player2) {
             return true;
         }
-        self.place_ia();
+        self.place_ia(1);
         true
     }
 
@@ -219,10 +219,14 @@ impl Game {
         true
     }
 
-    pub fn place_ia(&mut self) -> (usize, usize) {
+    pub fn place_ia(&mut self, pl:i32) -> (usize, usize) {
         self.movements += 1;
         let start = Instant::now();
-        let (x, y) = self.best_move();
+        let (x, y) = match pl {
+            1 => self.best_move(),
+            2 => self.worst_move(),
+            _ => !panic!("Invalid player"),
+        };
         let duration = start.elapsed();
         self.map[x as usize][y as usize] = Piece::Player1;
         self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
@@ -486,6 +490,14 @@ impl Game {
         //     }
         // }
         false
+    }
+
+    pub fn hint(&mut self, player: i8) -> (i8, i8) {
+        if player == 1 {
+            self.best_move()
+        } else {
+            self.worst_move()
+        }
     }
 }
 
