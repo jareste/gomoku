@@ -8,46 +8,8 @@ use rand::prelude::IteratorRandom;
 // use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
 use crate::heuristic::{generate_patterns, generate_patterns_single_move};
 use crate::constants::DEPTH;
-use std::sync::Mutex;
 use std::cmp::{max, min};
-use lazy_static::lazy_static;
 use std::error::Error;
-use csv::Writer;
-use csv::Reader;
-
-lazy_static! {
-    static ref TRANSPOSITION_TABLE: Mutex<HashMap<u64, ((i8, i8), i128)>> = Mutex::new(HashMap::new());
-}
-
-pub fn load_transposition_table() -> Result<(), Box<dyn Error>> {
-    let filename = "transposition_table_".to_owned() + &DEPTH.to_string() + ".csv";
-    let mut rdr = Reader::from_path(filename)?;
-
-    let mut table = TRANSPOSITION_TABLE.lock().unwrap();
-    for result in rdr.records() {
-        let record = result?;
-        let state = record[0].parse::<u64>()?;
-        let move_index = (record[1].parse::<i8>()?, record[2].parse::<i8>()?);
-        let score = record[3].parse::<i128>()?;
-        table.insert(state, (move_index, score));
-    }
-
-    Ok(())
-}
-
-pub fn store_transposition_table() -> Result<(), Box<dyn Error>> {
-    let filename = "transposition_table_".to_owned() + &DEPTH.to_string() + ".csv";
-    let mut wtr = Writer::from_path(filename)?;
-
-    let table = TRANSPOSITION_TABLE.lock().unwrap();
-    for (&state, &(move_index, score)) in table.iter() {
-        wtr.write_record(&[state.to_string(), move_index.0.to_string(), move_index.1.to_string(), score.to_string()])?;
-    }
-
-    wtr.flush()?;
-    Ok(())
-}
-
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Move {

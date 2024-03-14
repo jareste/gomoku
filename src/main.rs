@@ -13,7 +13,6 @@ use crate::game::Piece;
 use crate::ia::IA;
 use rand::prelude::SliceRandom;
 use std::process;
-use ctrlc::set_handler;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
