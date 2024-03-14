@@ -507,7 +507,7 @@ fn button_system(
                 match (text.as_str(), *player){
                     ("Quit", _) => {
                         game_state.set(GameState::Menu);
-                        *game = Game::new();
+                        game.restart();
                         *playerTimes = PlayerTimes(0, 0);
                     },
                     ("Hint P1", Player::P2) => {

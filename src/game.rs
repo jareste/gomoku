@@ -101,6 +101,16 @@ impl Game {
             last_move2: (0, 0),
         }
     }
+
+    pub fn restart(&mut self) {
+        self.map = [[Piece::Empty; 19]; 19];
+        self.heat_map = [[0.0; 19]; 19];
+        self.captured1 = 0;
+        self.captured2 = 0;
+        self.movements = 0;
+        self.last_move1 = (0, 0);
+        self.last_move2 = (0, 0);
+    }
     
     pub fn state_to_string(&self, depth: i8) -> String {
         let mut state = self.map.iter()
