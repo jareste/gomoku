@@ -9,6 +9,7 @@ use super::{despawn_screen,Mode, game, GameState, Player, TEXT_COLOR};
 use bevy::prelude::Sprite;
 use crate::ia;
 use crate::menu::MenuButtonAction;
+use crate::zfighting;
 use crate::IAPosition;
 
 use std::process::exit;
@@ -75,7 +76,7 @@ impl Position {
     }
 
     /// Transforms a position into a world point according to the board's size.
-    fn to_vec3(self) -> Vec3 {
+    fn to_vec3(self, zf: f32) -> Vec3 {
         // Offset from the bottom left point of the board.
         let board = 500.0 + (20.0 * 10.0);
         let tile_size = 500.0 /19.0;
@@ -90,7 +91,7 @@ impl Position {
         Vec3::new(
             (tile_size + tile_spacing) * self.col as f32,
             (tile_size + tile_spacing) * self.row as f32,
-            0.0,
+            zf,
         ) + offset
     }
 
@@ -108,6 +109,7 @@ fn gameUI_setup(
     asset_server: Res<AssetServer>,
     iapos: Res<IAPosition>,
     mut player: ResMut<Player>,
+    mut zf: ResMut<zfighting>,
  ) {
     let board = 500.0 + (20.0 * 10.0);
     let tile_size = 500.0 /19.0;
@@ -212,7 +214,7 @@ fn gameUI_setup(
             parent.spawn(TextBundle::from_section("Quit", button_text_style.clone()));
         });
         
-        if (*mode != Mode::IAP1 && *mode != Mode::IAP1P2) {
+        if (*mode != Mode::IAP2 && *mode != Mode::IAP1P2) {
             commands
             .spawn((ButtonBundle {
                 style: Style {
@@ -240,7 +242,7 @@ fn gameUI_setup(
                 parent.spawn(TextBundle::from_section("Hint P2", button_text_style.clone()));
             });
         }
-        if (*mode != Mode::IAP2 && *mode != Mode::IAP1P2) {
+        if (*mode != Mode::IAP1 && *mode != Mode::IAP1P2) {
             commands
             .spawn((ButtonBundle {
                 style: Style {
@@ -347,7 +349,7 @@ fn gameUI_setup(
         *player = Player::P2;
     }
     game.print_map();
-    print_ui_map(&game, &mut commands, tile_size);
+    print_ui_map(&game, &mut commands, tile_size, &mut zf);
     // Spawn a 5 seconds timer to trigger going back to the menu
 
     
@@ -363,7 +365,7 @@ fn gameUI(
     //}
 }
 
-fn print_ui_tile(position: Position, tile_size: f32, commands: &mut Commands, color: Color) {
+fn print_ui_tile(position: Position, tile_size: f32, commands: &mut Commands, color: Color, zf: f32) {
     commands
     .spawn((SpriteBundle {
         //material: materials.add(Color::rgba_u8(238, 228, 218, 90).into()),
@@ -372,14 +374,14 @@ fn print_ui_tile(position: Position, tile_size: f32, commands: &mut Commands, co
             color: color.into(),
             ..default()
         },
-        transform: Transform::from_translation(position.to_vec3()),
+        transform: Transform::from_translation(position.to_vec3(zf)),
         ..Default::default()
     },
     OnGameScreen),
     );
 }
 
-fn print_ui_hint(position: Position, tile_size: f32, commands: &mut Commands) {
+fn print_ui_hint(position: Position, tile_size: f32, commands: &mut Commands, zf: &mut zfighting) {
     let color = Color::rgba_u8(80, 80, 80, 250); 
     commands
     .spawn((SpriteBundle {
@@ -389,14 +391,16 @@ fn print_ui_hint(position: Position, tile_size: f32, commands: &mut Commands) {
 
             ..default()
         },
-        transform: Transform::from_translation(position.to_vec3()),
+        transform: Transform::from_translation(position.to_vec3((zf.0))),
         ..Default::default()
     },
     OnHintScreen),
     );
+    println!("zf: {:?}", zf.0);
+    *zf = zfighting(zf.0 + 0.0001);
 }
 
-fn print_ui_map(game: &Game, commands: &mut Commands, tile_size: f32) {
+fn print_ui_map(game: &Game, commands: &mut Commands, tile_size: f32, zf: &mut zfighting) {
     let empty_tile : Color = Color::rgba_u8(238, 228, 218, 250);
     let p1_tile : Color = Color::rgba_u8(238, 50, 50, 250);
     let p2_tile : Color = Color::rgba_u8(50, 50, 218, 255);
@@ -404,10 +408,11 @@ fn print_ui_map(game: &Game, commands: &mut Commands, tile_size: f32) {
         for j in 0..19 {
             let position = Position { row: 18 - i, col: j};
             match game.map[i][j] {
-                Piece::Empty => print_ui_tile(position, tile_size, commands, empty_tile),
-                Piece::Player1 => print_ui_tile(position, tile_size, commands, p1_tile),
-                Piece::Player2 => print_ui_tile(position, tile_size, commands, p2_tile)
+                Piece::Empty => print_ui_tile(position, tile_size, commands, empty_tile, zf.0),
+                Piece::Player1 => print_ui_tile(position, tile_size, commands, p1_tile, zf.0),
+                Piece::Player2 => print_ui_tile(position, tile_size, commands, p2_tile, zf.0)
             }
+            *zf = zfighting(zf.0 + 0.0001);
         }
     }
 }
@@ -421,7 +426,8 @@ fn mouse_click_system(
     mode : Res<Mode>,
     mut game_state: ResMut<NextState<GameState>>,
     query: Query<Entity, With<OnHintScreen>>,
-    finished: Res<Finished>
+    finished: Res<Finished>,
+    mut zf: ResMut<zfighting>,
     ) {
 
     if *finished == Finished(false){
@@ -459,7 +465,7 @@ fn mouse_click_system(
                         return;
                     }
                     *player = Player::P2;
-                    print_ui_map(&game, &mut commands, tile_size);
+                    print_ui_map(&game, &mut commands, tile_size, &mut zf);
                 },
                 Player::P2 => {
                     let p_back = position.clone().to_backend();
@@ -468,7 +474,7 @@ fn mouse_click_system(
                         info!("Invalid move");
                         return;
                     }
-                    print_ui_map(&game, &mut commands, tile_size);
+                    print_ui_map(&game, &mut commands, tile_size, &mut zf);
                     *player = Player::P1;
                 }
             }
@@ -503,6 +509,7 @@ fn button_system(
     mut player: ResMut<Player>, 
     mut playerTimes: ResMut<PlayerTimes>,
     finished: Res<Finished>,
+    mut zf: ResMut<zfighting>,
 ) {
     for (interaction, mut color, mut border_color, children) in &mut interaction_query {
         let text = text_query.get_mut(children[0]).unwrap().sections[0].value.clone();
@@ -525,7 +532,7 @@ fn button_system(
                                 col: hint.1 as usize
                             };
                             println!("Hint P1 {:?}", position);
-                            print_ui_hint(position, tile_size, &mut commands)
+                            print_ui_hint(position, tile_size, &mut commands, &mut zf)
                         }
                     },
                     ("Hint P2", Player::P2) => {
@@ -536,7 +543,7 @@ fn button_system(
                                 col: hint.1 as usize
                             };
                             println!("Hint P1 {:?}", position);
-                            print_ui_hint(position, tile_size, &mut commands)
+                            print_ui_hint(position, tile_size, &mut commands, &mut zf)
                         }
                     },
                     _ => {},
@@ -601,11 +608,11 @@ fn IA_move(
     mode: Res<Mode>,
     mut player_times: ResMut<PlayerTimes>,
     pl: Res<IAPosition>,
-    finished: Res<Finished>
+    finished: Res<Finished>,
+    mut zf: ResMut<zfighting>,
 ) {
     if *finished == Finished(false){
         let tile_size = 500.0 /19.0;
-        println!("Mode {:?}, player{:?}", *mode, *player);
         match *mode {
             Mode::IAP1 => {
                 if *player == Player::P1 {
@@ -613,7 +620,7 @@ fn IA_move(
                     game.place_ia(1);
                     let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
                     player_times.0 += time;
-                    print_ui_map(&game, &mut commands, tile_size);
+                    print_ui_map(&game, &mut commands, tile_size, &mut zf);
                     *player = Player::P2;
                 }
             },
@@ -623,7 +630,7 @@ fn IA_move(
                     game.place_ia(2);
                     let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
                     player_times.1 += time;
-                    print_ui_map(&game, &mut commands, tile_size);
+                    print_ui_map(&game, &mut commands, tile_size, &mut zf);
                     *player = Player::P1;
                 }
             },
@@ -632,7 +639,7 @@ fn IA_move(
                     Player::P1 => game.place_ia(1),
                     Player::P2 => game.place_ia(2),
                 };
-                print_ui_map(&game, &mut commands, tile_size);
+                print_ui_map(&game, &mut commands, tile_size, &mut zf);
                 *player = match *player {
                     Player::P1 => Player::P2,
                     Player::P2 => Player::P1,

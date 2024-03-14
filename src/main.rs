@@ -53,6 +53,9 @@ enum Mode {
     IAP1P2,
 }
 
+#[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
+struct zfighting(f32);
+
 //struct bevyGame(Game);
 fn main() {
    
@@ -80,6 +83,7 @@ fn main() {
     .insert_resource(Player::P1)
     .insert_resource(game::Game::new())
     .insert_resource(Mode::IAP1)
+    .insert_resource(zfighting(0.0))
     .init_state::<GameState>()
     .add_systems(Startup, setup)
     .add_plugins((menu::menu_plugin, gameUI::gameUI_plugin))
