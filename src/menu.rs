@@ -1,5 +1,7 @@
 use bevy::{app::AppExit, prelude::*};
 
+use crate::ia;
+
 use super::{despawn_screen, Mode,IAQuality, GameState, IAPosition,MinMaxProf, TEXT_COLOR};
 
 // This plugin manages the menu, with 5 different screens:
@@ -572,6 +574,7 @@ fn menu_action(
     mut menu_state: ResMut<NextState<MenuState>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut mode: ResMut<Mode>,
+    iapos: Res<IAPosition>,
 ) {
     for (interaction, menu_button_action) in &interaction_query {
         if *interaction == Interaction::Pressed {
@@ -587,7 +590,10 @@ fn menu_action(
                 MenuButtonAction::PlayIA => {
                     game_state.set(GameState::Game);
                     menu_state.set(MenuState::Disabled);
-                    *mode = Mode::IAP1;
+                    *mode = match *iapos {
+                        IAPosition::P1 => Mode::IAP1,
+                        IAPosition::P2 => Mode::IAP2,
+                    };
                 }
                 MenuButtonAction::PlayIAvsIA => {
                     game_state.set(GameState::Game);

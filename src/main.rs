@@ -63,10 +63,10 @@ fn main() {
             resolution: WindowResolution::new(1200., 800.).with_scale_factor_override(1.0),
             title: "Gomoku".to_string(),
             resize_constraints: WindowResizeConstraints {
-                min_width: 600.,
-                min_height: 400.,
-                max_width: 600.,
-                max_height: 400.,
+                min_width: 1200.,
+                min_height: 800.,
+                max_width: 1200.,
+                max_height: 800.,
                 ..default()
             },
             ..default()
@@ -77,7 +77,7 @@ fn main() {
     .insert_resource(IAQuality::Medium)
     .insert_resource(MinMaxProf(7))
     .insert_resource(IAPosition::P1)
-    .insert_resource(Player::P2)
+    .insert_resource(Player::P1)
     .insert_resource(game::Game::new())
     .insert_resource(Mode::IAP1)
     .init_state::<GameState>()

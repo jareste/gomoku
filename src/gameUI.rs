@@ -25,6 +25,7 @@ pub fn gameUI_plugin(app: &mut App) {
         .add_systems(Update, button_system.run_if(in_state(GameState::Game)))
         .add_systems(Update, captures.run_if(in_state(GameState::Game)))
         .add_systems(Update, IA_move.run_if(in_state(GameState::Game)))
+        .add_systems(Update, game_ended.run_if(in_state(GameState::Game)))
         .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
         .add_systems(OnExit(GameState::Game), despawn_screen::<OnHintScreen>)
         .add_systems(OnExit(GameState::Game), despawn_screen::<TimeText>)
@@ -50,7 +51,11 @@ struct CaptureText;
 
 #[derive(Resource)]
 struct PlayerTimes(pub u32, pub u32);
-/// An identifier for the board background's entity.
+
+
+#[derive(Resource, PartialEq, Eq, Clone, Copy, Debug)]
+struct Finished(pub bool);
+
 pub struct Board;
 
 /// An identifier for the empty-tiles' entities.
@@ -102,6 +107,7 @@ fn gameUI_setup(
     mut game: ResMut<Game>,
     asset_server: Res<AssetServer>,
     iapos: Res<IAPosition>,
+    mut player: ResMut<Player>,
  ) {
     let board = 500.0 + (20.0 * 10.0);
     let tile_size = 500.0 /19.0;
@@ -109,6 +115,7 @@ fn gameUI_setup(
 
     commands.insert_resource(GameTimer(Timer::from_seconds(0.1, TimerMode::Repeating)));
     commands.insert_resource(PlayerTimes(0, 0));
+    commands.insert_resource(Finished(false));
 
     commands
         .spawn((SpriteBundle {
@@ -128,7 +135,7 @@ fn gameUI_setup(
                 TextStyle {
                     font: asset_server.load("fonts/MontserratExtrabold-VGO60.ttf"),
                     font_size: 40.0,
-                    color: Color::rgb(0.1, 0.1, 0.9),
+                    color: Color::rgb(0.9, 0.1, 0.1),
                     ..default()
                 },
             )
@@ -148,7 +155,7 @@ fn gameUI_setup(
                 TextStyle {
                     font: asset_server.load("fonts/MontserratExtrabold-VGO60.ttf"),
                     font_size: 40.0,
-                    color: Color::rgb(0.9, 0.1, 0.1),
+                    color: Color::rgb(0.1, 0.1, 0.9),
                     ..default()
                 },
             )
@@ -337,7 +344,9 @@ fn gameUI_setup(
     // Creating a grid of empty tiles.
     if *mode != Mode::Normal && *iapos == IAPosition::P1 {
         game.start_ia();
+        *player = Player::P2;
     }
+    game.print_map();
     print_ui_map(&game, &mut commands, tile_size);
     // Spawn a 5 seconds timer to trigger going back to the menu
 
@@ -412,67 +421,63 @@ fn mouse_click_system(
     mode : Res<Mode>,
     mut game_state: ResMut<NextState<GameState>>,
     query: Query<Entity, With<OnHintScreen>>,
+    finished: Res<Finished>
     ) {
 
-    let center = Vec2::new(600.0, 400.0);
-    let board = 500.0 + (20.0 * 10.0);
-    let tile_size = 500.0 /19.0;
-    let tile_spacing = 10.0;
+    if *finished == Finished(false){
+        let center = Vec2::new(600.0, 400.0);
+        let board = 500.0 + (20.0 * 10.0);
+        let tile_size = 500.0 /19.0;
+        let tile_spacing = 10.0;
 
 
 
-    if mouse_button_input.just_pressed(MouseButton::Left) {
-        let mouse: Vec2 = windows.single().cursor_position().unwrap() - Vec2::new(260.0, 60.0);
-        if mouse.x < 0.0 || mouse.x > 680.0 || mouse.y < 0.0 || mouse.y > 680.0 {
-            let abs = windows.single().cursor_position().unwrap();
-            return;
-        }
-        let row = (19.0 - mouse.y / (tile_size + 10.0)) as usize;
-        let col = ( mouse.x / (tile_size + 10.0)) as usize;
-    
-        let position = Position { row, col};
-
-        info!("{}", windows.single().cursor_position().unwrap());
-        info!("row: {}, col: {}, pl: {:?}", row, col, *player);
-
-        for entity in query.iter() {
-            commands.entity(entity).despawn_recursive();
-        }
-        
-        match *player {
-            Player::P1 => {
-                let p_back = position.clone().to_backend();
-                info!("click on coordinates: {} {}", p_back.0, p_back.1);
-                if !game.update_game(p_back.0, p_back.1, Piece::Player1) {
-                    info!("Invalid move");
-                    return;
-                }
-                *player = Player::P2;
-                print_ui_map(&game, &mut commands, tile_size);
-            },
-            Player::P2 => {
-                let p_back = position.clone().to_backend();
-                info!("click on coordinates: {} {}", p_back.0, p_back.1);
-                if !game.update_game(p_back.0, p_back.1, Piece::Player2) {
-                    info!("Invalid move");
-                    return;
-                }
-                print_ui_map(&game, &mut commands, tile_size);
-                *player = Player::P1;
+        if mouse_button_input.just_pressed(MouseButton::Left) {
+            let mouse: Vec2 = windows.single().cursor_position().unwrap() - Vec2::new(260.0, 60.0);
+            if mouse.x < 0.0 || mouse.x > 680.0 || mouse.y < 0.0 || mouse.y > 680.0 {
+                let abs = windows.single().cursor_position().unwrap();
+                return;
             }
-        }
-        game.print_map();
-        if (game.check_win() == (true, Piece::Player1)) || (game.check_win() == (true, Piece::Player2)) {
-            println!("Player {:?} wins", game.check_win().1);
-            println!("Segmentation Fault (core dumped)");
-            // ia::store_transposition_table();
-            exit(0);
-        }
-            
-    }
+            let row = (19.0 - mouse.y / (tile_size + 10.0)) as usize;
+            let col = ( mouse.x / (tile_size + 10.0)) as usize;
+        
+            let position = Position { row, col};
 
-    if mouse_button_input.just_released(MouseButton::Left) {
-        info!("left mouse just released");
+            info!("{}", windows.single().cursor_position().unwrap());
+            info!("row: {}, col: {}, pl: {:?}", row, col, *player);
+
+            for entity in query.iter() {
+                commands.entity(entity).despawn_recursive();
+            }
+            
+            match *player {
+                Player::P1 => {
+                    let p_back = position.clone().to_backend();
+                    info!("click on coordinates: {} {}", p_back.0, p_back.1);
+                    if !game.update_game(p_back.0, p_back.1, Piece::Player1) {
+                        info!("Invalid move");
+                        return;
+                    }
+                    *player = Player::P2;
+                    print_ui_map(&game, &mut commands, tile_size);
+                },
+                Player::P2 => {
+                    let p_back = position.clone().to_backend();
+                    info!("click on coordinates: {} {}", p_back.0, p_back.1);
+                    if !game.update_game(p_back.0, p_back.1, Piece::Player2) {
+                        info!("Invalid move");
+                        return;
+                    }
+                    print_ui_map(&game, &mut commands, tile_size);
+                    *player = Player::P1;
+                }
+            }
+            game.print_map();
+        }
+
+        if mouse_button_input.just_released(MouseButton::Left) {
+            info!("left mouse just released");
+        }
     }
 }
 
@@ -497,6 +502,7 @@ fn button_system(
     mut commands: Commands,
     mut player: ResMut<Player>, 
     mut playerTimes: ResMut<PlayerTimes>,
+    finished: Res<Finished>,
 ) {
     for (interaction, mut color, mut border_color, children) in &mut interaction_query {
         let text = text_query.get_mut(children[0]).unwrap().sections[0].value.clone();
@@ -504,29 +510,34 @@ fn button_system(
         match (*interaction) {
             Interaction::Pressed => {
                 *color = HOVERED_BUTTON.into();
+                println!("Player {:?}", *player);
                 match (text.as_str(), *player){
                     ("Quit", _) => {
                         game_state.set(GameState::Menu);
                         game.restart();
                         *playerTimes = PlayerTimes(0, 0);
                     },
-                    ("Hint P1", Player::P2) => {
-                        let hint = game.hint(1);
-                        let position = Position { 
-                            row: 18 - hint.0 as usize, 
-                            col: hint.1 as usize
-                        };
-                        println!("Hint P1 {:?}", position);
-                        print_ui_hint(position, tile_size, &mut commands)
+                    ("Hint P1", Player::P1) => {
+                        if *finished == Finished(false){
+                            let hint = game.hint(1);
+                            let position = Position { 
+                                row: 18 - hint.0 as usize, 
+                                col: hint.1 as usize
+                            };
+                            println!("Hint P1 {:?}", position);
+                            print_ui_hint(position, tile_size, &mut commands)
+                        }
                     },
-                    ("Hint P2", Player::P1) => {
-                        let hint = game.hint(2);
-                        let position = Position { 
-                            row: 18 - hint.0 as usize, 
-                            col: hint.1 as usize
-                        };
-                        println!("Hint P1 {:?}", position);
-                        print_ui_hint(position, tile_size, &mut commands)
+                    ("Hint P2", Player::P2) => {
+                        if *finished == Finished(false){
+                            let hint = game.hint(2);
+                            let position = Position { 
+                                row: 18 - hint.0 as usize, 
+                                col: hint.1 as usize
+                            };
+                            println!("Hint P1 {:?}", position);
+                            print_ui_hint(position, tile_size, &mut commands)
+                        }
                     },
                     _ => {},
                 }
@@ -554,8 +565,8 @@ fn countdown(
         let mut i = 0;
         for mut entity in query.iter_mut() {
             match i {  
-                0 => entity.sections[0].value = format!("Time: {}.{}", player_times.1/10, player_times.1%10),
-                1 => entity.sections[0].value = format!("Time: {}.{}", player_times.0/10, player_times.0%10),
+                0 => entity.sections[0].value = format!("Time: {}.{}", player_times.0/10, player_times.0%10),
+                1 => entity.sections[0].value = format!("Time: {}.{}", player_times.1/10, player_times.1%10),
                 _ => {}
             
             }
@@ -590,40 +601,64 @@ fn IA_move(
     mode: Res<Mode>,
     mut player_times: ResMut<PlayerTimes>,
     pl: Res<IAPosition>,
+    finished: Res<Finished>
 ) {
-    let tile_size = 500.0 /19.0;
-    match *mode {
-        Mode::IAP1 => {
-            if *player == Player::P1 {
-                let start = Instant::now();
-                game.place_ia(1);
-                let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
-                player_times.0 += time;
+    if *finished == Finished(false){
+        let tile_size = 500.0 /19.0;
+        println!("Mode {:?}, player{:?}", *mode, *player);
+        match *mode {
+            Mode::IAP1 => {
+                if *player == Player::P1 {
+                    let start = Instant::now();
+                    game.place_ia(1);
+                    let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
+                    player_times.0 += time;
+                    print_ui_map(&game, &mut commands, tile_size);
+                    *player = Player::P2;
+                }
+            },
+            Mode::IAP2 => {
+                if *player == Player::P2 {
+                    let start = Instant::now();
+                    game.place_ia(2);
+                    let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
+                    player_times.1 += time;
+                    print_ui_map(&game, &mut commands, tile_size);
+                    *player = Player::P1;
+                }
+            },
+            Mode::IAP1P2 => {
+                match *player {
+                    Player::P1 => game.place_ia(1),
+                    Player::P2 => game.place_ia(2),
+                };
                 print_ui_map(&game, &mut commands, tile_size);
-                *player = Player::P2;
-            }
-        },
-        Mode::IAP2 => {
-            if *player == Player::P2 {
-                let start = Instant::now();
-                game.place_ia(2);
-                let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
-                player_times.1 += time;
-                print_ui_map(&game, &mut commands, tile_size);
-                *player = Player::P1;
-            }
-        },
-        Mode::IAP1P2 => {
-            match *player {
-                Player::P1 => game.place_ia(1),
-                Player::P2 => game.place_ia(2),
-            };
-            print_ui_map(&game, &mut commands, tile_size);
-            *player = match *player {
-                Player::P1 => Player::P2,
-                Player::P2 => Player::P1,
-            };
-        },
-        _ => {}
+                *player = match *player {
+                    Player::P1 => Player::P2,
+                    Player::P2 => Player::P1,
+                };
+            },
+            _ => {}
+        }
+    }
+}
+
+
+fn game_ended(
+    mut game_state: ResMut<NextState<GameState>>,
+    game: Res<Game>,
+    mut player: ResMut<Player>,
+    mut player_times: ResMut<PlayerTimes>,
+    mut finished: ResMut<Finished>,
+    mut timer: ResMut<GameTimer>,
+) {
+    if *finished == Finished(false){
+        if (game.check_win() == (true, Piece::Player1)) || (game.check_win() == (true, Piece::Player2)) {
+            *finished = Finished(true);
+            timer.pause();
+            println!("Player {:?} wins", game.check_win().1);
+            println!("Segmentation Fault (core dumped)");
+            // ia::store_transposition_table();
+        }
     }
 }

@@ -237,9 +237,19 @@ impl Game {
             2 => self.worst_move(),
             _ => !panic!("Invalid player"),
         };
+        let player = match pl {
+            1 => Piece::Player1,
+            2 => Piece::Player2,
+            _ => !panic!("Invalid player"),
+        };
+        let oponent = match pl {
+            1 => Piece::Player2,
+            2 => Piece::Player1,
+            _ => !panic!("Invalid player"),
+        };
         let duration = start.elapsed();
-        self.map[x as usize][y as usize] = Piece::Player1;
-        self.capture(x as usize, y as usize, Piece::Player1, Piece::Player2);
+        self.map[x as usize][y as usize] = player;
+        self.capture(x as usize, y as usize, player, oponent);
         self.update_heat_map((x, y));
 
         let time = duration.as_secs_f64();
