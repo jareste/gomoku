@@ -13,6 +13,7 @@ use crate::zfighting;
 use crate::IAPosition;
 
 use std::process::exit;
+use std::thread;
 use std::thread::sleep;
 use std::time::Instant;
 
@@ -345,7 +346,15 @@ fn gameUI_setup(
 
     // Creating a grid of empty tiles.
     if *mode != Mode::Normal && *iapos == IAPosition::P1 {
-        game.start_ia();
+        match *mode {
+            Mode::IAP1 => {
+                game.start_ia();
+            },
+            Mode::IAP1P2 => {
+                game.start_ia_random();
+            },
+            _ => {}
+        }
         *player = Player::P2;
     }
     game.print_map();
@@ -613,10 +622,12 @@ fn IA_move(
 ) {
     if *finished == Finished(false){
         let tile_size = 500.0 /19.0;
+        let start = Instant::now();
+        let mut rng = rand::thread_rng();
+        let random = rng.gen_range(0..30);
         match *mode {
             Mode::IAP1 => {
                 if *player == Player::P1 {
-                    let start = Instant::now();
                     game.place_ia(1);
                     let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
                     player_times.0 += time;
@@ -626,7 +637,6 @@ fn IA_move(
             },
             Mode::IAP2 => {
                 if *player == Player::P2 {
-                    let start = Instant::now();
                     game.place_ia(2);
                     let time = (start.elapsed().as_secs_f64() * 10.0) as u32;
                     player_times.1 += time;
@@ -635,15 +645,17 @@ fn IA_move(
                 }
             },
             Mode::IAP1P2 => {
-                match *player {
-                    Player::P1 => game.place_ia(1),
-                    Player::P2 => game.place_ia(2),
-                };
-                print_ui_map(&game, &mut commands, tile_size, &mut zf);
-                *player = match *player {
-                    Player::P1 => Player::P2,
-                    Player::P2 => Player::P1,
-                };
+                if (random == 0){
+                    match *player {
+                        Player::P1 => game.place_ia(1),
+                        Player::P2 => game.place_ia(2),
+                    };
+                    print_ui_map(&game, &mut commands, tile_size, &mut zf);
+                    *player = match *player {
+                        Player::P1 => Player::P2,
+                        Player::P2 => Player::P1,
+                    };
+                }
             },
             _ => {}
         }

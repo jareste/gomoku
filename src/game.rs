@@ -5,6 +5,7 @@ use std::collections::HashMap;
 // use crate::ia::best_move;
 use std::process::exit;
 use bevy::prelude::*;
+use rand::Rng;
 use std::fmt;
 use crate::ia::Move;
 
@@ -348,6 +349,16 @@ impl Game {
     {
         self.place(9, 9, Piece::Player1);
         self.update_heat_map((9, 9));
+
+    }
+
+    pub fn start_ia_random(&mut self)
+    {
+        let mut rng = rand::thread_rng();
+        let x: usize = rng.gen_range(0..19);
+        let y: usize = rng.gen_range(0..19);
+        self.place(x, y, Piece::Player1);
+        self.update_heat_map((x as i8, y as i8));
 
     }
 
