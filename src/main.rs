@@ -1,18 +1,12 @@
 #![allow(warnings)]
 mod game;
 mod ia;
-//use game::terminal_game;
-//use game::terminal_game_ia;
 mod gameUI;
 mod menu;
 mod constants;
 mod heuristic;
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_prototype_lyon::prelude::*;
-use crate::game::Piece;
-use crate::ia::IA;
-use rand::prelude::SliceRandom;
-use std::process;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -56,7 +50,6 @@ enum Mode {
 #[derive(Resource, Debug, Component, PartialEq, Clone, Copy)]
 struct zfighting(f32);
 
-//struct bevyGame(Game);
 fn main() {
    
     App::new()
@@ -66,10 +59,10 @@ fn main() {
             resolution: WindowResolution::new(1200., 800.).with_scale_factor_override(1.0),
             title: "Gomoku".to_string(),
             resize_constraints: WindowResizeConstraints {
-                min_width: 1200.,
-                min_height: 800.,
-                max_width: 1200.,
-                max_height: 800.,
+                min_width: 600.,
+                min_height: 400.,
+                max_width: 600.,
+                max_height: 400.,
                 ..default()
             },
             ..default()

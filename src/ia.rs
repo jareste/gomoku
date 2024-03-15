@@ -4,8 +4,6 @@ use std::collections::HashMap;
 use crate::game::{Game, Piece};
 use rand::seq::SliceRandom;
 use rand::prelude::IteratorRandom;
-// use crate::constants::{DEPTH, WINNING_BONUS, LOSING_PENALTY, DIRECTIONS, DEVELOPING_TWO, DEVELOPING_THREE, FREE_FOUR, DEVELOPING_FOUR, FIVE_IN_A_ROW};
-// use crate::constants::{POSSIBLE_CAPTURE, CAPTURE, FREE_THREE_FIVE, FREE_THREE_SIX};
 use crate::heuristic::{generate_patterns, generate_patterns_single_move};
 use crate::constants::DEPTH;
 use std::cmp::{max, min};
@@ -89,13 +87,6 @@ impl IA for Game {
     }
 
     fn minimax(&mut self, depth: i8, alpha: i128, beta: i128, is_maximizing_player: bool) -> Move {
-        // let state = self.state_to_int(depth);
-        // {
-        //     let table = TRANSPOSITION_TABLE.lock().unwrap();
-        //     if let Some(&(move_index, score)) = table.get(&state) {
-        //         return Move { index: move_index, score };
-        //     }
-        // }
         if depth == 0 {
             return Move { index: (0, 0), score: generate_patterns(self.map.clone(), self.captured1, self.captured2) };
         }
@@ -126,11 +117,6 @@ impl IA for Game {
                     (best_move2, best_score2)
                 }
             }).unwrap_or(((0, 0), 0));
-        // if depth == DEPTH {
-        //     let state = self.state_to_int(depth);
-        //     let mut table = TRANSPOSITION_TABLE.lock().unwrap();
-        //     table.insert(state, (best_move, best_score));
-        // }
         Move { index: best_move, score: best_score }
     }
 
@@ -154,7 +140,6 @@ impl IA for Game {
                     *alpha = max(*alpha, score);
                 }
                 if beta >= alpha {
-                    // Prune the remaining branches
                     return (moves, score);
                 }
                 (moves, score)

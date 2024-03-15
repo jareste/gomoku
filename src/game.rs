@@ -2,7 +2,6 @@
 use std::time::Instant;
 use crate::ia::IA;
 use std::collections::HashMap;
-// use crate::ia::best_move;
 use std::process::exit;
 use bevy::prelude::*;
 use std::fmt;
@@ -157,7 +156,6 @@ impl Game {
                 if nx >= 0 && nx < 19 && ny >= 0 && ny < 19 {
                     let distance = dx.abs().max(dy.abs());
                     let heat = 3 - distance;
-                    // Multiply the heat by a factor that increases with the number of moves
                     let heat = heat as f32 * (1.0 + self.movements as f32 / 100.0);
                     self.heat_map[nx as usize][ny as usize] += heat;
                 }
@@ -166,7 +164,7 @@ impl Game {
     }
 
     pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
-        println!("place:::x: {}, y: {}", x, y);
+        // println!("place:::x: {}, y: {}", x, y);
         if !self.validate_movement(x, y, Piece::Player2) {
             return false;
         }
@@ -207,11 +205,6 @@ impl Game {
         self.update_heat_map((x as i8, y as i8));
         true
     }
-
-    // if self.find_free_threes((x as i8, y as i8), 1) {
-    //     self.map[x][y] = Piece::Empty;
-    //     return false;
-    // }
 
     pub fn place(&mut self, x: usize, y: usize, piece: Piece) -> bool {
         self.map[x][y] = piece;
@@ -264,10 +257,10 @@ impl Game {
             times[times.len() / 2]
         };
 
-        println!("Time elapsed in placing the piece: {:?}", time);
-        println!("Median time: {:?}", median);
-        println!("IA placed at x: {} y: {}", x, y);
-        println!("movements: {:?}", self.movements);
+        // println!("Time elapsed in placing the piece: {:?}", time);
+        // println!("Median time: {:?}", median);
+        // println!("IA placed at x: {} y: {}", x, y);
+        info!("movements: {:?}", self.movements);
         (x as usize, y as usize)
     }
 
@@ -348,22 +341,17 @@ impl Game {
     {
         self.place(9, 9, Piece::Player1);
         self.update_heat_map((9, 9));
-
     }
 
     // no tira
     pub fn find_free_threes(&self, last_move: (i8, i8), quantity: i8, piece: Piece) -> bool {
-        // self.map[last_move.0 as usize][last_move.1 as usize] = piece;
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
         let mut free_three_p1_positions: Vec<(i8, i8)> = Vec::new();
         let mut free_three_p2_positions: Vec<(i8, i8)> = Vec::new();
-        // self.print_map();
         for x in 1..16 {
             for y in 1..16 {
                 if self.map[x][y] == piece {
-                    // println!("no petardea");
-                    // checking X vertical up
                     if let [a, b, c, d, e, f] = [
                         self.map[x - 1][y],
                         piece,
@@ -496,19 +484,18 @@ impl Game {
             }
         };
 
-        // println!("free three p1: {:?} | free three p2: {:?}", free_three_p1, free_three_p2);
-        // if free_three_p1 > quantity || free_three_p2 > quantity {
-        //     if piece == Piece::Player1 {
-        //         if free_three_p1_positions.contains(&last_move) {
-        //             return true;
-        //         }
-        //     }
-        //     else {
-        //         if free_three_p2_positions.contains(&last_move) {
-        //             return true;
-        //         }
-        //     }
-        // }
+        if free_three_p1 > quantity || free_three_p2 > quantity {
+            if piece == Piece::Player1 {
+                if free_three_p1_positions.contains(&last_move) {
+                    return true;
+                }
+            }
+            else {
+                if free_three_p2_positions.contains(&last_move) {
+                    return true;
+                }
+            }
+        }
         false
     }
 
@@ -520,98 +507,3 @@ impl Game {
         }
     }
 }
-
-
-
-
-
-
-/*
-
-
-
-
-
-// HELPER FUNCTION FOR TESTING
-use std::io::{self, Write};
-pub fn terminal_game() {
-    let mut game = Game::new();
-    let mut input = String::new();
-    let mut movements: usize = 0;
-    loop {
-        if movements % 2 == 0 {
-            println!("Player 1, please enter your move (x y): ");
-        }
-        else {
-            println!("Player 2, please enter your move (x y): ");
-        }
-        io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
-        input.clear();
-        io::stdin().read_line(&mut input).unwrap();
-        let numbers: Vec<i32> = input.split_whitespace().map(|s| s.parse().unwrap()).collect();
-        
-        if numbers.len() != 2 {
-            println!("numbers: {:?}", numbers);
-            println!("You must enter exactly two integers!");
-            continue;
-        }
-        if numbers[0] <0 || numbers[0] > 18 || numbers[1] < 0 || numbers[1] > 18 {
-            println!("You must enter numbers between 0 and 18!");
-            continue;
-        }
-        if movements % 2 == 0 {
-            if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player1) {
-                println!("You can't place a piece there!");
-                continue;
-            }
-        }
-        else {
-            if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player2) {
-                println!("You can't place a piece there!");
-                continue;
-            }
-        }
-        movements += 1;
-        game.print_map();
-    }
-}
-
-
-pub fn terminal_game_ia() {
-    let mut game = Game::new();
-    let mut input = String::new();
-    // let mut numbers: Vec<i32> = Vec::new();
-    let mut movements: usize = 1;
-    game.start_ia();
-    game.print_map();
-    loop {
-        println!("Player 2, please enter your move (x y): ");
-        io::stdout().flush().unwrap(); // Make sure the prompt is immediately displayed
-        input.clear();
-        io::stdin().read_line(&mut input).unwrap();
-        let numbers: Vec<i32> = input.split_whitespace().filter_map(|s| s.parse().ok()).collect();
-        
-        if numbers.len() != 2 {
-            println!("numbers: {:?}", numbers);
-            println!("You must enter exactly two integers!");
-            continue;
-        }
-        if numbers[0] <0 || numbers[0] > 18 || numbers[1] < 0 || numbers[1] > 18 {
-            println!("You must enter numbers between 0 and 18!");
-            continue;
-        }
-
-        if !game.place(numbers[0] as usize, numbers[1] as usize, Piece::Player2) {
-            println!("You can't place a piece there!");
-            continue;
-        }
-        game.place_ia();
-        // numbers.clear();
-        movements += 1;
-        println!("movements: {:?}", movements);
-        if game.check_win() {
-            break;
-        }
-    }
-}
-*/
