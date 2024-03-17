@@ -21,6 +21,7 @@ Usage:
     - Cargo run.
         (We strongly recommend you to run it with "CARGO_TARGET_DIR=/tmp/gomoku/ cargo run", 
         this will just generate the bin on /tmp folder, it's 3GB more or less.)
+    - On bin folder there are binaries compiled for Mac, Windows, and Linux, maybe them will work.
 
 Menu:
 
