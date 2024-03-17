@@ -23,9 +23,13 @@ Usage:
         this will just generate the bin on /tmp folder, it's 3GB more or less.)
 
 Menu:
+
     - 1vs1: you can play with your friends or against yourself.
+    
     - 1vsIA: by default IA will start always first, making it harder to the player to win. (IA score is something like 40-1, good luck.)
+    
     - IAvsIA: just a simulation of IA against our own IA. (second player IA was lazyly done, so you can expect lazy behaviour.)
+    
     - Settings: There's an option to make IA start second.
 
 While playing, you can also take profit of Hints. (As stated, second player IA was lazyly implemented so up to you to trust on it.).
