@@ -26,13 +26,10 @@ pub trait IA{
 
 
 impl IA for Game {
-
-
     fn distance(&self, a: (i8, i8), b: (i8, i8)) -> i8 {
         ((a.0 - b.0).abs() + (a.1 - b.1).abs()) as i8
     }
 
-    // threading moves.
     fn get_possible_moves(&mut self, is_maximizing_player: bool, depth: i8) -> Vec<(i8, i8)> {
         let directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)];
         let new_self = self.clone();
@@ -59,7 +56,6 @@ impl IA for Game {
             }).flatten()
         }).collect();
         let mut vec_moves: Vec<_> = moves.into_iter().collect();
-        // println!("vec_moves: {:?}", vec_moves);
         let last_move1 = self.last_move1;
         let last_move2 = self.last_move2;
 
@@ -161,5 +157,4 @@ impl IA for Game {
     fn worst_move(&mut self) -> (i8, i8) {
         self.minimax_worst(DEPTH, i128::MAX, i128::MAX, false).index
     }
-
 }

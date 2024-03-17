@@ -1,4 +1,3 @@
-// use std::process::exit;
 use std::time::Instant;
 use crate::ia::IA;
 use std::collections::HashMap;
@@ -7,7 +6,7 @@ use bevy::prelude::*;
 use rand::Rng;
 use std::fmt;
 use crate::ia::Move;
-
+use crate::constants::POSSIBILITIES;
 use std::sync::Mutex;
 use lazy_static::lazy_static;
 
@@ -44,18 +43,7 @@ pub fn string_to_map(input: &str) -> [[Piece; 19]; 19] {
     map
 }
 
-pub const POSSIBILITIES: [[Piece; 6]; 10] = [
-    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Empty], // - X X X -
-    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1], // - X X X -
-    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player2], // - X X X -
-    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Empty], // - O O O -
-    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player1], // - O O O -
-    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2], // - O O O -
-    [Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Empty], // - X X - X -
-    [Piece::Empty, Piece::Player1, Piece::Empty, Piece::Player1, Piece::Player1, Piece::Empty], // - X - X X -
-    [Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Empty], // - O O - O -
-    [Piece::Empty, Piece::Player2, Piece::Empty, Piece::Player2, Piece::Player2, Piece::Empty], // - O - O O -
-];
+
 
 
 impl fmt::Display for Piece {
@@ -112,42 +100,6 @@ impl Game {
         self.last_move2 = (0, 0);
     }
     
-    pub fn state_to_string(&self, depth: i8) -> String {
-        let mut state = self.map.iter()
-            .map(|row| row.iter()
-                .map(|&cell| match cell {
-                    Piece::Player1 => "X ",
-                    Piece::Player2 => "O ",
-                    Piece::Empty => "- ",
-                })
-                .collect::<String>())
-            .collect::<Vec<String>>()
-            .join("\n");
-        state.push_str(&format!("\nDepth: {}", depth));
-        state
-    }
-
-    pub fn state_to_int(&self, depth: i8) -> u64 {
-        let mut state = String::new();
-
-        for row in &self.map {
-            for &cell in row {
-                state.push_str(&match cell {
-                    Piece::Empty => "0",
-                    Piece::Player1 => "1",
-                    Piece::Player2 => "2",
-                });
-            }
-        }
-
-        // Add depth to the state
-        state.push_str(&depth.to_string());
-
-        let mut hasher = DefaultHasher::new();
-        state.hash(&mut hasher);
-        hasher.finish()
-    }
-
     pub fn update_heat_map(&mut self, last_move: (i8, i8)) {
         let (x, y) = last_move;
         for dx in -2..=2 {
@@ -165,7 +117,6 @@ impl Game {
     }
 
     pub fn update_game_ia(&mut self, x: usize, y: usize) -> bool {
-        // println!("place:::x: {}, y: {}", x, y);
         if !self.validate_movement(x, y, Piece::Player2) {
             return false;
         }
@@ -258,14 +209,12 @@ impl Game {
             times[times.len() / 2]
         };
 
-        // println!("Time elapsed in placing the piece: {:?}", time);
-        // println!("Median time: {:?}", median);
-        // println!("IA placed at x: {} y: {}", x, y);
-        info!("movements: {:?}", self.movements);
+        println!("Time elapsed in placing the piece: {:?}", time);
+        println!("Median time: {:?}", median);
+        println!("movements: {:?}", self.movements);
         (x as usize, y as usize)
     }
 
-    // terminal game HELPER FUNCTION
     pub fn print_map(&self) {
         for i in 0..19 {
             for j in 0..19 {
@@ -314,7 +263,6 @@ impl Game {
         (false, Piece::Empty)
     }
 
-    // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture_direction(&mut self, x: isize, y: isize, dx: isize, dy: isize, piece: Piece, o_piece: Piece) {
         if (1..3).all(|i| self.map.get((x + i * dx) as usize).and_then(|row| row.get((y + i * dy) as usize)) == Some(&o_piece))
             && self.map.get((x + 3 * dx) as usize).and_then(|row| row.get((y + 3 * dy) as usize)) == Some(&piece) {
@@ -329,7 +277,6 @@ impl Game {
         }
     }
 
-    // NEW CAPTURE FUNCTIONS MAYBE NOT WORKING AS EXPECTED
     fn capture(&mut self, x: usize, y: usize, piece: Piece, o_piece: Piece) {
         let directions = [(0, 1), (1, 0), (1, 1), (1, -1)];
         for &(dx, dy) in &directions {
@@ -354,7 +301,6 @@ impl Game {
 
     }
 
-    // no tira
     pub fn find_free_threes(&self, last_move: (i8, i8), quantity: i8, piece: Piece) -> bool {
         let mut free_three_p1: i8 = 0;
         let mut free_three_p2: i8 = 0;
@@ -425,7 +371,6 @@ impl Game {
                             }
                         }
                     }
-                    // checking diagonal up right /
                     if let [a, b, c, d, e, f] = [
                         self.map[x - 1][y - 1],
                         piece,
